@@ -1,19 +1,27 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/providers/marketplace_provider.dart';
+import '../../../core/utils/file_picker_helper.dart';
+import '../../../models/product.dart';
 
-class SellItemScreen extends StatefulWidget {
+class SellItemScreen extends ConsumerStatefulWidget {
   const SellItemScreen({super.key});
 
   @override
-  State<SellItemScreen> createState() => _SellItemScreenState();
+  ConsumerState<SellItemScreen> createState() => _SellItemScreenState();
 }
 
-class _SellItemScreenState extends State<SellItemScreen> {
+class _SellItemScreenState extends ConsumerState<SellItemScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _descController = TextEditingController();
   String _selectedCondition = 'Good';
+  String _selectedCategory = 'Books';
+  Uint8List? _uploadedImageBytes;
+  String? _uploadedImageUrl;
 
   @override
   void dispose() {
@@ -21,6 +29,33 @@ class _SellItemScreenState extends State<SellItemScreen> {
     _priceController.dispose();
     _descController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final result = await pickImageFile();
+      if (result != null) {
+        setState(() {
+          _uploadedImageBytes = result['bytes'] as Uint8List?;
+          _uploadedImageUrl = result['path'] as String?;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Photo "${result['name'] ?? 'Image'}" uploaded successfully!'),
+              backgroundColor: const Color(0xFF10B981),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to open file picker: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -31,7 +66,7 @@ class _SellItemScreenState extends State<SellItemScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
+            constraints: const BoxConstraints(maxWidth: 1300),
             child: Form(
               key: _formKey,
               child: Column(
@@ -66,52 +101,107 @@ class _SellItemScreenState extends State<SellItemScreen> {
                             // 1. Photos Card
                             _buildCardContainer(
                               title: 'Photos',
-                              badge: '0 / 8 Uploaded',
-                              child: CustomPaint(
-                                painter: _DashedBorderPainter(),
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(vertical: 36),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
+                              badge: '${_uploadedImageBytes != null || _uploadedImageUrl != null ? '1' : '0'} / 8 Uploaded',
+                              child: (_uploadedImageBytes == null && _uploadedImageUrl == null)
+                                  ? MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      child: GestureDetector(
+                                        onTap: _pickImage,
+                                        child: CustomPaint(
+                                          painter: _DashedBorderPainter(),
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(vertical: 36),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF8FAFC),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: const Icon(Icons.add_photo_alternate_outlined, size: 36, color: Color(0xFF2563EB)),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                RichText(
+                                                  text: const TextSpan(
+                                                    style: TextStyle(fontSize: 14, fontFamily: 'Roboto'),
+                                                    children: [
+                                                      TextSpan(
+                                                        text: 'Upload a photo ',
+                                                        style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                                                      ),
+                                                      TextSpan(
+                                                        text: 'or drag and drop',
+                                                        style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                const Text(
+                                                  'SVG, PNG, JPG, WEBP or GIF (max. 10MB)',
+                                                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Stack(
+                                      children: [
+                                        ClipRRect(
                                           borderRadius: BorderRadius.circular(12),
+                                          child: _uploadedImageBytes != null
+                                              ? Image.memory(
+                                                  _uploadedImageBytes!,
+                                                  height: 200,
+                                                  width: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : Image.network(
+                                                  _uploadedImageUrl!,
+                                                  height: 200,
+                                                  width: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                ),
                                         ),
-                                        child: const Icon(Icons.add_photo_alternate_outlined, size: 36, color: Color(0xFF64748B)),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      RichText(
-                                        text: const TextSpan(
-                                          style: TextStyle(fontSize: 14, fontFamily: 'Roboto'),
-                                          children: [
-                                            TextSpan(
-                                              text: 'Click to upload ',
-                                              style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
-                                            ),
-                                            TextSpan(
-                                              text: 'or drag and drop',
-                                              style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
-                                            ),
-                                          ],
+                                        Positioned(
+                                          top: 10,
+                                          right: 10,
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF10B981),
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                                child: const Text('Photo Added ✓', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              GestureDetector(
+                                                onTap: () => setState(() {
+                                                  _uploadedImageBytes = null;
+                                                  _uploadedImageUrl = null;
+                                                }),
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(6),
+                                                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      const Text(
-                                        'SVG, PNG, JPG or GIF (max. 5MB)',
-                                        style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                                      ],
+                                    ),
                             ),
                             const SizedBox(height: 20),
 
@@ -141,18 +231,20 @@ class _SellItemScreenState extends State<SellItemScreen> {
                                             _buildFieldLabel('Category'),
                                             const SizedBox(height: 8),
                                             DropdownButtonFormField<String>(
-                                              initialValue: 'Select category...',
+                                              initialValue: _selectedCategory,
                                               style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
                                               decoration: _buildInputDecoration(''),
                                               icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
                                               items: const [
-                                                DropdownMenuItem(value: 'Select category...', child: Text('Select category...', style: TextStyle(color: Color(0xFF94A3B8)))),
-                                                DropdownMenuItem(value: 'Textbooks', child: Text('Books & Textbooks')),
+                                                DropdownMenuItem(value: 'Books', child: Text('Books & Textbooks')),
                                                 DropdownMenuItem(value: 'Electronics', child: Text('Electronics')),
                                                 DropdownMenuItem(value: 'Stationery', child: Text('Stationery & Supplies')),
-                                                DropdownMenuItem(value: 'Services', child: Text('Digital Services')),
+                                                DropdownMenuItem(value: 'Notes', child: Text('Lecture Notes')),
+                                                DropdownMenuItem(value: 'Digital Services', child: Text('Digital Services')),
                                               ],
-                                              onChanged: (_) {},
+                                              onChanged: (val) {
+                                                if (val != null) setState(() => _selectedCategory = val);
+                                              },
                                             ),
                                           ],
                                         ),
@@ -217,7 +309,7 @@ class _SellItemScreenState extends State<SellItemScreen> {
                                     controller: _priceController,
                                     keyboardType: TextInputType.number,
                                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                                    decoration: _buildInputDecoration('\$  0.00'),
+                                    decoration: _buildInputDecoration('৳  0.00'),
                                   ),
                                   const SizedBox(height: 24),
                                   Row(
@@ -244,7 +336,11 @@ class _SellItemScreenState extends State<SellItemScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 OutlinedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Draft saved successfully to your profile!')),
+                                    );
+                                  },
                                   style: OutlinedButton.styleFrom(
                                     side: const BorderSide(color: Color(0xFFCBD5E1)),
                                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
@@ -254,8 +350,31 @@ class _SellItemScreenState extends State<SellItemScreen> {
                                 ),
                                 ElevatedButton.icon(
                                   onPressed: () {
+                                    final title = _titleController.text.trim();
+                                    final price = double.tryParse(_priceController.text.trim().replaceAll('৳', '').replaceAll('\$', '')) ?? 250.0;
+                                    final desc = _descController.text.trim();
+
+                                    final newProduct = Product(
+                                      id: 'p_${DateTime.now().millisecondsSinceEpoch}',
+                                      title: title.isNotEmpty ? title : 'Physics for Scientists & Engineers',
+                                      price: price > 0 ? price : 350.0,
+                                      category: _selectedCategory,
+                                      condition: _selectedCondition,
+                                      description: desc.isNotEmpty
+                                          ? desc
+                                          : 'Mint condition campus listing. Clean pages, no highlighting, available for campus meetup.',
+                                      imageUrl: _uploadedImageUrl ?? 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
+                                      sellerName: 'Alex Rivera (You)',
+                                      sellerCampus: 'Main Campus',
+                                    );
+
+                                    ref.read(marketplaceProvider.notifier).addProduct(newProduct);
+
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Listing Published successfully!')),
+                                      SnackBar(
+                                        content: Text('"${newProduct.title}" published successfully to Marketplace!'),
+                                        backgroundColor: const Color(0xFF2563EB),
+                                      ),
                                     );
                                     context.go('/marketplace');
                                   },
@@ -332,6 +451,8 @@ class _SellItemScreenState extends State<SellItemScreen> {
                                   Image.network(
                                     'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=300&q=80',
                                     height: 100,
+                                    cacheWidth: 300,
+                                    cacheHeight: 150,
                                     fit: BoxFit.contain,
                                     errorBuilder: (context, error, stackTrace) => Container(
                                       height: 90,

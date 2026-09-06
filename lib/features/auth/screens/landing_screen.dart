@@ -1,14 +1,193 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class LandingScreen extends StatelessWidget {
+class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
+
+  @override
+  State<LandingScreen> createState() => _LandingScreenState();
+}
+
+class _LandingScreenState extends State<LandingScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToFeatures() {
+    _scrollController.animateTo(
+      700,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _showHowItWorksModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        elevation: 8,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Padding(
+            padding: const EdgeInsets.all(28.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.help_outline_rounded, color: Color(0xFF2563EB), size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'How Student Market Works',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Safe, verified student-to-student platform',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF94A3B8)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                _buildHowItWorksStep(
+                  num: '1',
+                  title: 'Verified Student ID & .edu Email',
+                  desc: 'Join with your official university credentials to browse listings and connect safely with verified peers.',
+                  icon: Icons.verified_user_outlined,
+                  color: const Color(0xFF2563EB),
+                ),
+                const SizedBox(height: 16),
+
+                _buildHowItWorksStep(
+                  num: '2',
+                  title: 'Buy, Sell & Campus Meetups',
+                  desc: 'Find textbooks, electronics, notes, and study gear from students near you. Meet up on campus with zero shipping costs.',
+                  icon: Icons.storefront_outlined,
+                  color: const Color(0xFF059669),
+                ),
+                const SizedBox(height: 16),
+
+                _buildHowItWorksStep(
+                  num: '3',
+                  title: 'Split Group Subscriptions',
+                  desc: 'Form or join groups for Netflix, Spotify, Adobe, or Coursera to share subscriptions and split bills automatically.',
+                  icon: Icons.hub_outlined,
+                  color: const Color(0xFF7C3AED),
+                ),
+                const SizedBox(height: 28),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _scrollToFeatures();
+                      },
+                      icon: const Icon(Icons.arrow_downward_rounded, size: 16),
+                      label: const Text('View All Features', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHowItWorksStep({
+    required String num,
+    required String title,
+    required String desc,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                desc,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           children: [
             // Top Navigation Bar
@@ -38,83 +217,91 @@ class LandingScreen extends StatelessWidget {
   // 1. Top Navbar
   // ---------------------------------------------------------------------------
   Widget _buildNavbar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF0F2F5))),
-      ),
-      child: Row(
-        children: [
-          // Logo
-          InkWell(
-            onTap: () => context.go('/landing'),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.storefront_rounded, color: Color(0xFF2563EB), size: 22),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth > 900;
+
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Color(0xFFF0F2F5))),
+          ),
+          child: Row(
+            children: [
+              // Logo
+              InkWell(
+                onTap: () => context.go('/landing'),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.storefront_rounded, color: Color(0xFF2563EB), size: 22),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Student Marketplace',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Student Marketplace',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
-                    letterSpacing: -0.5,
+              ),
+              const Spacer(),
+
+              if (isDesktop) ...[
+                // Navigation Links
+                TextButton(
+                  onPressed: () => context.go('/landing'),
+                  child: const Text(
+                    'Home',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2563EB), fontSize: 14),
                   ),
                 ),
+                const SizedBox(width: 16),
+                TextButton(
+                  onPressed: () => context.go('/marketplace'),
+                  child: const Text(
+                    'Marketplace',
+                    style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B), fontSize: 14),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                TextButton(
+                  onPressed: () => context.go('/subscriptions'),
+                  child: const Text(
+                    'Subscription Groups',
+                    style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B), fontSize: 14),
+                  ),
+                ),
+                const SizedBox(width: 24),
               ],
-            ),
-          ),
-          const Spacer(),
 
-          // Navigation Links
-          TextButton(
-            onPressed: () => context.go('/landing'),
-            child: const Text(
-              'Home',
-              style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2563EB), fontSize: 14),
-            ),
+              // Login Button
+              OutlinedButton(
+                onPressed: () => context.go('/login'),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text(
+                  'Login',
+                  style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B), fontSize: 14),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 20),
-          TextButton(
-            onPressed: () => context.go('/marketplace'),
-            child: const Text(
-              'Marketplace',
-              style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B), fontSize: 14),
-            ),
-          ),
-          const SizedBox(width: 20),
-          TextButton(
-            onPressed: () => context.go('/subscriptions'),
-            child: const Text(
-              'Subscription Groups',
-              style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B), fontSize: 14),
-            ),
-          ),
-          const SizedBox(width: 32),
-
-          // Login Button
-          OutlinedButton(
-            onPressed: () => context.go('/login'),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text(
-              'Login',
-              style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B), fontSize: 14),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -220,7 +407,7 @@ class LandingScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 16),
                       TextButton.icon(
-                        onPressed: () => context.go('/marketplace'),
+                        onPressed: () => _showHowItWorksModal(context),
                         icon: const Icon(Icons.play_circle_outline_rounded, color: Color(0xFF475569), size: 20),
                         label: const Text(
                           'How it works',
@@ -305,6 +492,8 @@ class LandingScreen extends StatelessWidget {
                       child: Image.network(
                         'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1000',
                         fit: BoxFit.cover,
+                        cacheWidth: 800,
+                        cacheHeight: 440,
                         width: double.infinity,
                         height: 440,
                       ),
@@ -548,7 +737,7 @@ class LandingScreen extends StatelessWidget {
                               children: [
                                 Icon(Icons.hub_rounded, color: Color(0xFF60A5FA), size: 36),
                                 SizedBox(width: 12),
-                                Text('\$5.50 / mo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                Text('৳250 / mo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                               ],
                             ),
                           ),
@@ -704,49 +893,92 @@ class LandingScreen extends StatelessWidget {
   // 6. Footer
   // ---------------------------------------------------------------------------
   Widget _buildFooter(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
-      ),
-      child: Row(
-        children: [
-          // Left Logo
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(6)),
-                child: const Icon(Icons.storefront_rounded, color: Color(0xFF2563EB), size: 16),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Campus Market',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
-              ),
-            ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth > 900;
+
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
           ),
-          const Spacer(),
+          child: isDesktop
+              ? Row(
+                  children: [
+                    // Left Logo
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(6)),
+                          child: const Icon(Icons.storefront_rounded, color: Color(0xFF2563EB), size: 16),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Campus Market',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
 
-          // Links
-          const Text('About', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
-          const SizedBox(width: 24),
-          const Text('Support', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
-          const SizedBox(width: 24),
-          const Text('Terms', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
-          const SizedBox(width: 24),
-          const Text('Privacy', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                    // Links
+                    const Text('About', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                    const SizedBox(width: 24),
+                    const Text('Support', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                    const SizedBox(width: 24),
+                    const Text('Terms', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                    const SizedBox(width: 24),
+                    const Text('Privacy', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
 
-          const Spacer(),
+                    const Spacer(),
 
-          // Copyright
-          const Text(
-            '© 2024 Campus Market. Built for Students.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-          ),
-        ],
-      ),
+                    // Copyright
+                    const Text(
+                      '© 2024 Campus Market. Built for Students.',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(6)),
+                          child: const Icon(Icons.storefront_rounded, color: Color(0xFF2563EB), size: 16),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Campus Market',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Wrap(
+                      spacing: 20,
+                      runSpacing: 10,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        Text('About', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                        Text('Support', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                        Text('Terms', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                        Text('Privacy', style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '© 2024 Campus Market. Built for Students.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                    ),
+                  ],
+                ),
+        );
+      },
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../models/product.dart';
+import '../widgets/payment_checkout_dialog.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product? product;
@@ -103,19 +104,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final title = widget.product?.title ?? 'Introduction to Linear Algebra, 5th Edition';
-    final priceStr = widget.product != null ? '\$${widget.product!.price.toStringAsFixed(0)}' : '\$45';
+    final priceStr = widget.product != null ? '৳${widget.product!.price.toStringAsFixed(0)}' : '৳450';
     final seller = widget.product?.sellerName ?? 'Sarah Jenkins';
     final desc = widget.product?.description ??
-        'Mint condition textbook required for MATH 220. No highlighting, dog-eared pages, or spine damage. Includes the unused digital access code card inside the front cover.\n\nOriginally purchased for \$140 at the campus bookstore. Selling because I ended up dropping the class during syllabus week. Pick up near North Campus library preferred.';
+        'Mint condition textbook required for MATH 220. No highlighting, dog-eared pages, or spine damage. Includes the unused digital access code card inside the front cover.\n\nOriginally purchased for ৳1200 at the campus bookstore. Selling because I ended up dropping the class during syllabus week. Pick up near North Campus library preferred.';
     final condition = widget.product?.condition ?? 'Like New';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
+            constraints: const BoxConstraints(maxWidth: 1400),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -136,7 +137,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       flex: 6,
                       child: Column(
                         children: [
-                          // Main Big Image
+                          // Main Big Image with Hero & AnimatedSwitcher
                           Stack(
                             children: [
                               ClipRRect(
@@ -144,12 +145,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 child: SizedBox(
                                   height: 380,
                                   width: double.infinity,
-                                  child: Image.network(
-                                    _activeImage,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      color: const Color(0xFFF1F5F9),
-                                      child: const Icon(Icons.image_outlined, size: 48, color: Color(0xFF94A3B8)),
+                                  child: Hero(
+                                    tag: 'product-img-${widget.product?.id ?? ""}',
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 250),
+                                      switchInCurve: Curves.easeOutCubic,
+                                      switchOutCurve: Curves.easeInCubic,
+                                      child: Image.network(
+                                        _activeImage,
+                                        key: ValueKey<String>(_activeImage),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: 380,
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          color: const Color(0xFFF1F5F9),
+                                          child: const Icon(Icons.image_outlined, size: 48, color: Color(0xFF94A3B8)),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -337,18 +349,50 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Contact Seller Button
+                          // Buy Now / Pay with bKash/Nagad Button
                           SizedBox(
                             width: double.infinity,
                             height: 48,
                             child: ElevatedButton.icon(
+                              onPressed: () {
+                                PaymentCheckoutDialog.show(
+                                  context,
+                                  itemName: title,
+                                  priceText: priceStr,
+                                  category: widget.product?.category ?? 'Campus Marketplace',
+                                  onPaymentSuccess: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Payment verified successfully for $title! Order placed.'),
+                                        backgroundColor: const Color(0xFF10B981),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              icon: const Icon(Icons.account_balance_wallet_rounded, size: 18),
+                              label: const Text('PAY WITH BKASH / NAGAD', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE2136E),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Contact Seller Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: OutlinedButton.icon(
                               onPressed: () => _showContactSellerDialog(context, seller),
                               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
                               label: const Text('CONTACT SELLER', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2563EB),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                foregroundColor: const Color(0xFF2563EB),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                             ),
@@ -392,29 +436,29 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () => context.go('/product-details', extra: const Product(id: 'r1', title: 'TI-84 Plus CE Graphing Calculator', price: 80.0, category: 'Electronics', condition: 'Good', description: 'Calculator with color screen', imageUrl: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=400&q=80', sellerName: 'Michael R.', sellerCampus: 'Main Campus')),
-                        child: _buildSmallCard('TI-84 Plus CE Graphing Calculator', '\$80', 'Good', 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=400&q=80'),
+                        onTap: () => context.go('/product-details', extra: const Product(id: 'r1', title: 'TI-84 Plus CE Graphing Calculator', price: 1200.0, category: 'Electronics', condition: 'Good', description: 'Calculator with color screen', imageUrl: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=400&q=80', sellerName: 'Michael R.', sellerCampus: 'Main Campus')),
+                        child: _buildSmallCard('TI-84 Plus CE Graphing Calculator', '৳1200', 'Good', 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=400&q=80'),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: InkWell(
-                        onTap: () => context.go('/product-details', extra: const Product(id: 'r2', title: 'Grid Rule Notebooks (Pack of 3)', price: 12.0, category: 'Stationery', condition: 'New', description: '3 notebooks for engineering', imageUrl: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=400&q=80', sellerName: 'Lisa W.', sellerCampus: 'Engineering Quad')),
-                        child: _buildSmallCard('Grid Rule Notebooks (Pack of 3)', '\$12', 'New', 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=400&q=80'),
+                        onTap: () => context.go('/product-details', extra: const Product(id: 'r2', title: 'Grid Rule Notebooks (Pack of 3)', price: 150.0, category: 'Stationery', condition: 'New', description: '3 notebooks for engineering', imageUrl: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=400&q=80', sellerName: 'Lisa W.', sellerCampus: 'Engineering Quad')),
+                        child: _buildSmallCard('Grid Rule Notebooks (Pack of 3)', '৳150', 'New', 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=400&q=80'),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: InkWell(
-                        onTap: () => context.go('/product-details', extra: const Product(id: 'r3', title: 'Comprehensive Midterm Study Guides', price: 15.0, category: 'Notes', condition: 'Digital', description: 'Exam notes and solved problems', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&q=80', sellerName: 'David K.', sellerCampus: 'East Dorms')),
-                        child: _buildSmallCard('Comprehensive Midterm Study Guides', '\$15', 'Digital', 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&q=80'),
+                        onTap: () => context.go('/product-details', extra: const Product(id: 'r3', title: 'Comprehensive Midterm Study Guides', price: 180.0, category: 'Notes', condition: 'Digital', description: 'Exam notes and solved problems', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&q=80', sellerName: 'David K.', sellerCampus: 'East Dorms')),
+                        child: _buildSmallCard('Comprehensive Midterm Study Guides', '৳180', 'Digital', 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&q=80'),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: InkWell(
-                        onTap: () => context.go('/product-details', extra: const Product(id: 'r4', title: 'Personal Whiteboard + Markers', price: 10.0, category: 'Stationery', condition: 'Like New', description: 'Mini whiteboard set', imageUrl: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=400&q=80', sellerName: 'Sarah J.', sellerCampus: 'North Campus')),
-                        child: _buildSmallCard('Personal Whiteboard + Markers', '\$10', 'Like New', 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=400&q=80'),
+                        onTap: () => context.go('/product-details', extra: const Product(id: 'r4', title: 'Personal Whiteboard + Markers', price: 200.0, category: 'Stationery', condition: 'Like New', description: 'Mini whiteboard set', imageUrl: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=400&q=80', sellerName: 'Sarah J.', sellerCampus: 'North Campus')),
+                        child: _buildSmallCard('Personal Whiteboard + Markers', '৳200', 'Like New', 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=400&q=80'),
                       ),
                     ),
                   ],

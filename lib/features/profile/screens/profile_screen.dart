@@ -69,10 +69,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
+            constraints: const BoxConstraints(maxWidth: 1300),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -202,106 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 24),
 
                 // Dynamic Tab Content
-                if (_selectedTab == 0) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Active Listings',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => context.go('/sell'),
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('New Listing', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildListingCard(
-                          title: 'Calculus: Early Transcendentals 9th Edition',
-                          price: '\$45',
-                          desc: 'Used for one semester. Great condition, minimal highlighting.',
-                          imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
-                          status: 'Active',
-                          isSold: false,
-                          views: '12 views',
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildListingCard(
-                          title: 'Keychron K2 Wireless Mechanical Keyboard',
-                          price: '\$60',
-                          desc: 'Brown switches. Includes original box and extra keycaps.',
-                          imageUrl: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
-                          status: 'Active',
-                          isSold: false,
-                          views: '45 views',
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildListingCard(
-                          title: 'IKEA Tertial Desk Lamp',
-                          price: '\$15',
-                          desc: 'Works perfectly, just upgraded my setup.',
-                          imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80',
-                          status: 'Sold',
-                          isSold: true,
-                          views: 'Sold on Oct 12',
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else if (_selectedTab == 1) ...[
-                  const Text('Active Subscription Groups', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildJoinedGroupCard('Netflix Premium 4K', '\$5.50 / mo', 'Alex Chen (Host)', 'Next billing: Sep 25'),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildJoinedGroupCard('Coursera Plus Annual', '\$79 / yr', 'CS Study Group', 'Next billing: Jan 15'),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  const Text('Account & Privacy Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          title: const Text('Campus Email Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: const Text('Receive notifications when someone messages about your listing'),
-                          value: true,
-                          activeColor: const Color(0xFF2563EB),
-                          onChanged: (val) {},
-                        ),
-                        const Divider(),
-                        ListTile(
-                          title: const Text('Campus Identity Verification', style: TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: const Text('Verified via alex.r@stanford.edu'),
-                          trailing: const Icon(Icons.check_circle, color: Color(0xFF10B981)),
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                _buildTabContent(),
               ],
             ),
           ),
@@ -310,49 +211,176 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTabItem(int index, String label, String? count) {
-    final isSelected = _selectedTab == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTab = index),
-      child: Column(
+  Widget _buildTabContent() {
+    if (_selectedTab == 0) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+              const Text(
+                'Active Listings',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => context.go('/sell'),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('New Listing', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
-              if (count != null) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFDBEAFE) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    count,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
-          const SizedBox(height: 10),
-          Container(
-            height: 2,
-            width: 100,
-            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _buildListingCard(
+                  title: 'Calculus: Early Transcendentals 9th Edition',
+                  price: '৳450',
+                  desc: 'Used for one semester. Great condition, minimal highlighting.',
+                  imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+                  status: 'Active',
+                  isSold: false,
+                  views: '12 views',
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildListingCard(
+                  title: 'Keychron K2 Wireless Mechanical Keyboard',
+                  price: '৳1500',
+                  desc: 'Brown switches. Includes original box and extra keycaps.',
+                  imageUrl: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+                  status: 'Active',
+                  isSold: false,
+                  views: '45 views',
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildListingCard(
+                  title: 'IKEA Tertial Desk Lamp',
+                  price: '৳350',
+                  desc: 'Works perfectly, just upgraded my setup.',
+                  imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80',
+                  status: 'Sold',
+                  isSold: true,
+                  views: 'Sold on Oct 12',
+                ),
+              ),
+            ],
           ),
         ],
+      );
+    } else if (_selectedTab == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Active Subscription Groups', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildJoinedGroupCard('Netflix Premium 4K', '৳250 / mo', 'Alex Chen (Host)', 'Next billing: Sep 25'),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildJoinedGroupCard('Coursera Plus Annual', '৳1200 / yr', 'CS Study Group', 'Next billing: Jan 15'),
+              ),
+            ],
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Account & Privacy Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: const Text('Campus Email Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Receive notifications when someone messages about your listing'),
+                  value: true,
+                  activeThumbColor: const Color(0xFF2563EB),
+                  onChanged: (val) {},
+                ),
+                const Divider(),
+                ListTile(
+                  title: const Text('Campus Identity Verification', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Verified via alex.r@stanford.edu'),
+                  trailing: const Icon(Icons.check_circle, color: Color(0xFF10B981)),
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildTabItem(int index, String label, String? count) {
+    final isSelected = _selectedTab == index;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTab = index),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Roboto',
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                  ),
+                  child: Text(label),
+                ),
+                if (count != null) ...[
+                  const SizedBox(width: 6),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFFDBEAFE) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      count,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              height: 2,
+              width: isSelected ? 100 : 0,
+              color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -385,6 +413,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
+                  cacheWidth: 400,
+                  cacheHeight: 250,
                   errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey.shade200, child: const Icon(Icons.image)),
                 ),
               ),

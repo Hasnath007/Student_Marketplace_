@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/marketplace_provider.dart';
+import '../../marketplace/widgets/payment_checkout_dialog.dart';
 
-class SubscriptionGroupsScreen extends StatefulWidget {
+class SubscriptionGroupsScreen extends ConsumerStatefulWidget {
   const SubscriptionGroupsScreen({super.key});
 
   @override
-  State<SubscriptionGroupsScreen> createState() => _SubscriptionGroupsScreenState();
+  ConsumerState<SubscriptionGroupsScreen> createState() => _SubscriptionGroupsScreenState();
 }
 
-class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
+class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScreen> {
   String _selectedCategory = 'All Categories';
   final List<String> _categories = ['All Categories', 'Entertainment', 'Academic', 'Productivity'];
 
@@ -20,7 +23,7 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
       'progress': 0.5,
       'badge': 'ENTERTAINMENT',
       'category': 'Entertainment',
-      'price': '\$5.50',
+      'price': '৳250',
       'period': '/mo',
       'isFull': false,
       'isJoined': false,
@@ -35,7 +38,7 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
       'progress': 0.5,
       'badge': 'ENTERTAINMENT',
       'category': 'Entertainment',
-      'price': '\$7.49',
+      'price': '৳180',
       'period': '/mo',
       'isFull': false,
       'isJoined': false,
@@ -51,7 +54,7 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
       'badge': 'ACADEMIC',
       'category': 'Academic',
       'isVerified': true,
-      'price': '\$79',
+      'price': '৳1200',
       'period': '/yr',
       'isFull': false,
       'isJoined': false,
@@ -66,7 +69,7 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
       'progress': 1.0,
       'badge': 'PRODUCTIVITY',
       'category': 'Productivity',
-      'price': '\$19.99',
+      'price': '৳450',
       'period': '/mo',
       'isFull': true,
       'isJoined': false,
@@ -207,9 +210,12 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
                                 keyboardType: TextInputType.number,
                                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                 decoration: InputDecoration(
-                                  hintText: '\$5.50 /mo',
+                                  hintText: '৳250 /mo',
                                   hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.normal),
-                                  prefixIcon: const Icon(Icons.attach_money_rounded, size: 20, color: Color(0xFF64748B)),
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: Text('৳', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                  ),
                                   filled: true,
                                   fillColor: const Color(0xFFF8FAFC),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
@@ -228,7 +234,7 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
                               const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
                               const SizedBox(height: 6),
                               DropdownButtonFormField<String>(
-                                value: selectedCategory,
+                                initialValue: selectedCategory,
                                 style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
                                 decoration: InputDecoration(
                                   filled: true,
@@ -279,7 +285,7 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
                                   'progress': 0.25,
                                   'badge': selectedCategory.toUpperCase(),
                                   'category': selectedCategory,
-                                  'price': '\$${priceCtrl.text.isEmpty ? "5.00" : priceCtrl.text}',
+                                  'price': '৳${priceCtrl.text.isEmpty ? "250" : priceCtrl.text.replaceAll("৳", "").replaceAll("\$", "")}',
                                   'period': '/mo',
                                   'isFull': false,
                                   'isJoined': true,
@@ -316,38 +322,62 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
   }
 
   void _toggleJoinGroup(Map<String, dynamic> group) {
-    setState(() {
-      final isJoined = group['isJoined'] == true;
-      group['isJoined'] = !isJoined;
-      if (!isJoined) {
-        group['slotsText'] = 'Joined!';
-      } else {
+    final isJoined = group['isJoined'] == true;
+    if (!isJoined) {
+      PaymentCheckoutDialog.show(
+        context,
+        itemName: group['title'] ?? 'Subscription Group',
+        priceText: '${group['price'] ?? '৳250'}${group['period'] ?? '/mo'}',
+        category: group['category'] ?? 'Subscription',
+        onPaymentSuccess: () {
+          setState(() {
+            group['isJoined'] = true;
+            group['slotsText'] = 'Joined ✓';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Joined ${group['title']} successfully!'),
+              backgroundColor: const Color(0xFF10B981),
+            ),
+          );
+        },
+      );
+    } else {
+      setState(() {
+        group['isJoined'] = false;
         group['slotsText'] = '2/4 slots left';
-      }
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(group['isJoined'] ? 'Joined ${group['title']} group!' : 'Left ${group['title']} group.'),
-        backgroundColor: group['isJoined'] ? const Color(0xFF2563EB) : const Color(0xFF64748B),
-      ),
-    );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Left ${group['title']} group.'),
+          backgroundColor: const Color(0xFF64748B),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final searchQuery = ref.watch(searchQueryProvider);
+    final cleanSearch = searchQuery.trim().toLowerCase();
+
     final filteredGroups = _groups.where((g) {
-      if (_selectedCategory == 'All Categories') return true;
-      return g['category'] == _selectedCategory;
+      final matchesCategory = _selectedCategory == 'All Categories' || g['category'] == _selectedCategory;
+      final matchesSearch = cleanSearch.isEmpty ||
+          (g['title'] as String).toLowerCase().contains(cleanSearch) ||
+          (g['host'] as String).toLowerCase().contains(cleanSearch) ||
+          (g['category'] as String).toLowerCase().contains(cleanSearch) ||
+          (g['badge'] as String).toLowerCase().contains(cleanSearch);
+      return matchesCategory && matchesSearch;
     }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
+            constraints: const BoxConstraints(maxWidth: 1440),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -421,30 +451,45 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                // Category Filter Pills & Sort
+                // Category Filter Pills & Search Badge
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
-                      children: _categories.map((cat) {
-                        final isSelected = _selectedCategory == cat;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: Text(cat),
-                            selected: isSelected,
-                            onSelected: (s) => (s) ? setState(() => _selectedCategory = cat) : null,
-                            selectedColor: const Color(0xFF0F172A),
-                            backgroundColor: const Color(0xFFEEF2FF),
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : const Color(0xFF475569),
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              fontSize: 12,
+                      children: [
+                        ..._categories.map((cat) {
+                          final isSelected = _selectedCategory == cat;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: ChoiceChip(
+                              label: Text(cat),
+                              selected: isSelected,
+                              onSelected: (s) => (s) ? setState(() => _selectedCategory = cat) : null,
+                              selectedColor: const Color(0xFF0F172A),
+                              backgroundColor: const Color(0xFFEEF2FF),
+                              labelStyle: TextStyle(
+                                color: isSelected ? Colors.white : const Color(0xFF475569),
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                             ),
+                          );
+                        }),
+                        if (searchQuery.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          ActionChip(
+                            avatar: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF2563EB)),
+                            label: Text('Search: "$searchQuery"'),
+                            backgroundColor: const Color(0xFFDBEAFE),
+                            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                            onPressed: () {
+                              ref.read(searchQueryProvider.notifier).setQuery('');
+                            },
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           ),
-                        );
-                      }).toList(),
+                        ],
+                      ],
                     ),
                     const Row(
                       children: [
@@ -456,39 +501,110 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Group Cards Grid
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: 0.85,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: filteredGroups.length,
-                  itemBuilder: (context, index) {
-                    final group = filteredGroups[index];
-                    final isFull = group['isFull'] == true;
-                    final isJoined = group['isJoined'] == true;
+                // Empty State or Group Cards Grid
+                if (filteredGroups.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 60),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.search_off_rounded, size: 48, color: Color(0xFF94A3B8)),
+                        const SizedBox(height: 12),
+                        Text(
+                          searchQuery.isNotEmpty
+                              ? 'No subscription groups matching "$searchQuery"'
+                              : 'No groups found in "$_selectedCategory"',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          searchQuery.isNotEmpty
+                              ? 'Try searching for Netflix, Spotify, Coursera, Adobe, etc.'
+                              : 'Be the first to start a group in this category!',
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 16),
+                        if (searchQuery.isNotEmpty)
+                          OutlinedButton(
+                            onPressed: () => ref.read(searchQueryProvider.notifier).setQuery(''),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF2563EB)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text('Clear Search', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+                          )
+                        else
+                          ElevatedButton.icon(
+                            onPressed: _showCreateGroupModal,
+                            icon: const Icon(Icons.add, size: 16),
+                            label: const Text('Start a Group'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2563EB),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                else
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      int crossAxisCount = 4;
+                      double childAspectRatio = 0.90;
+                      if (constraints.maxWidth < 620) {
+                        crossAxisCount = 1;
+                        childAspectRatio = 1.6;
+                      } else if (constraints.maxWidth < 950) {
+                        crossAxisCount = 2;
+                        childAspectRatio = 1.0;
+                      } else if (constraints.maxWidth < 1300) {
+                        crossAxisCount = 3;
+                        childAspectRatio = 0.92;
+                      } else {
+                        crossAxisCount = 4;
+                        childAspectRatio = 0.90;
+                      }
 
-                    return _buildGroupCard(
-                      title: group['title'],
-                      host: group['host'],
-                      slotsText: group['slotsText'],
-                      progress: group['progress'],
-                      badge: group['badge'],
-                      price: group['price'],
-                      period: group['period'],
-                      buttonText: isJoined ? 'Joined ✓' : (isFull ? 'Full' : 'Join Group'),
-                      isDisabled: isFull,
-                      isJoined: isJoined,
-                      onPressed: () => _toggleJoinGroup(group),
-                      iconWidget: _buildLogoBox(group['logo'], group['color']),
-                      isVerified: group['isVerified'] == true,
-                    );
-                  },
-                ),
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: childAspectRatio,
+                          crossAxisSpacing: 20,
+                          mainAxisSpacing: 20,
+                        ),
+                        itemCount: filteredGroups.length,
+                        itemBuilder: (context, index) {
+                          final group = filteredGroups[index];
+                          final isFull = group['isFull'] == true;
+                          final isJoined = group['isJoined'] == true;
+
+                          return _buildGroupCard(
+                            title: group['title'],
+                            host: group['host'],
+                            slotsText: group['slotsText'],
+                            progress: group['progress'],
+                            badge: group['badge'],
+                            price: group['price'],
+                            period: group['period'],
+                            buttonText: isJoined ? 'Joined ✓' : (isFull ? 'Full' : 'Join Group'),
+                            isDisabled: isFull,
+                            isJoined: isJoined,
+                            onPressed: () => _toggleJoinGroup(group),
+                            iconWidget: _buildLogoBox(group['logo'], group['color']),
+                            isVerified: group['isVerified'] == true,
+                          );
+                        },
+                      );
+                    },
+                  ),
               ],
             ),
           ),
@@ -521,91 +637,170 @@ class _SubscriptionGroupsScreenState extends State<SubscriptionGroupsScreen> {
     required Widget iconWidget,
     bool isVerified = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isJoined ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
-          width: isJoined ? 2 : 1,
+    return _GroupCardWidget(
+      title: title,
+      host: host,
+      slotsText: slotsText,
+      progress: progress,
+      badge: badge,
+      price: price,
+      period: period,
+      buttonText: buttonText,
+      isDisabled: isDisabled,
+      isJoined: isJoined,
+      onPressed: onPressed,
+      iconWidget: iconWidget,
+      isVerified: isVerified,
+    );
+  }
+}
+
+class _GroupCardWidget extends StatefulWidget {
+  final String title;
+  final String host;
+  final String slotsText;
+  final double progress;
+  final String badge;
+  final String price;
+  final String period;
+  final String buttonText;
+  final bool isDisabled;
+  final bool isJoined;
+  final VoidCallback onPressed;
+  final Widget iconWidget;
+  final bool isVerified;
+
+  const _GroupCardWidget({
+    required this.title,
+    required this.host,
+    required this.slotsText,
+    required this.progress,
+    required this.badge,
+    required this.price,
+    required this.period,
+    required this.buttonText,
+    required this.isDisabled,
+    required this.isJoined,
+    required this.onPressed,
+    required this.iconWidget,
+    this.isVerified = false,
+  });
+
+  @override
+  State<_GroupCardWidget> createState() => _GroupCardWidgetState();
+}
+
+class _GroupCardWidgetState extends State<_GroupCardWidget> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(0, _isHovered ? -4 : 0, 0),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: widget.isJoined
+                ? const Color(0xFF10B981)
+                : (_isHovered ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0)),
+            width: widget.isJoined ? 2 : (_isHovered ? 1.5 : 1.0),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _isHovered ? const Color(0xFF1E293B).withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.03),
+              blurRadius: _isHovered ? 16 : 8,
+              offset: Offset(0, _isHovered ? 6 : 2),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              iconWidget,
-              if (isVerified)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(6)),
-                  child: const Text('VERIFIED HOST', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(6)),
-                  child: Text(badge, style: const TextStyle(color: Color(0xFF2563EB), fontSize: 9, fontWeight: FontWeight.bold)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 4),
-          Text('👤 Host: $host', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(slotsText, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isDisabled ? Colors.red : (isJoined ? const Color(0xFF10B981) : const Color(0xFF2563EB)))),
-            ],
-          ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: const Color(0xFFE2E8F0),
-            color: isDisabled ? Colors.red : (isJoined ? const Color(0xFF10B981) : const Color(0xFF2563EB)),
-            minHeight: 4,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          const Spacer(),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('PER PERSON', style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
-                  Row(
-                    children: [
-                      Text(price, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-                      Text(period, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                    ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                widget.iconWidget,
+                if (widget.isVerified)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(6)),
+                    child: const Text('VERIFIED HOST', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(6)),
+                    child: Text(widget.badge, style: const TextStyle(color: Color(0xFF2563EB), fontSize: 9, fontWeight: FontWeight.bold)),
                   ),
-                ],
-              ),
-              ElevatedButton(
-                onPressed: isDisabled ? null : onPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isJoined ? const Color(0xFF10B981) : (isVerified ? const Color(0xFF2563EB) : const Color(0xFFEEF2FF)),
-                  foregroundColor: isJoined || isVerified ? Colors.white : const Color(0xFF2563EB),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 4),
+            Text('👤 Host: ${widget.host}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.slotsText,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: widget.isDisabled ? Colors.red : (widget.isJoined ? const Color(0xFF10B981) : const Color(0xFF2563EB)),
+                  ),
                 ),
-                child: Text(buttonText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 4),
+            LinearProgressIndicator(
+              value: widget.progress,
+              backgroundColor: const Color(0xFFE2E8F0),
+              color: widget.isDisabled ? Colors.red : (widget.isJoined ? const Color(0xFF10B981) : const Color(0xFF2563EB)),
+              minHeight: 4,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            const Spacer(),
+            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('PER PERSON', style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        Text(widget.price, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                        Text(widget.period, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: widget.isDisabled ? null : widget.onPressed,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.isJoined ? const Color(0xFF10B981) : (widget.isVerified ? const Color(0xFF2563EB) : const Color(0xFFEEF2FF)),
+                    foregroundColor: widget.isJoined || widget.isVerified ? Colors.white : const Color(0xFF2563EB),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text(widget.buttonText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

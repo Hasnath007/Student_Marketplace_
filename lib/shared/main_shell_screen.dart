@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../core/providers/marketplace_provider.dart';
 
-class MainShellScreen extends StatelessWidget {
+class MainShellScreen extends ConsumerStatefulWidget {
   final Widget child;
 
   const MainShellScreen({super.key, required this.child});
+
+  @override
+  ConsumerState<MainShellScreen> createState() => _MainShellScreenState();
+}
+
+class _MainShellScreenState extends ConsumerState<MainShellScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
@@ -36,6 +51,11 @@ class MainShellScreen extends StatelessWidget {
     final selectedIndex = _calculateSelectedIndex(context);
     final theme = Theme.of(context);
     final isDesktop = MediaQuery.of(context).size.width > 768;
+    final currentQuery = ref.watch(searchQueryProvider);
+
+    if (_searchController.text != currentQuery && !_searchController.selection.isValid) {
+      _searchController.text = currentQuery;
+    }
 
     return Scaffold(
       appBar: PreferredSize(
@@ -50,49 +70,52 @@ class MainShellScreen extends StatelessWidget {
           child: SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
+                constraints: const BoxConstraints(maxWidth: 1440),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Row(
                     children: [
-                      // Brand Logo & Title
-                      InkWell(
-                        onTap: () => context.go('/marketplace'),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEEF2FF),
-                                borderRadius: BorderRadius.circular(8),
+                      // Brand Logo & Title with smooth hover
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: selectedIndex == 0 ? null : () => context.go('/marketplace'),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.storefront_rounded,
+                                  color: Color(0xFF2563EB),
+                                  size: 20,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.storefront_rounded,
-                                color: Color(0xFF2563EB),
-                                size: 20,
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Campus Market',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1E293B),
+                                  letterSpacing: -0.3,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Campus Market',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF1E293B),
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 32),
 
-                      // Desktop Nav Links
+                      // Desktop Nav Links with animated indicators
                       if (isDesktop) ...[
                         _buildNavItem(context, 'Marketplace', '/marketplace', selectedIndex == 0),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         _buildNavItem(context, 'Sell Item', '/sell', selectedIndex == 1),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         _buildNavItem(context, 'Subscription Groups', '/subscriptions', selectedIndex == 2),
                       ],
 
@@ -102,16 +125,35 @@ class MainShellScreen extends StatelessWidget {
                       if (isDesktop)
                         SizedBox(
                           width: 300,
-                          height: 38,
+                          height: 40,
                           child: TextField(
+                            controller: _searchController,
+                            onChanged: (val) {
+                              ref.read(searchQueryProvider.notifier).setQuery(val);
+                              final currentLoc = GoRouterState.of(context).uri.toString();
+                              if (!currentLoc.startsWith('/marketplace') && !currentLoc.startsWith('/subscriptions')) {
+                                context.go('/marketplace');
+                              }
+                            },
                             style: const TextStyle(fontSize: 13),
                             decoration: InputDecoration(
-                              hintText: 'Search products or groups...',
+                              hintText: GoRouterState.of(context).uri.toString().startsWith('/subscriptions')
+                                  ? 'Search subscription groups...'
+                                  : 'Search marketplace products...',
                               hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                               prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
+                              suffixIcon: currentQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF94A3B8)),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        ref.read(searchQueryProvider.notifier).setQuery('');
+                                      },
+                                    )
+                                  : null,
                               filled: true,
                               fillColor: const Color(0xFFF1F5F9),
-                              contentPadding: EdgeInsets.zero,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(20),
                                 borderSide: BorderSide.none,
@@ -120,18 +162,34 @@ class MainShellScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                                 borderSide: BorderSide.none,
                               ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
+                              ),
                             ),
                           ),
                         ),
 
                       const SizedBox(width: 20),
 
-                      // Profile Action Avatar
-                      InkWell(
-                        onTap: () => context.go('/profile'),
-                        child: const CircleAvatar(
-                          radius: 16,
-                          backgroundImage: NetworkImage('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'),
+                      // Profile Action Avatar with smooth hover
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: selectedIndex == 3 ? null : () => context.go('/profile'),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: selectedIndex == 3 ? const Color(0xFF2563EB) : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: const CircleAvatar(
+                              radius: 16,
+                              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -142,12 +200,7 @@ class MainShellScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: child,
-        ),
-      ),
+      body: widget.child,
       bottomNavigationBar: isDesktop
           ? null
           : NavigationBar(
@@ -181,35 +234,39 @@ class MainShellScreen extends StatelessWidget {
   }
 
   Widget _buildNavItem(BuildContext context, String label, String route, bool isSelected) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        TextButton(
-          onPressed: () => context.go(route),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+    return InkWell(
+      onTap: isSelected ? null : () => context.go(route),
+      borderRadius: BorderRadius.circular(8),
+      hoverColor: const Color(0xFFEEF2FF),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontFamily: 'Roboto',
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+              ),
             ),
-          ),
+            const SizedBox(height: 4),
+            Container(
+              height: 2.5,
+              width: isSelected ? 36 : 0,
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
         ),
-        if (isSelected)
-          Container(
-            height: 2.5,
-            width: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          )
-        else
-          const SizedBox(height: 2.5),
-      ],
+      ),
     );
   }
 }

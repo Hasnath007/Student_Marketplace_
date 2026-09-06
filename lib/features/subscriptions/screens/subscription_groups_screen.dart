@@ -294,7 +294,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: members.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
                         itemBuilder: (context, idx) {
                           final m = members[idx] as Map<String, dynamic>;
                           final isVacant = m['status'] == 'Vacant';
@@ -429,6 +429,325 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
     );
   }
 
+  void _showCreateGroupModal() {
+    final titleCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final totalSlotsCtrl = TextEditingController(text: '4');
+    final emailCtrl = TextEditingController();
+    final pinCtrl = TextEditingController();
+    String selectedCategory = 'Entertainment';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Dialog(
+            elevation: 8,
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 540),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Row with Icon Badge & Close Button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(Icons.add_task_rounded, color: Color(0xFF2563EB), size: 24),
+                            ),
+                            const SizedBox(width: 14),
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Start a Subscription Group',
+                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), letterSpacing: -0.3),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Share subscriptions & split monthly costs with peers',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8), size: 20),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Input 1: Group Name
+                    const Text('Service or Group Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: titleCtrl,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. ChatGPT Plus, Netflix 4K, Spotify Family',
+                        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                        prefixIcon: const Icon(Icons.layers_outlined, size: 20, color: Color(0xFF64748B)),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Input 2: Price & Category Side-by-side
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Price / Member', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: priceCtrl,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                decoration: InputDecoration(
+                                  hintText: '৳250 /mo',
+                                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.normal),
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: Text('৳', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Total Slots (Seats)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: totalSlotsCtrl,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                decoration: InputDecoration(
+                                  hintText: '4',
+                                  prefixIcon: const Icon(Icons.people_outline_rounded, size: 20, color: Color(0xFF64748B)),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Input 3: Category & Login Email
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              const SizedBox(height: 6),
+                              DropdownButtonFormField<String>(
+                                initialValue: selectedCategory,
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(value: 'Entertainment', child: Text('Entertainment')),
+                                  DropdownMenuItem(value: 'Academic', child: Text('Academic')),
+                                  DropdownMenuItem(value: 'Productivity', child: Text('Productivity')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) setModalState(() => selectedCategory = val);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Profile PIN / Token', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: pinCtrl,
+                                decoration: InputDecoration(
+                                  hintText: 'e.g. 4829 or Invite link',
+                                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                                  prefixIcon: const Icon(Icons.vpn_key_outlined, size: 18, color: Color(0xFF64748B)),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Actions Bar (Cancel & Publish)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            if (titleCtrl.text.isNotEmpty) {
+                              final total = int.tryParse(totalSlotsCtrl.text.trim()) ?? 4;
+                              final price = priceCtrl.text.isEmpty ? '250' : priceCtrl.text.replaceAll('৳', '').replaceAll('\$', '');
+                              setState(() {
+                                _groups.insert(0, {
+                                  'id': DateTime.now().toString(),
+                                  'title': titleCtrl.text,
+                                  'host': 'You (Alex R.)',
+                                  'slotsText': '1/$total slots filled',
+                                  'progress': 1 / total,
+                                  'badge': selectedCategory.toUpperCase(),
+                                  'category': selectedCategory,
+                                  'price': '৳$price',
+                                  'period': '/mo',
+                                  'isFull': false,
+                                  'isJoined': true,
+                                  'color': const Color(0xFF2563EB),
+                                  'logo': '⭐',
+                                  'totalSlots': total,
+                                  'filledSlots': 1,
+                                  'accountEmail': emailCtrl.text.isNotEmpty ? emailCtrl.text : 'you.campus@stanford.edu',
+                                  'pinCode': pinCtrl.text.isNotEmpty ? pinCtrl.text : 'Active Host PIN',
+                                  'assignedScreen': 'Host Screen 1',
+                                  'members': [
+                                    {'name': 'You (Alex Rivera)', 'role': 'Host (Owner)', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80', 'screen': 'Screen 1'},
+                                    for (int i = 2; i <= total; i++)
+                                      {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Screen $i'},
+                                  ],
+                                });
+                              });
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Subscription Group created successfully!'), backgroundColor: Color(0xFF2563EB)),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.rocket_launch_rounded, size: 18),
+                          label: const Text('Publish Group', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _toggleJoinGroup(Map<String, dynamic> group) {
+    final isJoined = group['isJoined'] == true;
+    if (!isJoined) {
+      PaymentCheckoutDialog.show(
+        context,
+        itemName: group['title'] ?? 'Subscription Group',
+        priceText: '${group['price'] ?? '৳250'}${group['period'] ?? '/mo'}',
+        category: group['category'] ?? 'Subscription',
+        onPaymentSuccess: () {
+          setState(() {
+            group['isJoined'] = true;
+            group['slotsText'] = 'Joined ✓';
+            final members = group['members'] as List<dynamic>?;
+            if (members != null) {
+              for (final m in members) {
+                if (m['status'] == 'Vacant') {
+                  m['name'] = 'You (Joined)';
+                  m['role'] = 'Member';
+                  m['status'] = 'Active';
+                  m['avatar'] = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
+                  break;
+                }
+              }
+            }
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Joined ${group['title']} successfully! Check credentials now.'),
+              backgroundColor: const Color(0xFF10B981),
+            ),
+          );
+        },
+      );
+    } else {
+      setState(() {
+        group['isJoined'] = false;
+        group['slotsText'] = '2/4 slots left';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Left ${group['title']} group.'),
+          backgroundColor: const Color(0xFF64748B),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final searchQuery = ref.watch(searchQueryProvider);
@@ -482,12 +801,12 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                               letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 450),
-                            child: const Text(
-                              'Join existing subscription groups on campus to split the bill, or start your own and invite others. Trusted, verified peer-to-peer sharing.',
-                              style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Pool subscription seats with verified university peers for maximum savings.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
                             ),
                           ),
                         ],
@@ -497,11 +816,11 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                       children: [
                         OutlinedButton.icon(
                           onPressed: _showHowItWorksDialog,
-                          icon: const Icon(Icons.info_outline_rounded, size: 16),
-                          label: const Text('How it works', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          icon: const Icon(Icons.help_outline_rounded, size: 16),
+                          label: const Text('How it Works', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEEF2FF),
-                            side: BorderSide.none,
+                            foregroundColor: const Color(0xFF2563EB),
+                            side: const BorderSide(color: Color(0xFF93C5FD)),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
@@ -509,12 +828,13 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         const SizedBox(width: 12),
                         ElevatedButton.icon(
                           onPressed: _showCreateGroupModal,
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('Create Group', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Start a Group', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2563EB),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                            elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
@@ -524,105 +844,63 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                 ),
                 const SizedBox(height: 28),
 
-                // Category Filter Pills & Search Badge
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        ..._categories.map((cat) {
-                          final isSelected = _selectedCategory == cat;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: ChoiceChip(
-                              label: Text(cat),
-                              selected: isSelected,
-                              onSelected: (s) => (s) ? setState(() => _selectedCategory = cat) : null,
-                              selectedColor: const Color(0xFF0F172A),
-                              backgroundColor: const Color(0xFFEEF2FF),
-                              labelStyle: TextStyle(
-                                color: isSelected ? Colors.white : const Color(0xFF475569),
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                fontSize: 12,
-                              ),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            ),
-                          );
-                        }),
-                        if (searchQuery.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          ActionChip(
-                            avatar: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF2563EB)),
-                            label: Text('Search: "$searchQuery"'),
-                            backgroundColor: const Color(0xFFDBEAFE),
-                            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                            onPressed: () {
-                              ref.read(searchQueryProvider.notifier).setQuery('');
-                            },
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const Row(
-                      children: [
-                        Text('Sort by: ', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                        Text('Newest First', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                      ],
-                    ),
-                  ],
+                // Category Chips
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: _categories.map((cat) {
+                    final isSelected = _selectedCategory == cat;
+                    return ChoiceChip(
+                      label: Text(cat),
+                      selected: isSelected,
+                      onSelected: (val) {
+                        if (val) setState(() => _selectedCategory = cat);
+                      },
+                      labelStyle: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? Colors.white : const Color(0xFF475569),
+                      ),
+                      backgroundColor: Colors.white,
+                      selectedColor: const Color(0xFF2563EB),
+                      side: BorderSide(
+                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      showCheckmark: false,
+                    );
+                  }).toList(),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 28),
 
-                // Empty State or Group Cards Grid
+                // Groups Grid View
                 if (filteredGroups.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 60),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.search_off_rounded, size: 48, color: Color(0xFF94A3B8)),
-                        const SizedBox(height: 12),
-                        Text(
-                          searchQuery.isNotEmpty
-                              ? 'No subscription groups matching "$searchQuery"'
-                              : 'No groups found in "$_selectedCategory"',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          searchQuery.isNotEmpty
-                              ? 'Try searching for Netflix, Spotify, Coursera, Adobe, etc.'
-                              : 'Be the first to start a group in this category!',
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                        ),
-                        const SizedBox(height: 16),
-                        if (searchQuery.isNotEmpty)
-                          OutlinedButton(
-                            onPressed: () => ref.read(searchQueryProvider.notifier).setQuery(''),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFF2563EB)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text('Clear Search', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
-                          )
-                        else
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 60),
+                      child: Column(
+                        children: [
+                          Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade400),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No subscription groups found',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text('Try changing the search query or category filter.', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                          const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: _showCreateGroupModal,
                             icon: const Icon(Icons.add, size: 16),
-                            label: const Text('Start a Group'),
+                            label: const Text('Be the first to start a group!'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2563EB),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                           ),
-                      ],
+                        ],
+                      ),
                     ),
                   )
                 else

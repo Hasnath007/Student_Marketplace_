@@ -11,7 +11,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   int _selectedTab = 0;
   double _availableBalance = 2850.0;
-  double _pendingBalance = 650.0;
+  final double _pendingBalance = 650.0;
   double _totalWithdrawn = 3000.0;
 
   final List<Map<String, dynamic>> _transactions = [
@@ -23,7 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'date': 'Today, 02:45 PM',
       'status': 'Available',
       'icon': Icons.check_circle_rounded,
-      'color': Color(0xFF10B981),
+      'color': const Color(0xFF10B981),
     },
     {
       'id': 'tx_102',
@@ -33,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'date': 'Yesterday',
       'status': 'Available',
       'icon': Icons.subscriptions_rounded,
-      'color': Color(0xFF2563EB),
+      'color': const Color(0xFF2563EB),
     },
     {
       'id': 'tx_103',
@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'date': '02 Sep 2026',
       'status': 'Completed',
       'icon': Icons.arrow_outward_rounded,
-      'color': Color(0xFF64748B),
+      'color': const Color(0xFF64748B),
     },
     {
       'id': 'tx_104',
@@ -53,12 +53,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'date': 'Pending Verification',
       'status': 'Pending Escrow',
       'icon': Icons.hourglass_top_rounded,
-      'color': Color(0xFFF59E0B),
+      'color': const Color(0xFFF59E0B),
     },
   ];
 
   void _showEditProfileModal() {
-    final bioController = TextEditingController(text: 'Senior CS student. Selling textbooks, electronics, and random dorm stuff.');
+    final bioController = TextEditingController(text: 'Senior CS student. Selling textbooks, electronics, and sharing subscription slots.');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -787,7 +787,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _transactions.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
               itemBuilder: (context, index) {
                 final tx = _transactions[index];
                 return Padding(

@@ -116,3 +116,13 @@ class SearchQueryNotifier extends Notifier<String> {
 }
 
 final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(SearchQueryNotifier.new);
+
+class SelectedSortNotifier extends Notifier<String> {
+  @override
+  String build() => 'Default';
+
+  void setSort(String sort) => state = sort;
+}
+
+final selectedSortProvider = NotifierProvider<SelectedSortNotifier, String>(SelectedSortNotifier.new);
+

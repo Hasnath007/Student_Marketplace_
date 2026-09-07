@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/providers/marketplace_provider.dart';
+import '../../../models/product.dart';
 
 class MarketplaceScreen extends ConsumerWidget {
   const MarketplaceScreen({super.key});
@@ -11,30 +12,117 @@ class MarketplaceScreen extends ConsumerWidget {
     final products = ref.watch(marketplaceProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
     final searchQuery = ref.watch(searchQueryProvider);
+    final selectedSort = ref.watch(selectedSortProvider);
     final theme = Theme.of(context);
 
     final categories = ['All Categories', 'Books', 'Electronics', 'Stationery', 'Notes', 'Digital Services'];
 
     final cleanSearch = searchQuery.trim().toLowerCase();
 
-    final filteredProducts = products.where((p) {
+    List<Product> filteredProducts = products.where((p) {
       final pCat = p.category.toLowerCase().trim();
       final selCat = selectedCategory.toLowerCase().trim();
 
-      final matchesCat = (selectedCategory == 'All Categories' || selectedCategory == 'All') ||
-          pCat == selCat ||
-          (selCat == 'books' && (pCat.contains('book') || p.title.toLowerCase().contains('book') || p.description.toLowerCase().contains('textbook'))) ||
-          (selCat == 'electronics' && (pCat.contains('electr') || p.title.toLowerCase().contains('calculator') || p.title.toLowerCase().contains('keyboard') || p.title.toLowerCase().contains('phone') || p.title.toLowerCase().contains('laptop'))) ||
-          (selCat == 'stationery' && (pCat.contains('station') || p.title.toLowerCase().contains('pen') || p.title.toLowerCase().contains('notebook'))) ||
-          (selCat == 'notes' && (pCat.contains('note') || p.title.toLowerCase().contains('note') || p.title.toLowerCase().contains('sheet') || p.title.toLowerCase().contains('lecture')));
+      bool matchesCat = false;
+      if (selectedCategory == 'All Categories' || selectedCategory == 'All') {
+        matchesCat = true;
+      } else if (selCat == 'books') {
+        matchesCat = pCat == 'books' ||
+            pCat.contains('book') ||
+            p.title.toLowerCase().contains('book') ||
+            p.description.toLowerCase().contains('textbook') ||
+            p.description.toLowerCase().contains('hardcover') ||
+            p.description.toLowerCase().contains('edition');
+      } else if (selCat == 'electronics') {
+        matchesCat = pCat == 'electronics' ||
+            pCat.contains('electr') ||
+            p.title.toLowerCase().contains('calculator') ||
+            p.title.toLowerCase().contains('keyboard') ||
+            p.title.toLowerCase().contains('laptop') ||
+            p.title.toLowerCase().contains('phone') ||
+            p.title.toLowerCase().contains('mouse') ||
+            p.title.toLowerCase().contains('monitor') ||
+            p.title.toLowerCase().contains('gadget') ||
+            p.description.toLowerCase().contains('battery') ||
+            p.description.toLowerCase().contains('screen');
+      } else if (selCat == 'stationery') {
+        matchesCat = pCat == 'stationery' ||
+            pCat.contains('station') ||
+            p.title.toLowerCase().contains('pen') ||
+            p.title.toLowerCase().contains('notebook') ||
+            p.title.toLowerCase().contains('binder') ||
+            p.title.toLowerCase().contains('marker') ||
+            p.title.toLowerCase().contains('pencil') ||
+            p.title.toLowerCase().contains('highlighter') ||
+            p.title.toLowerCase().contains('desk lamp') ||
+            p.title.toLowerCase().contains('lamp');
+      } else if (selCat == 'notes') {
+        matchesCat = pCat == 'notes' ||
+            pCat.contains('note') ||
+            p.title.toLowerCase().contains('note') ||
+            p.title.toLowerCase().contains('sheet') ||
+            p.title.toLowerCase().contains('lecture') ||
+            p.title.toLowerCase().contains('midterm') ||
+            p.title.toLowerCase().contains('final') ||
+            p.title.toLowerCase().contains('pdf');
+      } else if (selCat == 'digital services') {
+        matchesCat = pCat == 'digital services' ||
+            pCat.contains('digital') ||
+            pCat.contains('service') ||
+            p.title.toLowerCase().contains('service') ||
+            p.title.toLowerCase().contains('design') ||
+            p.title.toLowerCase().contains('review') ||
+            p.title.toLowerCase().contains('resume') ||
+            p.title.toLowerCase().contains('portfolio') ||
+            p.title.toLowerCase().contains('tutor');
+      } else {
+        matchesCat = pCat == selCat || pCat.contains(selCat);
+      }
 
-      final matchesSearch = cleanSearch.isEmpty ||
-          p.title.toLowerCase().contains(cleanSearch) ||
-          p.description.toLowerCase().contains(cleanSearch) ||
-          p.category.toLowerCase().contains(cleanSearch) ||
-          p.sellerName.toLowerCase().contains(cleanSearch);
+      bool matchesSearch = true;
+      if (cleanSearch.isNotEmpty) {
+        final queryTerms = cleanSearch.split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+        matchesSearch = queryTerms.every((term) =>
+            p.title.toLowerCase().contains(term) ||
+            p.description.toLowerCase().contains(term) ||
+            p.category.toLowerCase().contains(term) ||
+            p.sellerName.toLowerCase().contains(term) ||
+            p.sellerCampus.toLowerCase().contains(term) ||
+            p.condition.toLowerCase().contains(term) ||
+            p.price.toStringAsFixed(0).contains(term));
+      }
+
       return matchesCat && matchesSearch;
     }).toList();
+
+    // Apply Sorting
+    if (selectedSort == 'Price: Low to High') {
+      filteredProducts.sort((a, b) => a.price.compareTo(b.price));
+    } else if (selectedSort == 'Price: High to Low') {
+      filteredProducts.sort((a, b) => b.price.compareTo(a.price));
+    } else if (selectedSort == 'Newest') {
+      filteredProducts = filteredProducts.reversed.toList();
+    }
+
+    int getCategoryCount(String cat) {
+      if (cat == 'All Categories' || cat == 'All') return products.length;
+      final sel = cat.toLowerCase();
+      return products.where((p) {
+        final pCat = p.category.toLowerCase();
+        if (sel == 'books') {
+          return pCat == 'books' || pCat.contains('book') || p.title.toLowerCase().contains('book') || p.description.toLowerCase().contains('textbook');
+        } else if (sel == 'electronics') {
+          return pCat == 'electronics' || pCat.contains('electr') || p.title.toLowerCase().contains('calculator') || p.title.toLowerCase().contains('keyboard') || p.title.toLowerCase().contains('phone');
+        } else if (sel == 'stationery') {
+          return pCat == 'stationery' || pCat.contains('station') || p.title.toLowerCase().contains('pen') || p.title.toLowerCase().contains('notebook');
+        } else if (sel == 'notes') {
+          return pCat == 'notes' || pCat.contains('note') || p.title.toLowerCase().contains('note') || p.title.toLowerCase().contains('sheet') || p.title.toLowerCase().contains('pdf');
+        } else if (sel == 'digital services') {
+          return pCat == 'digital services' || pCat.contains('digital') || pCat.contains('service') || p.title.toLowerCase().contains('service') || p.title.toLowerCase().contains('design') || p.title.toLowerCase().contains('resume');
+        }
+        return pCat == sel;
+      }).length;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -46,60 +134,180 @@ class MarketplaceScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title Header
-                const Text(
-                  'Marketplace',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.8),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Find textbooks, notes, and services from students on campus.',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-                ),
-                const SizedBox(height: 20),
-
-                // Category Pills Bar
+                // Title Header & Post Listing Button
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    ...categories.map((cat) {
-                      final isSel = (selectedCategory == cat) || (selectedCategory == 'All' && cat == 'All Categories');
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ChoiceChip(
-                          label: Text(cat),
-                          selected: isSel,
-                          onSelected: (s) {
-                            if (s) {
-                              ref.read(selectedCategoryProvider.notifier).setCategory(cat);
-                            }
-                          },
-                          selectedColor: const Color(0xFF2563EB),
-                          backgroundColor: const Color(0xFFEEF2FF),
-                          labelStyle: TextStyle(
-                            color: isSel ? Colors.white : const Color(0xFF475569),
-                            fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Marketplace',
+                          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.8),
                         ),
-                      );
-                    }),
-                    if (searchQuery.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      ActionChip(
-                        avatar: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF2563EB)),
-                        label: Text('Search: "$searchQuery"'),
-                        backgroundColor: const Color(0xFFDBEAFE),
-                        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                        onPressed: () {
-                          ref.read(searchQueryProvider.notifier).setQuery('');
-                        },
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        SizedBox(height: 4),
+                        Text(
+                          'Find textbooks, notes, and services from students on campus.',
+                          style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => context.go('/sell'),
+                      icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                      label: const Text('Sell an Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                    ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
+
+                // Category Filter Bar & Sort Controls
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Scrollable Category Pills
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            ...categories.map((cat) {
+                              final isSel = (selectedCategory == cat) || (selectedCategory == 'All' && cat == 'All Categories');
+                              final count = getCategoryCount(cat);
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: ChoiceChip(
+                                  label: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(cat),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: isSel ? Colors.white.withValues(alpha: 0.25) : const Color(0xFFE2E8F0),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          '$count',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: isSel ? Colors.white : const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  selected: isSel,
+                                  onSelected: (s) {
+                                    if (s) {
+                                      ref.read(selectedCategoryProvider.notifier).setCategory(cat);
+                                    }
+                                  },
+                                  selectedColor: const Color(0xFF2563EB),
+                                  backgroundColor: const Color(0xFFEEF2FF),
+                                  labelStyle: TextStyle(
+                                    color: isSel ? Colors.white : const Color(0xFF475569),
+                                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                                    fontSize: 13,
+                                  ),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                ),
+                              );
+                            }),
+                            if (searchQuery.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              ActionChip(
+                                avatar: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF2563EB)),
+                                label: Text('Search: "$searchQuery"'),
+                                backgroundColor: const Color(0xFFDBEAFE),
+                                labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                onPressed: () {
+                                  ref.read(searchQueryProvider.notifier).setQuery('');
+                                },
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    // Sort By Dropdown
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.sort_rounded, size: 16, color: Color(0xFF64748B)),
+                          const SizedBox(width: 6),
+                          DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: selectedSort,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF64748B)),
+                              items: const [
+                                DropdownMenuItem(value: 'Default', child: Text('Featured')),
+                                DropdownMenuItem(value: 'Price: Low to High', child: Text('Price: Low to High')),
+                                DropdownMenuItem(value: 'Price: High to Low', child: Text('Price: High to Low')),
+                                DropdownMenuItem(value: 'Newest', child: Text('Newest First')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  ref.read(selectedSortProvider.notifier).setSort(val);
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Active Filter Status Info
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Showing ${filteredProducts.length} ${filteredProducts.length == 1 ? 'item' : 'items'} in $selectedCategory',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                    ),
+                    if (selectedCategory != 'All Categories' || searchQuery.isNotEmpty || selectedSort != 'Default')
+                      GestureDetector(
+                        onTap: () {
+                          ref.read(selectedCategoryProvider.notifier).setCategory('All Categories');
+                          ref.read(searchQueryProvider.notifier).setQuery('');
+                          ref.read(selectedSortProvider.notifier).setSort('Default');
+                        },
+                        child: const Row(
+                          children: [
+                            Icon(Icons.refresh_rounded, size: 14, color: Color(0xFF2563EB)),
+                            SizedBox(width: 4),
+                            Text('Reset All Filters', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
                 // Empty State if no items in category or search
                 if (filteredProducts.isEmpty)
@@ -129,25 +337,32 @@ class MarketplaceScreen extends ConsumerWidget {
                           style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                         ),
                         const SizedBox(height: 16),
-                        if (searchQuery.isNotEmpty)
-                          OutlinedButton(
-                            onPressed: () => ref.read(searchQueryProvider.notifier).setQuery(''),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFF2563EB)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            OutlinedButton(
+                              onPressed: () {
+                                ref.read(selectedCategoryProvider.notifier).setCategory('All Categories');
+                                ref.read(searchQueryProvider.notifier).setQuery('');
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFF2563EB)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('View All Categories', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
                             ),
-                            child: const Text('Clear Search', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
-                          )
-                        else
-                          ElevatedButton(
-                            onPressed: () => context.go('/sell'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            const SizedBox(width: 12),
+                            ElevatedButton(
+                              onPressed: () => context.go('/sell'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('Post a Listing'),
                             ),
-                            child: const Text('Post a Listing'),
-                          ),
+                          ],
+                        ),
                       ],
                     ),
                   )

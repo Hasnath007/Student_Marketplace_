@@ -99,7 +99,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final titleController = TextEditingController(text: listing['title'] as String);
     final priceController = TextEditingController(text: listing['price'] as String);
     final descController = TextEditingController(text: listing['desc'] as String);
+    String selectedCat = (listing['category'] as String?) ?? 'Books';
     bool isSold = listing['isSold'] as bool;
+
+    final categories = ['Books', 'Electronics', 'Stationery', 'Notes', 'Digital Services'];
 
     showDialog(
       context: context,
@@ -155,18 +158,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Price Input
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    labelText: 'Price (৳)',
-                    prefixText: '৳ ',
-                    prefixStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                // Category & Price Row
+                Row(
+                  children: [
+                    // Category Dropdown
+                    Expanded(
+                      flex: 6,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: categories.contains(selectedCat) ? selectedCat : 'Books',
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
+                        decoration: InputDecoration(
+                          labelText: 'Category',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        items: categories
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13))))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() => selectedCat = val);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+
+                    // Price Input
+                    Expanded(
+                      flex: 4,
+                      child: TextField(
+                        controller: priceController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          labelText: 'Price (৳)',
+                          prefixText: '৳ ',
+                          prefixStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
 
@@ -267,6 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _myListings[idx]['title'] = newTitle;
                             _myListings[idx]['price'] = newPrice;
                             _myListings[idx]['desc'] = newDesc;
+                            _myListings[idx]['category'] = selectedCat;
                             _myListings[idx]['isSold'] = isSold;
                             _myListings[idx]['status'] = isSold ? 'Sold' : 'Active';
                           }

@@ -13,7 +13,7 @@ class SubscriptionGroupsScreen extends ConsumerStatefulWidget {
 
 class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScreen> {
   String _selectedCategory = 'All Categories';
-  final List<String> _categories = ['All Categories', 'Entertainment', 'Academic', 'Productivity'];
+  final List<String> _categories = ['All Categories', 'Entertainment', 'Academic', 'Productivity', 'AI Tools', 'Dev Tools'];
 
   final List<Map<String, dynamic>> _groups = [
     {
@@ -774,14 +774,64 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
     final cleanSearch = searchQuery.trim().toLowerCase();
 
     final filteredGroups = _groups.where((g) {
-      final matchesCategory = _selectedCategory == 'All Categories' || g['category'] == _selectedCategory;
-      final matchesSearch = cleanSearch.isEmpty ||
-          (g['title'] as String).toLowerCase().contains(cleanSearch) ||
-          (g['host'] as String).toLowerCase().contains(cleanSearch) ||
-          (g['category'] as String).toLowerCase().contains(cleanSearch) ||
-          (g['badge'] as String).toLowerCase().contains(cleanSearch);
+      final gCat = (g['category'] as String? ?? '').toLowerCase();
+      final gTitle = (g['title'] as String? ?? '').toLowerCase();
+      final gBadge = (g['badge'] as String? ?? '').toLowerCase();
+      final selCat = _selectedCategory.toLowerCase();
+
+      bool matchesCategory = false;
+      if (_selectedCategory == 'All Categories' || _selectedCategory == 'All') {
+        matchesCategory = true;
+      } else if (selCat == 'entertainment') {
+        matchesCategory = gCat.contains('entertain') || gBadge.contains('entertain') || gTitle.contains('netflix') || gTitle.contains('spotify') || gTitle.contains('prime') || gTitle.contains('disney') || gTitle.contains('hulu') || gTitle.contains('youtube');
+      } else if (selCat == 'academic') {
+        matchesCategory = gCat.contains('academic') || gBadge.contains('academic') || gTitle.contains('coursera') || gTitle.contains('edx') || gTitle.contains('chegg') || gTitle.contains('grammarly') || gTitle.contains('study');
+      } else if (selCat == 'productivity') {
+        matchesCategory = gCat.contains('product') || gBadge.contains('product') || gTitle.contains('adobe') || gTitle.contains('canva') || gTitle.contains('notion') || gTitle.contains('office') || gTitle.contains('figma');
+      } else if (selCat.contains('ai')) {
+        matchesCategory = gCat.contains('ai') || gBadge.contains('ai') || gTitle.contains('chatgpt') || gTitle.contains('claude') || gTitle.contains('midjourney') || gTitle.contains('copilot');
+      } else if (selCat.contains('dev')) {
+        matchesCategory = gCat.contains('dev') || gBadge.contains('dev') || gTitle.contains('github') || gTitle.contains('jetbrains') || gTitle.contains('aws');
+      } else {
+        matchesCategory = gCat == selCat || gCat.contains(selCat);
+      }
+
+      bool matchesSearch = true;
+      if (cleanSearch.isNotEmpty) {
+        final queryTerms = cleanSearch.split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+        matchesSearch = queryTerms.every((term) =>
+            gTitle.contains(term) ||
+            (g['host'] as String? ?? '').toLowerCase().contains(term) ||
+            gCat.contains(term) ||
+            gBadge.contains(term) ||
+            (g['price'] as String? ?? '').toLowerCase().contains(term) ||
+            (g['accountEmail'] as String? ?? '').toLowerCase().contains(term));
+      }
+
       return matchesCategory && matchesSearch;
     }).toList();
+
+    int getSubCategoryCount(String cat) {
+      if (cat == 'All Categories' || cat == 'All') return _groups.length;
+      final sel = cat.toLowerCase();
+      return _groups.where((g) {
+        final gCat = (g['category'] as String? ?? '').toLowerCase();
+        final gTitle = (g['title'] as String? ?? '').toLowerCase();
+        final gBadge = (g['badge'] as String? ?? '').toLowerCase();
+        if (sel == 'entertainment') {
+          return gCat.contains('entertain') || gBadge.contains('entertain') || gTitle.contains('netflix') || gTitle.contains('spotify');
+        } else if (sel == 'academic') {
+          return gCat.contains('academic') || gBadge.contains('academic') || gTitle.contains('coursera') || gTitle.contains('edx');
+        } else if (sel == 'productivity') {
+          return gCat.contains('product') || gBadge.contains('product') || gTitle.contains('adobe') || gTitle.contains('canva');
+        } else if (sel.contains('ai')) {
+          return gCat.contains('ai') || gBadge.contains('ai') || gTitle.contains('chatgpt');
+        } else if (sel.contains('dev')) {
+          return gCat.contains('dev') || gBadge.contains('dev') || gTitle.contains('github');
+        }
+        return gCat == sel;
+      }).length;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -801,8 +851,8 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
+                        children: const [
+                          Text(
                             'COST SHARING',
                             style: TextStyle(
                               fontSize: 11,
@@ -811,8 +861,8 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                               letterSpacing: 1.0,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
+                          SizedBox(height: 4),
+                          Text(
                             'Share Costs, Save Money',
                             style: TextStyle(
                               fontSize: 28,
@@ -821,8 +871,8 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                               letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          const Text(
+                          SizedBox(height: 6),
+                          Text(
                             'Pool subscription seats with verified university peers for maximum savings.',
                             style: TextStyle(
                               fontSize: 13,
@@ -862,36 +912,103 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     ),
                   ],
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
-                // Category Chips
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _categories.map((cat) {
-                    final isSelected = _selectedCategory == cat;
-                    return ChoiceChip(
-                      label: Text(cat),
-                      selected: isSelected,
-                      onSelected: (val) {
-                        if (val) setState(() => _selectedCategory = cat);
-                      },
-                      labelStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? Colors.white : const Color(0xFF475569),
-                      ),
-                      backgroundColor: Colors.white,
-                      selectedColor: const Color(0xFF2563EB),
-                      side: BorderSide(
-                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
-                      ),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      showCheckmark: false,
-                    );
-                  }).toList(),
+                // Category Chips Row
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ..._categories.map((cat) {
+                        final isSelected = _selectedCategory == cat;
+                        final count = getSubCategoryCount(cat);
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(cat),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? Colors.white.withValues(alpha: 0.25) : const Color(0xFFE2E8F0),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '$count',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? Colors.white : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            selected: isSelected,
+                            onSelected: (val) {
+                              if (val) setState(() => _selectedCategory = cat);
+                            },
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? Colors.white : const Color(0xFF475569),
+                            ),
+                            backgroundColor: Colors.white,
+                            selectedColor: const Color(0xFF2563EB),
+                            side: BorderSide(
+                              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            showCheckmark: false,
+                          ),
+                        );
+                      }),
+                      if (searchQuery.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        ActionChip(
+                          avatar: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF2563EB)),
+                          label: Text('Search: "$searchQuery"'),
+                          backgroundColor: const Color(0xFFDBEAFE),
+                          labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                          onPressed: () {
+                            ref.read(searchQueryProvider.notifier).setQuery('');
+                          },
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 16),
+
+                // Active Filter Status Info
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Showing ${filteredGroups.length} ${filteredGroups.length == 1 ? 'group' : 'groups'} in $_selectedCategory',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                    ),
+                    if (_selectedCategory != 'All Categories' || searchQuery.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() => _selectedCategory = 'All Categories');
+                          ref.read(searchQueryProvider.notifier).setQuery('');
+                        },
+                        child: const Row(
+                          children: [
+                            Icon(Icons.refresh_rounded, size: 14, color: Color(0xFF2563EB)),
+                            SizedBox(width: 4),
+                            Text('Reset All Filters', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
                 // Groups Grid View
                 if (filteredGroups.isEmpty)

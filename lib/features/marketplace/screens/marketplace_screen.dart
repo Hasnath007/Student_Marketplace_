@@ -13,13 +13,21 @@ class MarketplaceScreen extends ConsumerWidget {
     final searchQuery = ref.watch(searchQueryProvider);
     final theme = Theme.of(context);
 
-    final categories = ['All Categories', 'Books', 'Stationery', 'Notes', 'Digital Services'];
+    final categories = ['All Categories', 'Books', 'Electronics', 'Stationery', 'Notes', 'Digital Services'];
 
     final cleanSearch = searchQuery.trim().toLowerCase();
 
     final filteredProducts = products.where((p) {
+      final pCat = p.category.toLowerCase().trim();
+      final selCat = selectedCategory.toLowerCase().trim();
+
       final matchesCat = (selectedCategory == 'All Categories' || selectedCategory == 'All') ||
-          p.category.toLowerCase().trim() == selectedCategory.toLowerCase().trim();
+          pCat == selCat ||
+          (selCat == 'books' && (pCat.contains('book') || p.title.toLowerCase().contains('book') || p.description.toLowerCase().contains('textbook'))) ||
+          (selCat == 'electronics' && (pCat.contains('electr') || p.title.toLowerCase().contains('calculator') || p.title.toLowerCase().contains('keyboard') || p.title.toLowerCase().contains('phone') || p.title.toLowerCase().contains('laptop'))) ||
+          (selCat == 'stationery' && (pCat.contains('station') || p.title.toLowerCase().contains('pen') || p.title.toLowerCase().contains('notebook'))) ||
+          (selCat == 'notes' && (pCat.contains('note') || p.title.toLowerCase().contains('note') || p.title.toLowerCase().contains('sheet') || p.title.toLowerCase().contains('lecture')));
+
       final matchesSearch = cleanSearch.isEmpty ||
           p.title.toLowerCase().contains(cleanSearch) ||
           p.description.toLowerCase().contains(cleanSearch) ||

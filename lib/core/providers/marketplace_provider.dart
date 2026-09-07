@@ -26,12 +26,12 @@ final sampleProducts = [
     sellerCampus: 'Engineering Quad',
   ),
 
-  // 2. Stationery
+  // 2. Electronics
   const Product(
     id: 'p3',
     title: 'TI-84 Plus CE Graphing Calculator',
     price: 1200.00,
-    category: 'Stationery',
+    category: 'Electronics',
     condition: 'Like New',
     description: 'Rechargeable battery, high-resolution color screen. Essential for math & engineering.',
     imageUrl: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=800&q=80',

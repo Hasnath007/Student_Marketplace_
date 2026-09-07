@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../marketplace/widgets/payment_checkout_dialog.dart';
+import '../widgets/host_chat_dialog.dart';
 
 class SubscriptionGroupsScreen extends ConsumerStatefulWidget {
   const SubscriptionGroupsScreen({super.key});
@@ -381,8 +382,13 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Opening group chat with ${group['host']}...'), backgroundColor: const Color(0xFF2563EB)),
+                              HostChatDialog.show(
+                                context,
+                                hostName: group['host'] as String? ?? 'Group Host',
+                                groupTitle: group['title'] as String? ?? 'Subscription Group',
+                                accountEmail: group['accountEmail'] as String?,
+                                pinCode: group['pinCode'] as String?,
+                                assignedScreen: group['assignedScreen'] as String?,
                               );
                             },
                             icon: const Icon(Icons.chat_outlined, size: 16),
@@ -709,6 +715,20 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
         itemName: group['title'] ?? 'Subscription Group',
         priceText: '${group['price'] ?? '৳250'}${group['period'] ?? '/mo'}',
         category: group['category'] ?? 'Subscription',
+        accountEmail: group['accountEmail'] as String?,
+        pinCode: group['pinCode'] as String?,
+        assignedScreen: group['assignedScreen'] as String?,
+        hostName: group['host'] as String?,
+        onOpenChat: () {
+          HostChatDialog.show(
+            context,
+            hostName: group['host'] as String? ?? 'Group Host',
+            groupTitle: group['title'] as String? ?? 'Subscription Group',
+            accountEmail: group['accountEmail'] as String?,
+            pinCode: group['pinCode'] as String?,
+            assignedScreen: group['assignedScreen'] as String?,
+          );
+        },
         onPaymentSuccess: () {
           setState(() {
             group['isJoined'] = true;

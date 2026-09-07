@@ -7,6 +7,11 @@ class PaymentCheckoutDialog extends StatefulWidget {
   final String itemName;
   final String priceText;
   final String category;
+  final String? accountEmail;
+  final String? pinCode;
+  final String? assignedScreen;
+  final String? hostName;
+  final VoidCallback? onOpenChat;
   final VoidCallback onPaymentSuccess;
 
   const PaymentCheckoutDialog({
@@ -14,6 +19,11 @@ class PaymentCheckoutDialog extends StatefulWidget {
     required this.itemName,
     required this.priceText,
     required this.category,
+    this.accountEmail,
+    this.pinCode,
+    this.assignedScreen,
+    this.hostName,
+    this.onOpenChat,
     required this.onPaymentSuccess,
   });
 
@@ -22,6 +32,11 @@ class PaymentCheckoutDialog extends StatefulWidget {
     required String itemName,
     required String priceText,
     required String category,
+    String? accountEmail,
+    String? pinCode,
+    String? assignedScreen,
+    String? hostName,
+    VoidCallback? onOpenChat,
     required VoidCallback onPaymentSuccess,
   }) {
     return showDialog(
@@ -31,6 +46,11 @@ class PaymentCheckoutDialog extends StatefulWidget {
         itemName: itemName,
         priceText: priceText,
         category: category,
+        accountEmail: accountEmail,
+        pinCode: pinCode,
+        assignedScreen: assignedScreen,
+        hostName: hostName,
+        onOpenChat: onOpenChat,
         onPaymentSuccess: onPaymentSuccess,
       ),
     );
@@ -44,7 +64,7 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
   int _currentStep = 0; // 0 = Select Method, 1 = Manual bKash/Nagad Form, 2 = Success Receipt
   PaymentMethod _selectedMethod = PaymentMethod.bkash;
   final TextEditingController _trxController = TextEditingController();
-  final TextEditingController _senderPhoneController = TextEditingController(text: '01712345678');
+  final TextEditingController _senderPhoneController = TextEditingController();
   bool _isVerifying = false;
   String? _errorMessage;
   late final String _invoiceId;
@@ -704,33 +724,265 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
               ],
             ),
           ),
+          // Instant Access Credentials Card (If provided for subscription / digital access)
+          if (widget.pinCode != null || widget.accountEmail != null || widget.assignedScreen != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFEFF6FF), Color(0xFFF0FDF4)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.vpn_key_rounded, color: Color(0xFF2563EB), size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Your Access Credentials',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E3A8A)),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('UNLOCKED ✓', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCredentialRow(
+                    icon: Icons.alternate_email_rounded,
+                    label: 'Login Account:',
+                    value: widget.accountEmail ?? 'group_access@campus.edu',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildCredentialRow(
+                    icon: Icons.tv_rounded,
+                    label: 'Assigned Screen / Seat:',
+                    value: widget.assignedScreen ?? 'Screen 3',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildCredentialRow(
+                    icon: Icons.lock_outline_rounded,
+                    label: 'Profile PIN / Token:',
+                    value: widget.pinCode ?? '5829',
+                    isHighlight: true,
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            // Physical Product Handover & Meetup Next Steps Card
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF0FDF4), Color(0xFFEFF6FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF86EFAC), width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.handshake_rounded, color: Color(0xFF059669), size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Campus Pickup & Next Steps',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF065F46)),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('ESCROW SECURED', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'আপনার টাকা এস্ক্রো-তে নিরাপদ আছে। ক্যাম্পাসে দেখা করে পণ্য বুঝে নেওয়ার পর সেলার টাকা পাবেন।',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF047857), height: 1.35),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStepPill('1', 'ইন-অ্যাপ চ্যাটে সেলারকে মিটআপের স্থান ও সময় জানান (যেমন: লাইব্রেরি / টিএসসি)'),
+                  const SizedBox(height: 6),
+                  _buildStepPill('2', 'ক্যাম্পাসে সরাসরি দেখা করে প্রোডাক্টটি চেক করে রিসিভ করুন'),
+                  const SizedBox(height: 6),
+                  _buildStepPill('3', 'পণ্য বুঝে পেলে "Item Received" কনফার্ম করলেই অর্ডার সম্পন্ন হবে'),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 24),
 
-          // Done Button
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('"${widget.itemName}" পেমেন্ট ও অ্যাক্সেস কনফার্ম করা হয়েছে!'),
-                    backgroundColor: const Color(0xFF16A34A),
+          // Action Buttons (Chat with Host & Done)
+          Row(
+            children: [
+              if (widget.onOpenChat != null) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      widget.onOpenChat!();
+                    },
+                    icon: const Icon(Icons.chat_outlined, size: 16),
+                    label: const Text('Chat with Host', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF2563EB),
+                      side: const BorderSide(color: Color(0xFF2563EB)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
+                ),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('"${widget.itemName}" পেমেন্ট ও অ্যাক্সেস কনফার্ম করা হয়েছে!'),
+                        backgroundColor: const Color(0xFF16A34A),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                  child: const Text('সম্পন্ন করুন (Done)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                ),
               ),
-              child: const Text('সম্পন্ন করুন (Done)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCredentialRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isHighlight = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: isHighlight ? const Color(0xFFDBEAFE) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: isHighlight ? const Color(0xFF60A5FA) : const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: isHighlight ? const Color(0xFF1D4ED8) : const Color(0xFF64748B)),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isHighlight ? FontWeight.w900 : FontWeight.bold,
+                color: isHighlight ? const Color(0xFF1D4ED8) : const Color(0xFF0F172A),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          InkWell(
+            onTap: () => _copyToClipboard(value, label.replaceAll(':', '')),
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.copy_rounded, size: 10, color: Color(0xFF2563EB)),
+                  SizedBox(width: 2),
+                  Text('Copy', style: TextStyle(fontSize: 10, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStepPill(String num, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 18,
+          height: 18,
+          decoration: const BoxDecoration(
+            color: Color(0xFF059669),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(num, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(text, style: const TextStyle(fontSize: 11, color: Color(0xFF334155), height: 1.25)),
+        ),
+      ],
     );
   }
 

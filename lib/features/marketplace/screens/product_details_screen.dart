@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../models/product.dart';
+import '../../subscriptions/widgets/host_chat_dialog.dart';
 import '../widgets/payment_checkout_dialog.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
@@ -14,6 +15,8 @@ class ProductDetailsScreen extends StatefulWidget {
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   late String _activeImage;
+  bool _isOrderPlaced = false;
+  bool _isReceived = false;
 
   @override
   void initState() {
@@ -29,76 +32,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         _activeImage = widget.product?.imageUrl ?? 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80';
       });
     }
-  }
-
-  void _showContactSellerDialog(BuildContext context, String sellerName) {
-    final messageController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const CircleAvatar(
-              backgroundColor: Color(0xFFDBEAFE),
-              child: Icon(Icons.person, color: Color(0xFF2563EB)),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Contact $sellerName', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const Text('Verified Campus Seller', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-              ],
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Send a direct message on Campus Chat:', style: TextStyle(fontSize: 12, color: Color(0xFF475569))),
-            const SizedBox(height: 10),
-            TextField(
-              controller: messageController,
-              maxLines: 3,
-              style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Hi, is this item still available for meetup on campus?',
-                hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Message sent to $sellerName! They will respond shortly.'),
-                  backgroundColor: const Color(0xFF2563EB),
-                ),
-              );
-            },
-            icon: const Icon(Icons.send_rounded, size: 16),
-            label: const Text('Send Message'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -349,47 +282,181 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Buy Now / Pay with bKash/Nagad Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                PaymentCheckoutDialog.show(
-                                  context,
-                                  itemName: title,
-                                  priceText: priceStr,
-                                  category: widget.product?.category ?? 'Campus Marketplace',
-                                  onPaymentSuccess: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Payment verified successfully for $title! Order placed.'),
-                                        backgroundColor: const Color(0xFF10B981),
+                          // Order & Handover Status Section if purchased
+                          if (_isOrderPlaced) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: _isReceived ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: _isReceived ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            _isReceived ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
+                                            color: _isReceived ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            _isReceived ? 'Order Completed ✓' : 'Awaiting Campus Handover',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: _isReceived ? const Color(0xFF14532D) : const Color(0xFF92400E),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    );
-                                  },
-                                );
-                              },
-                              icon: const Icon(Icons.account_balance_wallet_rounded, size: 18),
-                              label: const Text('PAY WITH BKASH / NAGAD', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE2136E),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: _isReceived ? const Color(0xFF16A34A) : const Color(0xFFF59E0B),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          _isReceived ? 'COMPLETED' : 'ESCROW SECURED',
+                                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _isReceived
+                                        ? 'You have received the item. $priceStr has been released to $seller.'
+                                        : 'Payment verified! $priceStr is safely held in Escrow. Meet $seller on campus to inspect and receive.',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: _isReceived ? const Color(0xFF15803D) : const Color(0xFF78350F),
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                  if (!_isReceived) ...[
+                                    const SizedBox(height: 12),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 42,
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                              title: const Row(
+                                                children: [
+                                                  Icon(Icons.check_circle_rounded, color: Color(0xFF10B981)),
+                                                  SizedBox(width: 8),
+                                                  Text('Confirm Handover?'),
+                                                ],
+                                              ),
+                                              content: Text('Did you receive and inspect "$title" from $seller? This will release $priceStr to the seller.'),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Not Yet')),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(ctx);
+                                                    setState(() => _isReceived = true);
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('🎉 Handover confirmed! $priceStr released to $seller.'),
+                                                        backgroundColor: const Color(0xFF10B981),
+                                                      ),
+                                                    );
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color(0xFF10B981),
+                                                    foregroundColor: Colors.white,
+                                                  ),
+                                                  child: const Text('Yes, Item Received ✓'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                                        label: const Text('Item Received (Complete Handover)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF059669),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          elevation: 0,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
+                            const SizedBox(height: 12),
+                          ] else ...[
+                            // Buy Now / Pay with bKash/Nagad Button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  PaymentCheckoutDialog.show(
+                                    context,
+                                    itemName: title,
+                                    priceText: priceStr,
+                                    category: widget.product?.category ?? 'Campus Marketplace',
+                                    onOpenChat: () {
+                                      HostChatDialog.show(
+                                        context,
+                                        hostName: seller,
+                                        groupTitle: title,
+                                        assignedScreen: 'Campus Meetup Spot',
+                                        isSellerMode: true,
+                                      );
+                                    },
+                                    onPaymentSuccess: () {
+                                      setState(() => _isOrderPlaced = true);
+                                    },
+                                  );
+                                },
+                                icon: const Icon(Icons.account_balance_wallet_rounded, size: 18),
+                                label: const Text('PAY WITH BKASH / NAGAD', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE2136E),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
 
                           // Contact Seller Button
                           SizedBox(
                             width: double.infinity,
                             height: 48,
                             child: OutlinedButton.icon(
-                              onPressed: () => _showContactSellerDialog(context, seller),
+                              onPressed: () {
+                                HostChatDialog.show(
+                                  context,
+                                  hostName: seller,
+                                  groupTitle: title,
+                                  assignedScreen: 'Campus Meetup Spot',
+                                  isSellerMode: true,
+                                );
+                              },
                               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                              label: const Text('CONTACT SELLER', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5)),
+                              label: Text(
+                                _isOrderPlaced ? 'CHAT WITH SELLER (SCHEDULE MEETUP)' : 'CONTACT SELLER',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5),
+                              ),
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
                                 foregroundColor: const Color(0xFF2563EB),

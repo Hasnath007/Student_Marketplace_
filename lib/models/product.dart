@@ -1,3 +1,6 @@
+// 📦 Product Data Model
+// 📌 কাজ: একটি পণ্য বা প্রোডাক্টের ফিল্ড সংজ্ঞায়িত করা (id, title, price, category, condition, description, imageUrl, sellerName, sellerCampus)
+
 class Product {
   final String id;
   final String title;

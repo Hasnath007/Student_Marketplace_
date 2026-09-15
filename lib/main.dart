@@ -1,12 +1,21 @@
+// 🚀 Main Application Entry Point
+// 📌 কাজ: পুরো অ্যাপের শুরু, থিম সেটআপ (Light/Dark), স্ক্রোল বিহেভিয়ার এবং রুট ইনিশিয়ালাইজেশন।
+// 🔗 কানেকশন: ProviderScope (Riverpod), AppTheme, ThemeModeProvider, AppRouter
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'router/app_router.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   GestureBinding.instance.resamplingEnabled = true;
   PaintingBinding.instance.imageCache.maximumSize = 1000;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 300 << 20; // 300 MB memory cache

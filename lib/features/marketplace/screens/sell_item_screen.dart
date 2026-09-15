@@ -1,3 +1,8 @@
+// ➕ Sell Item Screen (পণ্য বিক্রির পোস্ট পেজ)
+// 📌 কাজ: নতুন কোনো পণ্য বিক্রির জন্য ছবি তোলা/আপলোড, নাম, দাম, ক্যাটাগরি ও কন্ডিশন দিয়ে পোস্ট করার ফর্ম।
+// 🔗 স্টেট: marketplaceProvider.notifier.addProduct(newProduct) দিয়ে প্রোডাক্ট অ্যাড করা হয়।
+// 🔗 ইউটিলস: FilePickerHelper দিয়ে গ্যালারি বা ফাইল থেকে ছবি নেওয়া হয়।
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

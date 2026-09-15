@@ -1,3 +1,7 @@
+// 🚀 Landing Screen (ওয়েলকাম হিরো পেজ)
+// 📌 কাজ: অ্যাপে প্রবেশ করলেই প্রথম আকর্ষণীয় অ্যানিমেটেড ব্যানার, ফিচারের হাইলাইট এবং 'Get Started' বাটন।
+// 🔗 নেভিগেশন: /login বা /signup পেজে নিয়ে যায়।
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

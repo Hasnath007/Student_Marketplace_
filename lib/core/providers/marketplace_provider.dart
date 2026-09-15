@@ -1,3 +1,7 @@
+// 🔄 Marketplace Riverpod State Providers
+// 📌 কাজ: সব প্রোডাক্টের লিস্ট ধরে রাখা, নতুন প্রোডাক্ট অ্যাড করা (addProduct), সার্চ কিওয়ার্ড ও ক্যাটাগরি ফিল্টার স্টেট সংরক্ষণ।
+// 🔗 ব্যবহৃত হয়: MarketplaceScreen, SellItemScreen, ProductDetailsScreen
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/product.dart';
 

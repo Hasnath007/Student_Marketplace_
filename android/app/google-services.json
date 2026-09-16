@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1021889952427",
+    "project_id": "student-mart-c6f77",
+    "storage_bucket": "student-mart-c6f77.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1021889952427:android:394d88d079669b8ad415ee",
+        "android_client_info": {
+          "package_name": "com.example.student_marketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBU83ZL6vsxFtc_2V1Y4bai6HDkJFU75G0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

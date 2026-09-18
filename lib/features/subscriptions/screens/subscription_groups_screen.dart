@@ -1,3 +1,7 @@
+// 👥 Subscription Groups Screen (সাবস্ক্রিপশন শেয়ারিং পেজ)
+// 📌 কাজ: Netflix, Spotify, Canva ইত্যাদি যৌথভাবে শেয়ার করার গ্রুপ লিস্ট, স্লট বুকিং ও হোস্ট চ্যাট।
+// 🔗 ডায়ালগ: PaymentCheckoutDialog, HostChatDialog
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/marketplace_provider.dart';

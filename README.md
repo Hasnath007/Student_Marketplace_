@@ -1,17 +1,115 @@
-# student_marketplace
+# 🎓 Student Marketplace (শিক্ষার্থী মার্কেটপ্লেস)
 
-A new Flutter project.
+একটি পূর্ণাঙ্গ আধুনিক **Flutter** অ্যাপ্লিকেশন, যা বিশ্ববিদ্যালয়ের শিক্ষার্থীদের নিজেদের মধ্যে বই, স্টেশনারি, ইলেকট্রনিক্স পণ্য কেনাবেচা এবং বিভিন্ন প্রিমিয়াম সাবস্ক্রিপশন (Netflix, Spotify ইত্যাদি) সহজে ও নিরাপদে শেয়ার করার জন্য তৈরি করা হয়েছে।
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 📁 প্রজেক্ট ফাইল স্ট্রাকচার ও বিবরণ (Project Architecture)
 
-A few resources to get you started if this is your first Flutter project:
+আপনার প্রজেক্টটি আধুনিক **Feature-First Architecture** অনুসরণ করে তৈরি করা হয়েছে। নিচে প্রতিটি ফোল্ডার ও ফাইলের দায়িত্ব সহজে তুলে ধরা হলো:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```text
+Student_Marketplace/
+│
+├── 📁 lib/                               # 📱 মূল অ্যাপ্লিকেশনের সব কোড
+│   │
+│   ├── 📄 main.dart                      # 🚀 অ্যাপের এন্ট্রি পয়েন্ট ও ইনিশিয়ালাইজেশন
+│   │
+│   ├── 📁 router/                        # 🧭 পেজ নেভিগেশন ও রাউটিং
+│   │   └── 📄 app_router.dart            # GoRouter কনফিগারেশন (সবগুলো পেজের পাথ)
+│   │
+│   ├── 📁 models/                        # 📦 ডেটা মডেল (Data Structures)
+│   │   ├── 📄 product.dart               # পণ্যের ডেটা মডেল (নাম, দাম, ছবি, ক্যাটাগরি)
+│   │   └── 📄 subscription_group.dart    # সাবস্ক্রিপশন শেয়ারিং গ্রুপের মডেল
+│   │
+│   ├── 📁 core/                          # ⚙️ অ্যাপের কোর লজিক ও সার্ভিস
+│   │   ├── 📁 logging/
+│   │   │   └── 📄 app_logger.dart        # কনসোল লগ ও এরর ডিবাগিং
+│   │   ├── 📁 providers/                 # 🔄 Riverpod স্টেট ম্যানেজমেন্ট
+│   │   │   ├── 📄 marketplace_provider.dart    # প্রোডাক্ট লিস্ট, সার্চ, ফিল্টার ও সেল স্টেট
+│   │   │   └── 📄 subscriptions_provider.dart  # সাবস্ক্রিপশন গ্রুপ ও জয়েন স্টেট
+│   │   ├── 📁 theme/                     # 🎨 থিম ও ডিজাইন
+│   │   │   ├── 📄 app_theme.dart         # লাইট ও ডার্ক মোডের কালার ও স্টাইল
+│   │   │   └── 📄 theme_mode_provider.dart # থিম টগল কন্ট্রোলার
+│   │   └── 📁 utils/
+│   │       └── 📄 file_picker_helper.dart# ছবি বা ফাইল সিলেক্ট করার হেল্পার
+│   │
+│   ├── 📁 features/                      # 🖥️ অ্যাপের ফ্রন্টএন্ড স্ক্রিনসমূহ
+│   │   │
+│   │   ├── 📁 auth/screens/              # 🔐 অথেনটিকেশন (লগইন/সাইন-আপ)
+│   │   │   ├── 📄 landing_screen.dart    # ওয়েলকাম হিরো স্ক্রিন
+│   │   │   ├── 📄 login_screen.dart      # স্টুডেন্ট লগইন ফর্ম
+│   │   │   └── 📄 signup_screen.dart     # নতুন অ্যাকাউন্ট খোলার ফর্ম
+│   │   │
+│   │   ├── 📁 marketplace/               # 🛍️ পণ্য কেনাবেচা মডিউল
+│   │   │   ├── 📁 screens/
+│   │   │   │   ├── 📄 marketplace_screen.dart     # পণ্যের গ্রিড, সার্চবার ও ক্যাটাগরি
+│   │   │   │   ├── 📄 product_details_screen.dart # পণ্যের বিস্তারিত ও কেনার পেজ
+│   │   │   │   └── 📄 sell_item_screen.dart       # পণ্য বিক্রির পোস্ট ফর্ম
+│   │   │   └── 📁 widgets/
+│   │   │       └── 📄 payment_checkout_dialog.dart# পেমেন্ট কনফার্মেশন পপআপ
+│   │   │
+│   │   ├── 📁 subscriptions/             # 👥 সাবস্ক্রিপশন শেয়ারিং মডিউল
+│   │   │   ├── 📁 screens/
+│   │   │   │   └── 📄 subscription_groups_screen.dart # শেয়ার্ড সাবস্ক্রিপশন গ্রুপ লিস্ট
+│   │   │   └── 📁 widgets/
+│   │   │       └── 📄 host_chat_dialog.dart           # গ্রুপ হোস্টের সাথে চ্যাট ডায়ালগ
+│   │   │
+│   │   └── 📁 profile/screens/           # 👤 প্রোফাইল ও সেটিংস
+│   │       └── 📄 profile_screen.dart    # ইউজারের প্রোফাইল ও ডার্ক মোড অপশন
+│   │
+│   └── 📁 shared/                        # ⚓ শেয়ার্ড উইজেট ও লেআউট
+│       └── 📄 main_shell_screen.dart     # নিচের বটম নেভিগেশন বার (Bottom Nav Bar)
+│
+├── 📄 pubspec.yaml                       # 📦 প্যাকেজ ও ডিপেন্ডেন্সি কনফিগারেশন
+└── 📄 SETUP_GUIDE.md                     # 📖 নতুন পিসিতে অ্যাপ সেটআপ ও রান করার গাইড
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 🌟 প্রধান ফিচারসমূহ (Key Features)
+
+1. **🛍️ ক্যাম্পাস মার্কেটপ্লেস (Student Marketplace):**
+   - ক্যাটাগরিভিত্তিক পণ্য ফিল্টারিং (Books, Electronics, Stationery, Notes)।
+   - ইনস্ট্যান্ট সার্চ ও দাম অনুযায়ী সর্টিং।
+   - পণ্যের ছবি, কন্ডিশন, বিক্রেতার নাম ও বিস্তারিত বিবরণ।
+   - সরাসরি নিরাপদ পেমেন্ট চেকআউট ডায়ালগ।
+
+2. **➕ সেল আইটেম (Sell Your Items):**
+   - ছবি আপলোড ও প্রিভিউ।
+   - টাইটেল, প্রাইস, ক্যাটাগরি ও কন্ডিশন সিলেক্টর।
+   - পোস্ট করার সাথে সাথেই লাইভ মার্কেটপ্লেসে যুক্ত হওয়ার সুবিধা।
+
+3. **👥 সাবস্ক্রিপশন পুলিং (Shared Subscriptions):**
+   - স্টুডেন্টদের জন্য Netflix, Spotify, Canva, Coursera ইত্যাদির শেয়ার্ড গ্রুপ।
+   - কতটি স্লট খালি আছে তা সরাসরি দেখা ও জয়েন করার রিকোয়েস্ট।
+   - গ্রুপের হোস্টের সাথে চ্যাট করার অপশন।
+
+4. **🌗 আধুনিক ডার্ক ও লাইট মোড (Dynamic Theming):**
+   - প্রোফাইল থেকে এক ক্লিকে ডার্ক ও লাইট থিমে পরিবর্তন।
+   - চোখে স্বস্তিদায়ক কন্ট্রাস্ট ও মসৃণ অ্যানিমেশন।
+
+---
+
+## 🚀 কীভাবে অ্যাপটি রান করবেন (How to Run)
+
+টার্মিনাল ওপেন করে নিচের কমান্ডগুলোর যেকোনো একটি রান করুন:
+
+### ১. গুগল ক্রোমে রান করতে (সবচেয়ে দ্রুত ও সহজ):
+```bash
+flutter run -d chrome
+```
+
+### ২. উইন্ডোজ অ্যাপ হিসেবে রান করতে:
+```bash
+flutter run -d windows
+```
+
+### ৩. ডিপেন্ডেন্সি আপডেট করতে:
+```bash
+flutter pub get
+```
+
+---
+
+> 💡 **নোট:** অন্য কোনো কম্পিউটারে সম্পূর্ণ নতুনভাবে সেটআপ দিতে চাইলে [SETUP_GUIDE.md](SETUP_GUIDE.md) ফাইলটি অনুসরণ করুন।

@@ -1,3 +1,7 @@
+// ⚓ Main Shell Screen (কমন ফ্রেম ও বটম নেভিগেশন বার)
+// 📌 কাজ: স্ক্রিনের নিচে স্টাইলিশ Bottom Navigation Bar রাখা (Marketplace, Sell, Subscriptions, Profile ট্যাব)।
+// 🔗 নেভিগেশন: GoRouter ShellRoute দিয়ে পেইজ পরিবর্তন করে।
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

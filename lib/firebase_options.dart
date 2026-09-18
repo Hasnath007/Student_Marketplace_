@@ -25,7 +25,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
         return windows;
       case TargetPlatform.linux:
@@ -41,46 +44,39 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCOnjOuhwNuTxFqLqBgpacn3kwwvxpyEkk',
-    appId: '1:1021889952427:web:a58716e7bc381e9cd415ee',
-    messagingSenderId: '1021889952427',
-    projectId: 'student-mart-c6f77',
-    authDomain: 'student-mart-c6f77.firebaseapp.com',
-    storageBucket: 'student-mart-c6f77.firebasestorage.app',
+    apiKey: 'AIzaSyDQMiUbXlWMJ4tHLBJvfmMJbmncFET4Da8',
+    appId: '1:1058840894713:web:6fd871c86b2e3f3c541628',
+    messagingSenderId: '1058840894713',
+    projectId: 'student-marketplace-fcf80',
+    authDomain: 'student-marketplace-fcf80.firebaseapp.com',
+    storageBucket: 'student-marketplace-fcf80.firebasestorage.app',
+    measurementId: 'G-Z4J7V9MTZW',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBU83ZL6vsxFtc_2V1Y4bai6HDkJFU75G0',
-    appId: '1:1021889952427:android:394d88d079669b8ad415ee',
-    messagingSenderId: '1021889952427',
-    projectId: 'student-mart-c6f77',
-    storageBucket: 'student-mart-c6f77.firebasestorage.app',
+    apiKey: 'AIzaSyC7zpeivBDxRr08IfTiBGVzGNHAD0ItnDE',
+    appId: '1:1058840894713:android:ef041b3a4f524dc7541628',
+    messagingSenderId: '1058840894713',
+    projectId: 'student-marketplace-fcf80',
+    storageBucket: 'student-marketplace-fcf80.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCwPq_JiqlxZxWq_JrhWEpFIYMq1uapPV8',
-    appId: '1:1021889952427:ios:a737a86efbd3d2e1d415ee',
-    messagingSenderId: '1021889952427',
-    projectId: 'student-mart-c6f77',
-    storageBucket: 'student-mart-c6f77.firebasestorage.app',
-    iosBundleId: 'com.example.studentMarketplace',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCwPq_JiqlxZxWq_JrhWEpFIYMq1uapPV8',
-    appId: '1:1021889952427:ios:a737a86efbd3d2e1d415ee',
-    messagingSenderId: '1021889952427',
-    projectId: 'student-mart-c6f77',
-    storageBucket: 'student-mart-c6f77.firebasestorage.app',
+    apiKey: 'AIzaSyAfuyBzH2N5uI_f6splvCIeC5cg6sHeaF8',
+    appId: '1:1058840894713:ios:ae451031be4033d3541628',
+    messagingSenderId: '1058840894713',
+    projectId: 'student-marketplace-fcf80',
+    storageBucket: 'student-marketplace-fcf80.firebasestorage.app',
     iosBundleId: 'com.example.studentMarketplace',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCOnjOuhwNuTxFqLqBgpacn3kwwvxpyEkk',
-    appId: '1:1021889952427:web:1efae92e2d4ba87fd415ee',
-    messagingSenderId: '1021889952427',
-    projectId: 'student-mart-c6f77',
-    authDomain: 'student-mart-c6f77.firebaseapp.com',
-    storageBucket: 'student-mart-c6f77.firebasestorage.app',
+    apiKey: 'AIzaSyDQMiUbXlWMJ4tHLBJvfmMJbmncFET4Da8',
+    appId: '1:1058840894713:web:735f4e4cbbf24665541628',
+    messagingSenderId: '1058840894713',
+    projectId: 'student-marketplace-fcf80',
+    authDomain: 'student-marketplace-fcf80.firebaseapp.com',
+    storageBucket: 'student-marketplace-fcf80.firebasestorage.app',
+    measurementId: 'G-MFBKPYZ6B9',
   );
 }

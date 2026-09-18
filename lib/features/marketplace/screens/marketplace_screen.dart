@@ -1,3 +1,8 @@
+// 🛍️ Marketplace Screen (মূল মার্কেটপ্লেস স্ক্রিন)
+// 📌 কাজ: সব বিক্রয়যোগ্য পণ্যের গ্রিড প্রদর্শন, লাইভ সার্চবার, ক্যাটাগরি ফিল্টার চিপস এবং সর্টিং ড্রপডাউন।
+// 🔗 স্টেট: marketplaceProvider, selectedCategoryProvider, searchQueryProvider, selectedSortProvider
+// 🔗 নেভিগেশন: প্রোডাক্ট ক্লিক করলে ProductDetailsScreen-এ নিয়ে যায়।
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

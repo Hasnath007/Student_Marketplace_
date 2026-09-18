@@ -1,3 +1,7 @@
+// 🧭 App Router & Navigation Configuration
+// 📌 কাজ: অ্যাপের সমস্ত পেজের রুট পাথ নির্ধারণ (Landing, Login, SignUp, Shell, Marketplace, Sell, Subscriptions, Profile)
+// 🔗 লাইব্রেরি: GoRouter
+
 import 'package:go_router/go_router.dart';
 import '../features/auth/screens/landing_screen.dart';
 import '../features/auth/screens/login_screen.dart';

@@ -1,3 +1,7 @@
+// 👤 Profile Screen (ইউজার প্রোফাইল ও সেটিংস পেজ)
+// 📌 কাজ: ব্যবহারকারীর তথ্য, মোট ব্যালেন্স, মাই লিস্টিং (My Listings), অর্ডার হিস্ট্রি ও সেটিংস।
+// 🔗 ডায়ালগ: HostChatDialog, GoRouter
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../subscriptions/widgets/host_chat_dialog.dart';

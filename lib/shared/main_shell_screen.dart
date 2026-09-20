@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/providers/marketplace_provider.dart';
@@ -192,7 +193,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                               ),
                             ),
                             child: StreamBuilder<DocumentSnapshot>(
-                              stream: FirebaseAuth.instance.currentUser != null
+                              stream: (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null)
                                   ? FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).snapshots()
                                   : const Stream.empty(),
                               builder: (context, snapshot) {

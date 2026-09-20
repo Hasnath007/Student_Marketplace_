@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../subscriptions/widgets/host_chat_dialog.dart';
@@ -715,7 +716,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseAuth.instance.currentUser != null
+                    stream: (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null)
                         ? FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).snapshots()
                         : const Stream.empty(),
                     builder: (context, snapshot) {
@@ -829,7 +830,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           // Sign Out Button
                           ElevatedButton.icon(
                             onPressed: () async {
-                              await FirebaseAuth.instance.signOut();
+                              if (Firebase.apps.isNotEmpty) {
+                                await FirebaseAuth.instance.signOut();
+                              }
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Logged out successfully')),

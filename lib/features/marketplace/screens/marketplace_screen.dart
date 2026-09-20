@@ -131,14 +131,17 @@ class MarketplaceScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1440),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1440),
+          child: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(32, 28, 32, 20),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 // Title Header & Post Listing Button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -371,22 +374,27 @@ class MarketplaceScreen extends ConsumerWidget {
                       ],
                     ),
                   )
-                else
-                  // Product Cards Grid
-                  LayoutBuilder(
+                    ],
+                  ),
+                ),
+              ),
+              if (filteredProducts.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 28),
+                  sliver: SliverLayoutBuilder(
                     builder: (context, constraints) {
                       int crossAxisCount = 4;
                       double childAspectRatio = 0.68;
-                      if (constraints.maxWidth < 600) {
+                      if (constraints.crossAxisExtent < 600) {
                         crossAxisCount = 1;
                         childAspectRatio = 1.15;
-                      } else if (constraints.maxWidth < 900) {
+                      } else if (constraints.crossAxisExtent < 900) {
                         crossAxisCount = 2;
                         childAspectRatio = 0.72;
-                      } else if (constraints.maxWidth < 1250) {
+                      } else if (constraints.crossAxisExtent < 1250) {
                         crossAxisCount = 3;
                         childAspectRatio = 0.70;
-                      } else if (constraints.maxWidth < 1550) {
+                      } else if (constraints.crossAxisExtent < 1550) {
                         crossAxisCount = 4;
                         childAspectRatio = 0.68;
                       } else {
@@ -394,25 +402,25 @@ class MarketplaceScreen extends ConsumerWidget {
                         childAspectRatio = 0.68;
                       }
 
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
+                      return SliverGrid(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
                           childAspectRatio: childAspectRatio,
                           crossAxisSpacing: 20,
                           mainAxisSpacing: 20,
                         ),
-                        itemCount: filteredProducts.length,
-                        itemBuilder: (context, index) {
-                          final item = filteredProducts[index];
-                          return _ProductCard(item: item, theme: theme);
-                        },
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = filteredProducts[index];
+                            return _ProductCard(item: item, theme: theme);
+                          },
+                          childCount: filteredProducts.length,
+                        ),
                       );
                     },
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),

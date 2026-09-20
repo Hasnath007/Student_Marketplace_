@@ -6,19 +6,20 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'router/app_router.dart';
+import 'firebase_options.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   GestureBinding.instance.resamplingEnabled = true;
   PaintingBinding.instance.imageCache.maximumSize = 1000;
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 300 << 20; // 300 MB memory cache
+  PaintingBinding.instance.imageCache.maximumSizeBytes =
+      300 << 20; // 300 MB memory cache
   runApp(const ProviderScope(child: StudentMarketplaceApp()));
 }
 
@@ -27,15 +28,15 @@ class SmoothWebScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-        PointerDeviceKind.stylus,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    return const BouncingScrollPhysics(
+    return const ClampingScrollPhysics(
       parent: AlwaysScrollableScrollPhysics(
         parent: RangeMaintainingScrollPhysics(),
       ),
@@ -43,7 +44,11 @@ class SmoothWebScrollBehavior extends MaterialScrollBehavior {
   }
 
   @override
-  Widget buildScrollbar(BuildContext context, Widget child, ScrollableDetails details) {
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
     return RawScrollbar(
       controller: details.controller,
       thumbVisibility: false,

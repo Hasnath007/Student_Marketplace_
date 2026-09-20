@@ -106,6 +106,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Send email verification
       await user.sendEmailVerification();
 
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created! Please verify your email.')),
       );

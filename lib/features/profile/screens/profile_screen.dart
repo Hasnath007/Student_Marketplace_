@@ -828,11 +828,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                           // Sign Out Button
                           ElevatedButton.icon(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Logged out successfully')),
-                              );
-                              context.go('/landing');
+                            onPressed: () async {
+                              await FirebaseAuth.instance.signOut();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Logged out successfully')),
+                                );
+                                context.go('/landing');
+                              }
                             },
                             icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFFDC2626)),
                             label: const Text('Sign Out', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold, fontSize: 13)),

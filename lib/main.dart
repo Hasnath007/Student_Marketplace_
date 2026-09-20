@@ -36,7 +36,7 @@ class SmoothWebScrollBehavior extends MaterialScrollBehavior {
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    return const BouncingScrollPhysics(
+    return const ClampingScrollPhysics(
       parent: AlwaysScrollableScrollPhysics(
         parent: RangeMaintainingScrollPhysics(),
       ),

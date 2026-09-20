@@ -222,57 +222,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                       const SizedBox(height: 20),
 
-                      // GOOGLE BUTTON
-                      SizedBox(
-                        width: double.infinity,
-                        height: 42,
-                        child: OutlinedButton.icon(
-                          onPressed: () => context.go('/marketplace'),
-                          icon: const Icon(
-                            Icons.g_mobiledata_rounded,
-                            size: 28,
-                            color: _textColor,
-                          ),
-                          label: const Text(
-                            'Continue with Google',
-                            style: TextStyle(
-                              color: _textColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            side: const BorderSide(color: Color(0xFFDBEFEF)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // DIVIDER
-                      Row(
-                        children: [
-                          const Expanded(child: Divider(color: _borderColor)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              'OR REGISTER WITH EMAIL',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade400,
-                              ),
-                            ),
-                          ),
-                          const Expanded(child: Divider(color: _borderColor)),
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
 
                       // NAME + STUDENT ID
                       Row(

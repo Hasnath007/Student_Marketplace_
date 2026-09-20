@@ -43,12 +43,18 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
       if (!mounted) return;
+
+      final user = userCredential.user;
+      if (user != null && !user.emailVerified) {
+        context.go('/verify-email');
+        return;
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Welcome back to Campus Market!')),
@@ -343,12 +349,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
 
                             validator: (value) {
-                              if (value == null ||
-                                  value.trim().isEmpty ||
-                                  !value.contains('@')) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Email is required';
+                              }
+                              final email = value.trim().toLowerCase();
+                              if (!email.contains('@')) {
                                 return 'Valid email required';
                               }
-
+                              if (!(email.endsWith('.edu') ||
+                                  email.endsWith('.edu.bd') ||
+                                  email.endsWith('.ac.bd'))) {
+                                return 'Please use your university email';
+                              }
                               return null;
                             },
                           ),

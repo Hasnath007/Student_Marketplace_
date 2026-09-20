@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/screens/landing_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
+import '../features/auth/screens/verify_email_screen.dart';
 import '../features/marketplace/screens/marketplace_screen.dart';
 import '../features/marketplace/screens/product_details_screen.dart';
 import '../features/marketplace/screens/sell_item_screen.dart';
@@ -29,6 +30,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/signup',
       pageBuilder: (context, state) => const NoTransitionPage(child: SignUpScreen()),
+    ),
+    GoRoute(
+      path: '/verify-email',
+      pageBuilder: (context, state) => const NoTransitionPage(child: VerifyEmailScreen()),
     ),
 
     // Main App Shell Route

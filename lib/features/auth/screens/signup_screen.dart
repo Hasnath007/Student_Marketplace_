@@ -103,11 +103,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (!mounted) return;
 
+      // Send email verification
+      await user.sendEmailVerification();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created successfully!')),
+        const SnackBar(content: Text('Account created! Please verify your email.')),
       );
 
-      context.go('/marketplace');
+      context.go('/verify-email');
     } on FirebaseAuthException catch (e) {
       String message = 'Something went wrong. Please try again.';
 
@@ -315,10 +318,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         decoration: _inputDeco('jane.doe@university.edu'),
 
                         validator: (value) {
-                          if (value == null ||
-                              value.trim().isEmpty ||
-                              !value.contains('@')) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Email is required';
+                          }
+                          final email = value.trim().toLowerCase();
+                          if (!email.contains('@')) {
                             return 'Valid email required';
+                          }
+                          if (!(email.endsWith('.edu') ||
+                              email.endsWith('.edu.bd') ||
+                              email.endsWith('.ac.bd'))) {
+                            return 'Please use your university email';
                           }
                           return null;
                         },

@@ -4,6 +4,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../subscriptions/widgets/host_chat_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -712,107 +714,138 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: const Color(0xFFDBEAFE).withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Avatar with verified badge
-                      Stack(
+                  child: StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseAuth.instance.currentUser != null
+                        ? FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).snapshots()
+                        : const Stream.empty(),
+                    builder: (context, snapshot) {
+                      String userName = 'Student';
+                      String userDept = 'University Student';
+                      String joinedDate = 'Joined Recently';
+                      String? photoUrl;
+
+                      if (snapshot.hasData && snapshot.data!.exists) {
+                        final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                        userName = data['name'] ?? userName;
+                        userDept = data['department'] ?? userDept;
+                        photoUrl = data['photoUrl'] ?? data['profileImageUrl'];
+                        if (data['createdAt'] != null) {
+                          final date = (data['createdAt'] as Timestamp).toDate();
+                          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                          joinedDate = 'Joined ${months[date.month - 1]} ${date.year}';
+                        }
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const CircleAvatar(
-                            radius: 46,
-                            backgroundImage: NetworkImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'),
+                          // Avatar with verified badge
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 46,
+                                backgroundColor: const Color(0xFF2563EB),
+                                backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                                child: photoUrl == null 
+                                  ? Text(
+                                      userName.isNotEmpty ? userName[0].toUpperCase() : 'S',
+                                      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                                    )
+                                  : null,
+                              ),
+                              Positioned(
+                                bottom: 2,
+                                right: 2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Color(0xFF2563EB),
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          Positioned(
-                            bottom: 2,
-                            right: 2,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.check_circle_rounded,
-                                color: Color(0xFF2563EB),
-                                size: 18,
-                              ),
+                          const SizedBox(width: 20),
+
+                          // User Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      userName,
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    IconButton(
+                                      onPressed: _showEditProfileModal,
+                                      icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF2563EB)),
+                                      tooltip: 'Edit Profile',
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.school_outlined, size: 16, color: Color(0xFF475569)),
+                                    const SizedBox(width: 4),
+                                    const Text('University Student', style: TextStyle(fontSize: 13, color: Color(0xFF475569))),
+                                    const Text('  •  ', style: TextStyle(color: Color(0xFF94A3B8))),
+                                    const Icon(Icons.science_outlined, size: 16, color: Color(0xFF475569)),
+                                    const SizedBox(width: 4),
+                                    Text(userDept, style: const TextStyle(fontSize: 13, color: Color(0xFF475569))),
+                                    const Text('  •  ', style: TextStyle(color: Color(0xFF94A3B8))),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.6),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(joinedDate, style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Student at the university. Interested in textbooks, electronics, and sharing subscriptions.',
+                                  style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Sign Out Button
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Logged out successfully')),
+                              );
+                              context.go('/landing');
+                            },
+                            icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFFDC2626)),
+                            label: const Text('Sign Out', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold, fontSize: 13)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFEE2E2),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(width: 20),
-
-                      // User Info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  'Alex Rivera',
-                                  style: TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                IconButton(
-                                  onPressed: _showEditProfileModal,
-                                  icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF2563EB)),
-                                  tooltip: 'Edit Profile',
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.school_outlined, size: 16, color: Color(0xFF475569)),
-                                const SizedBox(width: 4),
-                                const Text('Stanford University', style: TextStyle(fontSize: 13, color: Color(0xFF475569))),
-                                const Text('  •  ', style: TextStyle(color: Color(0xFF94A3B8))),
-                                const Icon(Icons.science_outlined, size: 16, color: Color(0xFF475569)),
-                                const SizedBox(width: 4),
-                                const Text('Computer Science', style: TextStyle(fontSize: 13, color: Color(0xFF475569))),
-                                const Text('  •  ', style: TextStyle(color: Color(0xFF94A3B8))),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.6),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Text('Joined Aug 2022', style: TextStyle(fontSize: 11, color: Color(0xFF475569))),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'Senior CS student. Selling textbooks, electronics, and sharing subscription slots. Usually on campus near the engineering quad.',
-                              style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Sign Out Button
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Logged out successfully')),
-                          );
-                          context.go('/landing');
-                        },
-                        icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFFDC2626)),
-                        label: const Text('Sign Out', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold, fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFEE2E2),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                    ],
+                      );
+                    }
                   ),
                 ),
                 const SizedBox(height: 24),

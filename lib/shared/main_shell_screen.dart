@@ -5,6 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/providers/marketplace_provider.dart';
 
 class MainShellScreen extends ConsumerStatefulWidget {
@@ -189,9 +191,32 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                 width: 2,
                               ),
                             ),
-                            child: const CircleAvatar(
-                              radius: 16,
-                              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'),
+                            child: StreamBuilder<DocumentSnapshot>(
+                              stream: FirebaseAuth.instance.currentUser != null
+                                  ? FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).snapshots()
+                                  : const Stream.empty(),
+                              builder: (context, snapshot) {
+                                String? photoUrl;
+                                String userName = '';
+
+                                if (snapshot.hasData && snapshot.data!.exists) {
+                                  final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                                  photoUrl = data['photoUrl'] ?? data['profileImageUrl'];
+                                  userName = data['name'] ?? '';
+                                }
+
+                                return CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: const Color(0xFF2563EB),
+                                  backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                                  child: photoUrl == null
+                                      ? Text(
+                                          userName.isNotEmpty ? userName[0].toUpperCase() : 'S',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                        )
+                                      : null,
+                                );
+                              },
                             ),
                           ),
                         ),

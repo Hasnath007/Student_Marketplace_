@@ -4,8 +4,9 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import '../features/auth/screens/landing_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
@@ -34,8 +35,11 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
 final appRouter = GoRouter(
   initialLocation: '/landing',
-  refreshListenable: GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
+  refreshListenable: GoRouterRefreshStream(
+      Firebase.apps.isNotEmpty ? FirebaseAuth.instance.authStateChanges() : const Stream.empty()),
   redirect: (context, state) {
+    if (Firebase.apps.isEmpty) return null; // Skip auth check in tests
+
     final user = FirebaseAuth.instance.currentUser;
     final isLoggedIn = user != null;
     

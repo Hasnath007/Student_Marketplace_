@@ -23,4 +23,56 @@ class Product {
     required this.sellerName,
     required this.sellerCampus,
   });
+
+  Product copyWith({
+    String? id,
+    String? title,
+    double? price,
+    String? category,
+    String? condition,
+    String? description,
+    String? imageUrl,
+    String? sellerName,
+    String? sellerCampus,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      price: price ?? this.price,
+      category: category ?? this.category,
+      condition: condition ?? this.condition,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      sellerName: sellerName ?? this.sellerName,
+      sellerCampus: sellerCampus ?? this.sellerCampus,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'price': price,
+      'category': category,
+      'condition': condition,
+      'description': description,
+      'imageUrl': imageUrl,
+      'sellerName': sellerName,
+      'sellerCampus': sellerCampus,
+    };
+  }
+
+  factory Product.fromMap(Map<String, dynamic> map) {
+    return Product(
+      id: map['id'] ?? '',
+      title: map['title'] ?? '',
+      price: (map['price'] ?? 0.0).toDouble(),
+      category: map['category'] ?? '',
+      condition: map['condition'] ?? '',
+      description: map['description'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      sellerName: map['sellerName'] ?? '',
+      sellerCampus: map['sellerCampus'] ?? '',
+    );
+  }
 }

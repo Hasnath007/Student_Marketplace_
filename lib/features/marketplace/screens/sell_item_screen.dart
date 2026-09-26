@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/utils/file_picker_helper.dart';
 import '../../../models/product.dart';
@@ -392,7 +391,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
 
                                     await ref.read(marketplaceProvider.notifier).addProduct(newProduct);
 
-                                    if (!mounted) return;
+                                    if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('"$title" published successfully!'),
@@ -401,7 +400,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                     );
                                     context.go('/marketplace');
                                   } catch (e) {
-                                    if (!mounted) return;
+                                    if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('Failed to publish: $e'),

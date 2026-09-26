@@ -11,6 +11,8 @@ import '../features/auth/screens/landing_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
 import '../features/auth/screens/verify_email_screen.dart';
+import '../features/auth/screens/forgot_password_screen.dart';
+import '../features/auth/screens/reset_password_screen.dart';
 import '../features/marketplace/screens/marketplace_screen.dart';
 import '../features/marketplace/screens/product_details_screen.dart';
 import '../features/marketplace/screens/sell_item_screen.dart';
@@ -47,7 +49,9 @@ final appRouter = GoRouter(
     final isAuthRoute = state.matchedLocation == '/landing' ||
         state.matchedLocation == '/login' ||
         state.matchedLocation == '/signup' ||
-        state.matchedLocation == '/verify-email';
+        state.matchedLocation == '/verify-email' ||
+        state.matchedLocation == '/forgot-password' ||
+        state.matchedLocation == '/reset-password';
 
     // If user is NOT logged in and trying to access a protected page
     if (!isLoggedIn && !isAuthRoute) {
@@ -78,6 +82,17 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/verify-email',
       pageBuilder: (context, state) => const NoTransitionPage(child: VerifyEmailScreen()),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      pageBuilder: (context, state) => const NoTransitionPage(child: ForgotPasswordScreen()),
+    ),
+    GoRoute(
+      path: '/reset-password',
+      pageBuilder: (context, state) {
+        final oobCode = state.uri.queryParameters['oobCode'] ?? '';
+        return NoTransitionPage(child: ResetPasswordScreen(oobCode: oobCode));
+      },
     ),
 
     // Main App Shell Route

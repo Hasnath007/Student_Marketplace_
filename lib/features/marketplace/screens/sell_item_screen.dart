@@ -4,9 +4,11 @@
 // 🔗 ইউটিলস: FilePickerHelper দিয়ে গ্যালারি বা ফাইল থেকে ছবি নেওয়া হয়।
 
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/utils/file_picker_helper.dart';
 import '../../../models/product.dart';
@@ -27,6 +29,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
   String _selectedCategory = 'Books';
   Uint8List? _uploadedImageBytes;
   String? _uploadedImageUrl;
+  bool _isPublishing = false;
 
   @override
   void dispose() {
@@ -71,7 +74,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1300),
+            constraints: const BoxConstraints(maxWidth: 800),
             child: Form(
               key: _formKey,
               child: Column(
@@ -94,15 +97,9 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Main 2-Column Layout
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Main Content
+                  Column(
                     children: [
-                      // Left Column: Form Cards (Flex 7)
-                      Expanded(
-                        flex: 7,
-                        child: Column(
-                          children: [
                             // 1. Photos Card
                             _buildCardContainer(
                               title: 'Photos',
@@ -337,153 +334,110 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                             const SizedBox(height: 28),
 
                             // Actions Bar (Save Draft & Publish Listing)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                OutlinedButton(
-                                  onPressed: () {
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _isPublishing ? null : () async {
+                                  if (!(_formKey.currentState?.validate() ?? false)) return;
+                                  
+                                  if (_uploadedImageBytes == null && _uploadedImageUrl == null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Draft saved successfully to your profile!')),
+                                      const SnackBar(content: Text('Please upload a photo first.')),
                                     );
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                  child: const Text('Save Draft', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1E293B), fontSize: 14)),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: () {
+                                    return;
+                                  }
+
+                                  setState(() {
+                                    _isPublishing = true;
+                                  });
+
+                                  try {
                                     final title = _titleController.text.trim();
-                                    final price = double.tryParse(_priceController.text.trim().replaceAll('৳', '').replaceAll('\$', '')) ?? 250.0;
+                                    final price = double.tryParse(_priceController.text.trim().replaceAll('৳', '').replaceAll('\$', '')) ?? 0.0;
                                     final desc = _descController.text.trim();
 
+                                    String finalImageUrl = _uploadedImageUrl ?? '';
+                                    
+                                    // Upload to Firestore directly as Base64 (100% Guaranteed to work on Web)
+                                    if (_uploadedImageBytes != null) {
+                                      try {
+                                        final base64String = base64Encode(_uploadedImageBytes!);
+                                        finalImageUrl = 'data:image/jpeg;base64,$base64String';
+                                        
+                                        // Check if it exceeds Firestore limit (1MB roughly, we use 900KB to be safe)
+                                        if (base64String.length > 900000) {
+                                          throw Exception('Image is too large! Please select a smaller image (under 700KB) or take a screenshot of it.');
+                                        }
+                                      } catch (e) {
+                                        throw Exception(e.toString());
+                                      }
+                                    }
+
+                                    // Get current user info
+                                    final user = FirebaseAuth.instance.currentUser;
+                                    final sellerName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Anonymous Student';
+
                                     final newProduct = Product(
-                                      id: 'p_${DateTime.now().millisecondsSinceEpoch}',
-                                      title: title.isNotEmpty ? title : 'Physics for Scientists & Engineers',
-                                      price: price > 0 ? price : 350.0,
+                                      id: '', // Will be set by provider/Firestore
+                                      title: title,
+                                      price: price,
                                       category: _selectedCategory,
                                       condition: _selectedCondition,
-                                      description: desc.isNotEmpty
-                                          ? desc
-                                          : 'Mint condition campus listing. Clean pages, no highlighting, available for campus meetup.',
-                                      imageUrl: _uploadedImageUrl ?? 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
-                                      sellerName: 'Alex Rivera (You)',
-                                      sellerCampus: 'Main Campus',
+                                      description: desc,
+                                      imageUrl: finalImageUrl,
+                                      sellerName: sellerName,
+                                      sellerCampus: 'UIU Campus', // Can be made dynamic later
                                     );
 
-                                    ref.read(marketplaceProvider.notifier).addProduct(newProduct);
+                                    await ref.read(marketplaceProvider.notifier).addProduct(newProduct);
 
+                                    if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('"${newProduct.title}" published successfully to Marketplace!'),
+                                        content: Text('"$title" published successfully!'),
                                         backgroundColor: const Color(0xFF2563EB),
                                       ),
                                     );
                                     context.go('/marketplace');
-                                  },
-                                  icon: const Icon(Icons.rocket_launch_rounded, size: 18),
-                                  label: const Text('Publish Listing', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2563EB),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                    elevation: 0,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(width: 28),
-
-                      // Right Column: Seller Tips & Graphic Card (Flex 4)
-                      Expanded(
-                        flex: 4,
-                        child: Column(
-                          children: [
-                            // Seller Tips Box
-                            Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEEF2FF),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: const Color(0xFFE0E7FF)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
-                                    children: [
-                                      Icon(Icons.lightbulb_outline_rounded, size: 20, color: Color(0xFF2563EB)),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'SELLER TIPS',
-                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF2563EB), letterSpacing: 0.5),
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Failed to publish: $e'),
+                                        backgroundColor: Colors.red,
                                       ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _buildTipItem('1', 'Take great photos', 'Use natural light. Show all angles and clearly capture any flaws.'),
-                                  const SizedBox(height: 16),
-                                  _buildTipItem('2', 'Price it right', 'Check similar listings. Pricing 10-15% lower than average gets 2x more views.'),
-                                  const SizedBox(height: 16),
-                                  _buildTipItem('3', 'Be descriptive', 'Include dimensions, model numbers, and exactly what\'s included.'),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Fast Selling Banner Box
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
+                                    );
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() {
+                                        _isPublishing = false;
+                                      });
+                                    }
+                                  }
+                                },
+                                icon: _isPublishing
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : const Icon(Icons.rocket_launch_rounded, size: 18),
+                                label: Text(
+                                  _isPublishing ? 'Publishing...' : 'Publish Listing',
+                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                                 ),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: const Color(0xFFBFDBFE)),
-                              ),
-                              child: Column(
-                                children: [
-                                  Image.network(
-                                    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=300&q=80',
-                                    height: 100,
-                                    cacheWidth: 300,
-                                    cacheHeight: 150,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      height: 90,
-                                      width: 90,
-                                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                                      child: const Icon(Icons.shopping_bag_outlined, size: 40, color: Color(0xFF2563EB)),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  const Text(
-                                    'FAST SELLING',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                      color: Color(0xFF1E3A8A),
-                                      letterSpacing: 1.5,
-                                    ),
-                                  ),
-                                ],
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2563EB),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  elevation: 0,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
+
                 ],
               ),
             ),
@@ -561,38 +515,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
     );
   }
 
-  Widget _buildTipItem(String num, String title, String desc) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 22,
-          height: 22,
-          decoration: const BoxDecoration(
-            color: Color(0xFFDBEAFE),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              num,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B))),
-              const SizedBox(height: 2),
-              Text(desc, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+
 }
 
 // Custom Painter for dashed border rectangle container

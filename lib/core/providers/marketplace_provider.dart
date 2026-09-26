@@ -3,6 +3,7 @@
 // 🔗 ব্যবহৃত হয়: MarketplaceScreen, SellItemScreen, ProductDetailsScreen
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/product.dart';
 
 final sampleProducts = [
@@ -94,10 +95,47 @@ final sampleProducts = [
 
 class MarketplaceNotifier extends Notifier<List<Product>> {
   @override
-  List<Product> build() => sampleProducts;
+  List<Product> build() {
+    _fetchProducts();
+    return sampleProducts; // Initial load, will be replaced by Firestore data
+  }
 
-  void addProduct(Product product) {
-    state = [product, ...state];
+  Future<void> _fetchProducts() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('products')
+          .orderBy('createdAt', descending: true)
+          .get();
+      
+      final products = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return Product.fromMap(data);
+      }).toList();
+
+      if (products.isNotEmpty) {
+        state = products;
+      }
+    } catch (e) {
+      // Failed to fetch, keep the sample data for now
+    }
+  }
+
+  Future<void> addProduct(Product product) async {
+    try {
+      final docRef = FirebaseFirestore.instance.collection('products').doc();
+      final newProduct = product.copyWith(id: docRef.id);
+      
+      final data = newProduct.toMap();
+      data['createdAt'] = FieldValue.serverTimestamp();
+      
+      await docRef.set(data);
+      
+      // Update local state so UI updates instantly
+      state = [newProduct, ...state];
+    } catch (e) {
+      throw Exception('Failed to add product: $e');
+    }
   }
 }
 

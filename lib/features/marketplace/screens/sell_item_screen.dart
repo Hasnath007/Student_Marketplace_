@@ -387,6 +387,8 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                       imageUrl: finalImageUrl,
                                       sellerName: sellerName,
                                       sellerCampus: 'UIU Campus', // Can be made dynamic later
+                                      sellerId: user?.uid ?? '',
+                                      isSold: false,
                                     );
 
                                     await ref.read(marketplaceProvider.notifier).addProduct(newProduct);

@@ -6,6 +6,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../models/product.dart';
 
@@ -15,6 +18,7 @@ class MarketplaceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final products = ref.watch(marketplaceProvider);
+    final isLoading = ref.watch(marketplaceLoadingProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
     final searchQuery = ref.watch(searchQueryProvider);
     final selectedSort = ref.watch(selectedSortProvider);
@@ -317,8 +321,16 @@ class MarketplaceScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Empty State if no items in category or search
-                if (filteredProducts.isEmpty)
+                // Loading or Empty State
+                if (isLoading)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 80),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                    ),
+                  )
+                else if (filteredProducts.isEmpty)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 60),
@@ -470,7 +482,7 @@ class _ProductCardState extends State<_ProductCard> {
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => context.go('/product-details', extra: item),
+          onTap: () => context.go('/product-details/${item.id}', extra: item),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -563,6 +575,33 @@ class _ProductCardState extends State<_ProductCard> {
                       ),
                     ),
                   ),
+                  if (item.isSold)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                        ),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'SOLD OUT',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
 
@@ -592,23 +631,67 @@ class _ProductCardState extends State<_ProductCard> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 10,
-                          backgroundColor: widget.theme.colorScheme.primaryContainer,
-                          child: Text(item.sellerName[0], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(item.sellerName, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                      ],
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: () {
+                        if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();
+                        
+                        String targetUid = item.sellerId ?? '';
+                        
+                        if (targetUid.isEmpty) {
+                          final currUser = FirebaseAuth.instance.currentUser;
+                          if (currUser != null) {
+                            final prefix = currUser.email?.split('@')[0] ?? '';
+                            final isOwner = item.sellerName == currUser.displayName ||
+                                (prefix.isNotEmpty && item.sellerName == prefix);
+                            if (isOwner) targetUid = currUser.uid;
+                          }
+                        }
+
+                        return targetUid.isNotEmpty 
+                            ? FirebaseFirestore.instance.collection('users').doc(targetUid).snapshots()
+                            : const Stream<DocumentSnapshot>.empty();
+                      }(),
+                      builder: (context, snapshot) {
+                        String displaySellerName = item.sellerName;
+                        String? sellerPhotoUrl;
+
+                        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                          final userData = snapshot.data!.data() as Map<String, dynamic>?;
+                          if (userData != null) {
+                            displaySellerName = userData['name'] ?? displaySellerName;
+                            sellerPhotoUrl = userData['photoUrl'] ?? userData['profileImageUrl'];
+                          }
+                        }
+
+                        return Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 10,
+                              backgroundColor: widget.theme.colorScheme.primaryContainer,
+                              backgroundImage: sellerPhotoUrl != null ? NetworkImage(sellerPhotoUrl) : null,
+                              child: sellerPhotoUrl == null
+                                  ? Text(displaySellerName.isNotEmpty ? displaySellerName[0].toUpperCase() : '?', 
+                                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold))
+                                  : null,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                displaySellerName, 
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
                     ),
                     const SizedBox(height: 14),
                     SizedBox(
                       width: double.infinity,
                       height: 32,
                       child: OutlinedButton(
-                        onPressed: () => context.go('/product-details', extra: item),
+                        onPressed: () => context.go('/product-details/${item.id}', extra: item),
                         style: OutlinedButton.styleFrom(
                           backgroundColor: _isHovered ? const Color(0xFF2563EB) : const Color(0xFFEEF2FF),
                           foregroundColor: _isHovered ? Colors.white : const Color(0xFF2563EB),

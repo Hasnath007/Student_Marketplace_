@@ -93,11 +93,20 @@ final sampleProducts = [
   ),
 ];
 
+class MarketplaceLoadingNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void setLoading(bool val) => state = val;
+}
+
+final marketplaceLoadingProvider = NotifierProvider<MarketplaceLoadingNotifier, bool>(MarketplaceLoadingNotifier.new);
+
 class MarketplaceNotifier extends Notifier<List<Product>> {
   @override
   List<Product> build() {
     _fetchProducts();
-    return sampleProducts; // Initial load, will be replaced by Firestore data
+    return []; // Start empty
   }
 
   Future<void> _fetchProducts() async {
@@ -113,11 +122,12 @@ class MarketplaceNotifier extends Notifier<List<Product>> {
         return Product.fromMap(data);
       }).toList();
 
-      if (products.isNotEmpty) {
-        state = products;
-      }
+      state = products;
     } catch (e) {
-      // Failed to fetch, keep the sample data for now
+      // Failed to fetch, set empty
+      state = [];
+    } finally {
+      ref.read(marketplaceLoadingProvider.notifier).setLoading(false);
     }
   }
 
@@ -135,6 +145,29 @@ class MarketplaceNotifier extends Notifier<List<Product>> {
       state = [newProduct, ...state];
     } catch (e) {
       throw Exception('Failed to add product: $e');
+    }
+  }
+
+  Future<void> updateProduct(Product product) async {
+    try {
+      if (product.id.isEmpty) return;
+      await FirebaseFirestore.instance.collection('products').doc(product.id).update(product.toMap());
+      state = [
+        for (final p in state)
+          if (p.id == product.id) product else p,
+      ];
+    } catch (e) {
+      throw Exception('Failed to update product: $e');
+    }
+  }
+
+  Future<void> deleteProduct(String productId) async {
+    try {
+      if (productId.isEmpty) return;
+      await FirebaseFirestore.instance.collection('products').doc(productId).delete();
+      state = state.where((p) => p.id != productId).toList();
+    } catch (e) {
+      throw Exception('Failed to delete product: $e');
     }
   }
 }

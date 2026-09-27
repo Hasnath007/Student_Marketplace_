@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../models/product.dart';
 import '../../subscriptions/widgets/host_chat_dialog.dart';
 import '../widgets/payment_checkout_dialog.dart';
+import '../../../core/providers/marketplace_provider.dart';
 
-class ProductDetailsScreen extends StatefulWidget {
+class ProductDetailsScreen extends ConsumerStatefulWidget {
   final Product? product;
+  final String? productId;
 
-  const ProductDetailsScreen({super.key, this.product});
+  const ProductDetailsScreen({super.key, this.product, this.productId});
 
   @override
-  State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
+  ConsumerState<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
 }
 
-class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
+class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   late String _activeImage;
   bool _isOrderPlaced = false;
   bool _isReceived = false;
@@ -36,17 +42,74 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.product?.title ?? 'Introduction to Linear Algebra, 5th Edition';
-    final priceStr = widget.product != null ? '৳${widget.product!.price.toStringAsFixed(0)}' : '৳450';
-    final seller = widget.product?.sellerName ?? 'Sarah Jenkins';
-    final desc = widget.product?.description ??
-        'Mint condition textbook required for MATH 220. No highlighting, dog-eared pages, or spine damage. Includes the unused digital access code card inside the front cover.\n\nOriginally purchased for ৳1200 at the campus bookstore. Selling because I ended up dropping the class during syllabus week. Pick up near North Campus library preferred.';
-    final condition = widget.product?.condition ?? 'Like New';
+    Product? activeProductOrNull = widget.product;
+    
+    if (activeProductOrNull == null && widget.productId != null) {
+      final allProducts = ref.watch(marketplaceProvider);
+      try {
+        activeProductOrNull = allProducts.firstWhere((p) => p.id == widget.productId);
+      } catch (e) {
+        activeProductOrNull = null;
+      }
+    }
 
+    if (activeProductOrNull == null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8FAFC),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF2563EB))),
+      );
+    }
+    
+    final Product activeProduct = activeProductOrNull;
+
+    if (_activeImage == 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80' && activeProduct.imageUrl.isNotEmpty) {
+      _activeImage = activeProduct.imageUrl;
+    }
+
+    final title = activeProduct.title;
+    final priceStr = '৳${activeProduct.price.toStringAsFixed(0)}';
+    final desc = activeProduct.description.isNotEmpty ? activeProduct.description :
+        'Mint condition textbook required for MATH 220. No highlighting, dog-eared pages, or spine damage. Includes the unused digital access code card inside the front cover.\n\nOriginally purchased for ৳1200 at the campus bookstore. Selling because I ended up dropping the class during syllabus week. Pick up near North Campus library preferred.';
+    final condition = activeProduct.condition;
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: () {
+          if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();
+          
+          String targetUid = activeProduct!.sellerId ?? '';
+          
+          if (targetUid.isEmpty) {
+            final currUser = FirebaseAuth.instance.currentUser;
+            if (currUser != null) {
+              final prefix = currUser.email?.split('@')[0] ?? '';
+              final isOwner = activeProduct.sellerName == currUser.displayName ||
+                  (prefix.isNotEmpty && activeProduct.sellerName == prefix);
+              if (isOwner) targetUid = currUser.uid;
+            }
+          }
+
+          return targetUid.isNotEmpty 
+              ? FirebaseFirestore.instance.collection('users').doc(targetUid).snapshots()
+              : const Stream<DocumentSnapshot>.empty();
+        }(),
+        builder: (context, snapshot) {
+          String displaySellerName = widget.product?.sellerName ?? 'Sarah Jenkins';
+          String? sellerPhotoUrl;
+
+          if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+            final userData = snapshot.data!.data() as Map<String, dynamic>?;
+            if (userData != null) {
+              displaySellerName = userData['name'] ?? displaySellerName;
+              sellerPhotoUrl = userData['photoUrl'] ?? userData['profileImageUrl'];
+            }
+          }
+
+          final seller = displaySellerName;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1400),
@@ -79,7 +142,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   height: 380,
                                   width: double.infinity,
                                   child: Hero(
-                                    tag: 'product-img-${widget.product?.id ?? ""}',
+                                    tag: 'product-img-${activeProduct.id}',
                                     child: AnimatedSwitcher(
                                       duration: const Duration(milliseconds: 250),
                                       switchInCurve: Curves.easeOutCubic,
@@ -124,36 +187,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Thumbnails Row
-                          Row(
-                            children: [
-                              _buildThumb('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80'),
-                              const SizedBox(width: 10),
-                              _buildThumb('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=300&q=80'),
-                              const SizedBox(width: 10),
-                              _buildThumb('https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=300&q=80'),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Container(
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFDBEAFE),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.collections_outlined, size: 20, color: Color(0xFF2563EB)),
-                                        SizedBox(height: 2),
-                                        Text('+2', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 12)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          // Thumbnails Row removed as products only have one main image
                         ],
                       ),
                     ),
@@ -175,7 +209,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  (widget.product?.category ?? 'Books & Textbooks').toUpperCase(),
+                                  activeProduct.category.toUpperCase(),
                                   style: const TextStyle(color: Color(0xFF2563EB), fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
                               ),
@@ -194,14 +228,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               Text(priceStr, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
-                              const SizedBox(width: 12),
-                              Row(
-                                children: [
-                                  Icon(Icons.trending_up_rounded, size: 14, color: Colors.orange.shade800),
-                                  const SizedBox(width: 4),
-                                  Text('High Demand', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade800)),
-                                ],
-                              ),
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -222,17 +248,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: const Color(0xFFE2E8F0)),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('Author / Brand', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                      Text('Gilbert Strang', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      SizedBox(height: 10),
-                                      Text('Course', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                      Text('MATH 220', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                                      const Text('Category', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                      Text(activeProduct.category, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      const SizedBox(height: 10),
+                                      const Text('Condition', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                      Text(condition, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
                                     ],
                                   ),
                                 ),
@@ -240,11 +266,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('ID / ISBN', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                      Text('978-0980232776', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      SizedBox(height: 10),
-                                      Text('Format', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                      Text('Hardcover', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      const Text('Campus', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                      Text(activeProduct.sellerCampus, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
                                 ),
@@ -255,31 +278,38 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                           // Seller Info Card
                           Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEEF2FF),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                const CircleAvatar(
-                                  radius: 20,
-                                  backgroundImage: NetworkImage('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80'),
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Row(
                                   children: [
-                                    Text(seller, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                    const SizedBox(height: 2),
-                                    const Text('★ 4.9 (12 Sales) • Verified Student', style: TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                                    CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: const Color(0xFF2563EB),
+                                      backgroundImage: sellerPhotoUrl != null ? NetworkImage(sellerPhotoUrl) : null,
+                                      child: sellerPhotoUrl == null
+                                          ? Text(
+                                              displaySellerName.isNotEmpty ? displaySellerName[0].toUpperCase() : '?',
+                                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                            )
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(displaySellerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                        const SizedBox(height: 2),
+                                        const Text('Verified Student', style: TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                                      ],
+                                    ),
+                                    const Spacer(),
+                                    const Icon(Icons.chevron_right, color: Color(0xFF475569)),
                                   ],
                                 ),
-                                const Spacer(),
-                                const Icon(Icons.chevron_right, color: Color(0xFF475569)),
-                              ],
-                            ),
-                          ),
+                              ),
                           const SizedBox(height: 20),
 
                           // Order & Handover Status Section if purchased
@@ -399,6 +429,28 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
+                          ] else if (activeProduct.isSold) ...[
+                            // Sold Out state
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  '🚫 THIS ITEM IS SOLD OUT',
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
                           ] else ...[
                             // Buy Now / Pay with bKash/Nagad Button
                             SizedBox(
@@ -410,7 +462,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                     context,
                                     itemName: title,
                                     priceText: priceStr,
-                                    category: widget.product?.category ?? 'Campus Marketplace',
+                                    category: activeProduct.category,
                                     onOpenChat: () {
                                       HostChatDialog.show(
                                         context,
@@ -499,68 +551,42 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 const SizedBox(height: 16),
 
                 // Bottom Cards Grid
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => context.go('/product-details', extra: const Product(id: 'r1', title: 'TI-84 Plus CE Graphing Calculator', price: 1200.0, category: 'Electronics', condition: 'Good', description: 'Calculator with color screen', imageUrl: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=400&q=80', sellerName: 'Michael R.', sellerCampus: 'Main Campus')),
-                        child: _buildSmallCard('TI-84 Plus CE Graphing Calculator', '৳1200', 'Good', 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=400&q=80'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => context.go('/product-details', extra: const Product(id: 'r2', title: 'Grid Rule Notebooks (Pack of 3)', price: 150.0, category: 'Stationery', condition: 'New', description: '3 notebooks for engineering', imageUrl: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=400&q=80', sellerName: 'Lisa W.', sellerCampus: 'Engineering Quad')),
-                        child: _buildSmallCard('Grid Rule Notebooks (Pack of 3)', '৳150', 'New', 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=400&q=80'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => context.go('/product-details', extra: const Product(id: 'r3', title: 'Comprehensive Midterm Study Guides', price: 180.0, category: 'Notes', condition: 'Digital', description: 'Exam notes and solved problems', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&q=80', sellerName: 'David K.', sellerCampus: 'East Dorms')),
-                        child: _buildSmallCard('Comprehensive Midterm Study Guides', '৳180', 'Digital', 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&q=80'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => context.go('/product-details', extra: const Product(id: 'r4', title: 'Personal Whiteboard + Markers', price: 200.0, category: 'Stationery', condition: 'Like New', description: 'Mini whiteboard set', imageUrl: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=400&q=80', sellerName: 'Sarah J.', sellerCampus: 'North Campus')),
-                        child: _buildSmallCard('Personal Whiteboard + Markers', '৳200', 'Like New', 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=400&q=80'),
-                      ),
-                    ),
-                  ],
+                Consumer(
+                  builder: (context, ref, child) {
+                    final allProducts = ref.watch(marketplaceProvider);
+                    final moreDeals = allProducts
+                        .where((p) => p.id != activeProduct!.id)
+                        .take(4)
+                        .toList();
+                        
+                    if (moreDeals.isEmpty) return const SizedBox.shrink();
+
+                    return Row(
+                      children: moreDeals.map((deal) {
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 16.0),
+                            child: InkWell(
+                              onTap: () => context.go('/product-details/${deal.id}', extra: deal),
+                              child: _buildSmallCard(deal.title, '৳${deal.price.toStringAsFixed(0)}', deal.condition, deal.imageUrl),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
                 ),
               ],
             ),
           ),
         ),
+      );
+    },
       ),
     );
   }
 
-  Widget _buildThumb(String url) {
-    final isSelected = _activeImage == url;
-    return GestureDetector(
-      onTap: () => setState(() => _activeImage = url),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: SizedBox(
-            height: 76,
-            width: 76,
-            child: Image.network(url, fit: BoxFit.cover),
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildSmallCard(String title, String price, String badge, String imgUrl) {
     return Container(

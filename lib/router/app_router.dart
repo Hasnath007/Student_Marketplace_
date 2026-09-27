@@ -120,10 +120,11 @@ final appRouter = GoRouter(
 
     // Details Route
     GoRoute(
-      path: '/product-details',
+      path: '/product-details/:id',
       pageBuilder: (context, state) {
         final product = state.extra as Product?;
-        return NoTransitionPage(child: ProductDetailsScreen(product: product));
+        final productId = state.pathParameters['id'];
+        return NoTransitionPage(child: ProductDetailsScreen(product: product, productId: productId));
       },
     ),
   ],

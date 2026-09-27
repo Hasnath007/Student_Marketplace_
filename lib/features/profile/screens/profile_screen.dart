@@ -870,7 +870,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return false;
     }).toList();
     
-    final _myListings = myProducts.map((p) => {
+    final myListings = myProducts.map((p) => {
       'id': p.id,
       'title': p.title,
       'price': p.price.toStringAsFixed(0),
@@ -884,7 +884,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }).toList();
 
     if (_selectedTab == 0) {
-      final activeCount = _myListings.where((l) => !(l['isSold'] as bool)).length;
+      final activeCount = myListings.where((l) => !(l['isSold'] as bool)).length;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -919,7 +919,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 18),
-          if (_myListings.isEmpty)
+          if (myListings.isEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(32),
@@ -936,7 +936,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Wrap(
               spacing: 16,
               runSpacing: 16,
-              children: _myListings.map((listing) {
+              children: myListings.map((listing) {
                 return SizedBox(
                   width: 320,
                   child: _buildListingCard(listing),

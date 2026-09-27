@@ -78,7 +78,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
         stream: () {
           if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();
           
-          String targetUid = activeProduct!.sellerId ?? '';
+          String targetUid = activeProduct.sellerId;
           
           if (targetUid.isEmpty) {
             final currUser = FirebaseAuth.instance.currentUser;
@@ -555,7 +555,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                   builder: (context, ref, child) {
                     final allProducts = ref.watch(marketplaceProvider);
                     final moreDeals = allProducts
-                        .where((p) => p.id != activeProduct!.id)
+                        .where((p) => p.id != activeProduct.id)
                         .take(4)
                         .toList();
                         

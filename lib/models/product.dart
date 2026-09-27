@@ -11,6 +11,8 @@ class Product {
   final String imageUrl;
   final String sellerName;
   final String sellerCampus;
+  final String sellerId;
+  final bool isSold;
 
   const Product({
     required this.id,
@@ -22,6 +24,8 @@ class Product {
     required this.imageUrl,
     required this.sellerName,
     required this.sellerCampus,
+    this.sellerId = '',
+    this.isSold = false,
   });
 
   Product copyWith({
@@ -34,6 +38,8 @@ class Product {
     String? imageUrl,
     String? sellerName,
     String? sellerCampus,
+    String? sellerId,
+    bool? isSold,
   }) {
     return Product(
       id: id ?? this.id,
@@ -45,6 +51,8 @@ class Product {
       imageUrl: imageUrl ?? this.imageUrl,
       sellerName: sellerName ?? this.sellerName,
       sellerCampus: sellerCampus ?? this.sellerCampus,
+      sellerId: sellerId ?? this.sellerId,
+      isSold: isSold ?? this.isSold,
     );
   }
 
@@ -59,6 +67,8 @@ class Product {
       'imageUrl': imageUrl,
       'sellerName': sellerName,
       'sellerCampus': sellerCampus,
+      'sellerId': sellerId,
+      'isSold': isSold,
     };
   }
 
@@ -73,6 +83,8 @@ class Product {
       imageUrl: map['imageUrl'] ?? '',
       sellerName: map['sellerName'] ?? '',
       sellerCampus: map['sellerCampus'] ?? '',
+      sellerId: map['sellerId'] ?? '',
+      isSold: map['isSold'] ?? false,
     );
   }
 }

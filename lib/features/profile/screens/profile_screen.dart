@@ -7,57 +7,26 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../subscriptions/widgets/host_chat_dialog.dart';
+import '../../../core/providers/marketplace_provider.dart';
+import '../../../models/product.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int _selectedTab = 0;
   bool _linearAlgebraReceived = false;
   double _availableBalance = 2850.0;
   final double _pendingBalance = 650.0;
   double _totalWithdrawn = 3000.0;
 
-  final List<Map<String, dynamic>> _myListings = [
-    {
-      'id': 'list_1',
-      'title': 'Calculus: Early Transcendentals 9th Edition',
-      'price': '450',
-      'desc': 'Used for one semester. Great condition, minimal highlighting.',
-      'imageUrl': 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
-      'status': 'Active',
-      'isSold': false,
-      'views': '12 views',
-      'category': 'Books',
-    },
-    {
-      'id': 'list_2',
-      'title': 'Keychron K2 Wireless Mechanical Keyboard',
-      'price': '1500',
-      'desc': 'Brown switches. Includes original box and extra keycaps.',
-      'imageUrl': 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
-      'status': 'Active',
-      'isSold': false,
-      'views': '45 views',
-      'category': 'Electronics',
-    },
-    {
-      'id': 'list_3',
-      'title': 'IKEA Tertial Desk Lamp',
-      'price': '350',
-      'desc': 'Works perfectly, just upgraded my setup.',
-      'imageUrl': 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80',
-      'status': 'Sold',
-      'isSold': true,
-      'views': 'Sold on Oct 12',
-      'category': 'Dorm Gear',
-    },
-  ];
+
 
   final List<Map<String, dynamic>> _transactions = [
     {
@@ -266,9 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextButton(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        setState(() {
-                          _myListings.removeWhere((item) => item['id'] == listing['id']);
-                        });
+                        ref.read(marketplaceProvider.notifier).deleteProduct(listing['id']);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Listing "${listing['title']}" deleted.'),
@@ -302,17 +269,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           return;
                         }
 
-                        setState(() {
-                          final idx = _myListings.indexWhere((item) => item['id'] == listing['id']);
-                          if (idx != -1) {
-                            _myListings[idx]['title'] = newTitle;
-                            _myListings[idx]['price'] = newPrice;
-                            _myListings[idx]['desc'] = newDesc;
-                            _myListings[idx]['category'] = selectedCat;
-                            _myListings[idx]['isSold'] = isSold;
-                            _myListings[idx]['status'] = isSold ? 'Sold' : 'Active';
-                          }
-                        });
+                        final updatedProduct = (listing['_originalProduct'] as Product).copyWith(
+                          title: newTitle,
+                          price: double.tryParse(newPrice) ?? 0.0,
+                          description: newDesc,
+                          category: selectedCat,
+                          isSold: isSold,
+                        );
+                        ref.read(marketplaceProvider.notifier).updateProduct(updatedProduct);
 
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -861,7 +825,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildTabItem(0, 'My Listings', '3'),
+                      _buildTabItem(0, 'My Listings', '${ref.watch(marketplaceProvider).where((p) {
+                        final u = FirebaseAuth.instance.currentUser;
+                        final prefix = u?.email?.split('@')[0] ?? '';
+                        return p.sellerId == (u?.uid ?? '') || p.sellerName == (u?.displayName ?? '') || (prefix.isNotEmpty && p.sellerName == prefix);
+                      }).length}'),
                       const SizedBox(width: 24),
                       _buildTabItem(1, 'Subscriptions', '3'),
                       const SizedBox(width: 24),
@@ -887,8 +855,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildTabContent() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final currentUserId = currentUser?.uid ?? '';
+    final currentUserDisplayName = currentUser?.displayName ?? '';
+    final currentUserEmailPrefix = currentUser?.email?.split('@')[0] ?? '';
+    
+    final allProducts = ref.watch(marketplaceProvider);
+    
+    // Dynamic Listings Filtering
+    final myProducts = allProducts.where((p) {
+      if (p.sellerId == currentUserId) return true;
+      if (currentUserDisplayName.isNotEmpty && p.sellerName == currentUserDisplayName) return true;
+      if (currentUserEmailPrefix.isNotEmpty && p.sellerName == currentUserEmailPrefix) return true;
+      return false;
+    }).toList();
+    
+    final myListings = myProducts.map((p) => {
+      'id': p.id,
+      'title': p.title,
+      'price': p.price.toStringAsFixed(0),
+      'desc': p.description,
+      'imageUrl': p.imageUrl,
+      'status': p.isSold ? 'Sold' : 'Active',
+      'isSold': p.isSold,
+      'views': '0 views', // Dynamic views not available yet
+      'category': p.category,
+      '_originalProduct': p, // Store reference for updating
+    }).toList();
+
     if (_selectedTab == 0) {
-      final activeCount = _myListings.where((l) => !(l['isSold'] as bool)).length;
+      final activeCount = myListings.where((l) => !(l['isSold'] as bool)).length;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -923,7 +919,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 18),
-          if (_myListings.isEmpty)
+          if (myListings.isEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(32),
@@ -937,13 +933,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             )
           else
-            Row(
-              children: _myListings.map((listing) {
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: _buildListingCard(listing),
-                  ),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: myListings.map((listing) {
+                return SizedBox(
+                  width: 320,
+                  child: _buildListingCard(listing),
                 );
               }).toList(),
             ),

@@ -130,11 +130,13 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
 
                       // Search Input (Center Right)
                       if (isDesktop)
-                        SizedBox(
-                          width: 300,
-                          height: 40,
-                          child: TextField(
-                            controller: _searchController,
+                        Flexible(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 300),
+                            child: SizedBox(
+                              height: 40,
+                              child: TextField(
+                                controller: _searchController,
                             onChanged: (val) {
                               ref.read(searchQueryProvider.notifier).setQuery(val);
                               final currentLoc = GoRouterState.of(context).uri.toString();
@@ -176,8 +178,10 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                             ),
                           ),
                         ),
+                      ),
+                    ),
 
-                      const SizedBox(width: 20),
+                  const SizedBox(width: 20),
 
                       // Profile Action Avatar with smooth hover
                       MouseRegion(

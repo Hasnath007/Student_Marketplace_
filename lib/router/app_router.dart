@@ -18,6 +18,7 @@ import '../features/marketplace/screens/product_details_screen.dart';
 import '../features/marketplace/screens/sell_item_screen.dart';
 import '../features/subscriptions/screens/subscription_groups_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../features/chat/screens/inbox_screen.dart';
 import '../shared/main_shell_screen.dart';
 import '../models/product.dart';
 
@@ -114,6 +115,10 @@ final appRouter = GoRouter(
         GoRoute(
           path: '/profile',
           pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
+        ),
+        GoRoute(
+          path: '/inbox',
+          pageBuilder: (context, state) => const NoTransitionPage(child: InboxScreen()),
         ),
       ],
     ),

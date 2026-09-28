@@ -8,6 +8,8 @@ import '../../../models/product.dart';
 import '../../subscriptions/widgets/host_chat_dialog.dart';
 import '../widgets/payment_checkout_dialog.dart';
 import '../../../core/providers/marketplace_provider.dart';
+import '../../chat/widgets/dynamic_chat_dialog.dart';
+import '../../../core/services/chat_service.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final Product? product;
@@ -95,7 +97,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
               : const Stream<DocumentSnapshot>.empty();
         }(),
         builder: (context, snapshot) {
-          String displaySellerName = widget.product?.sellerName ?? 'Sarah Jenkins';
+          String displaySellerName = activeProduct.sellerName;
           String? sellerPhotoUrl;
 
           if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
@@ -277,6 +279,8 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           const SizedBox(height: 20),
 
                           // Seller Info Card
+                          const Text('POSTED BY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8)),
+                          const SizedBox(height: 6),
                           Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
@@ -495,14 +499,22 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             width: double.infinity,
                             height: 48,
                             child: OutlinedButton.icon(
-                              onPressed: () {
-                                HostChatDialog.show(
-                                  context,
-                                  hostName: seller,
-                                  groupTitle: title,
-                                  assignedScreen: 'Campus Meetup Spot',
-                                  isSellerMode: true,
+                              onPressed: () async {
+                                final roomId = await chatService.getOrCreateChatRoom(
+                                  productId: activeProduct.id,
+                                  productTitle: activeProduct.title,
+                                  sellerId: activeProduct.sellerId.isNotEmpty ? activeProduct.sellerId : 'dummy_seller',
+                                  sellerName: seller,
                                 );
+                                if (context.mounted) {
+                                  DynamicChatDialog.show(
+                                    context,
+                                    roomId: roomId,
+                                    targetUserName: seller,
+                                    productTitle: title,
+                                    isSellerMode: true,
+                                  );
+                                }
                               },
                               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
                               label: Text(

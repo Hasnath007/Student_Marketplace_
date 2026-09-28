@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/utils/file_picker_helper.dart';
 import '../../../models/product.dart';
@@ -353,7 +354,15 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
 
                                   try {
                                     final title = _titleController.text.trim();
-                                    final price = double.tryParse(_priceController.text.trim().replaceAll('৳', '').replaceAll('\$', '')) ?? 0.0;
+                                    
+                                    // Robust price parsing: Convert Bengali digits and keep only numbers & decimal
+                                    String rawPrice = _priceController.text.trim();
+                                    const bd = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+                                    const en = ['0','1','2','3','4','5','6','7','8','9'];
+                                    for(int i=0; i<10; i++) { rawPrice = rawPrice.replaceAll(bd[i], en[i]); }
+                                    String cleanPrice = rawPrice.replaceAll(RegExp(r'[^0-9.]'), '');
+                                    final price = double.tryParse(cleanPrice) ?? 0.0;
+                                    
                                     final desc = _descController.text.trim();
 
                                     String finalImageUrl = _uploadedImageUrl ?? '';
@@ -375,7 +384,19 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
 
                                     // Get current user info
                                     final user = FirebaseAuth.instance.currentUser;
-                                    final sellerName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Anonymous Student';
+                                    String sellerName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Anonymous Student';
+                                    if (user != null) {
+                                      try {
+                                        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+                                        if (doc.exists && doc.data() != null && doc.data()!['name'] != null) {
+                                          sellerName = doc.data()!['name'];
+                                          // Update auth profile silently for future use
+                                          if (user.displayName == null) {
+                                            user.updateDisplayName(sellerName);
+                                          }
+                                        }
+                                      } catch (_) {}
+                                    }
 
                                     final newProduct = Product(
                                       id: '', // Will be set by provider/Firestore

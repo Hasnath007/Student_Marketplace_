@@ -32,7 +32,8 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/sell')) return 1;
     if (location.startsWith('/subscriptions')) return 2;
-    if (location.startsWith('/profile')) return 3;
+    if (location.startsWith('/inbox')) return 3;
+    if (location.startsWith('/profile')) return 4;
     return 0; // /marketplace
   }
 
@@ -48,6 +49,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
         context.go('/subscriptions');
         break;
       case 3:
+        context.go('/inbox');
+        break;
+      case 4:
         context.go('/profile');
         break;
     }
@@ -124,6 +128,8 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                         _buildNavItem(context, 'Sell Item', '/sell', selectedIndex == 1),
                         const SizedBox(width: 8),
                         _buildNavItem(context, 'Subscription Groups', '/subscriptions', selectedIndex == 2),
+                        const SizedBox(width: 8),
+                        _buildNavItem(context, 'Inbox', '/inbox', selectedIndex == 3),
                       ],
 
                       const Spacer(),
@@ -187,12 +193,12 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
-                          onTap: selectedIndex == 3 ? null : () => context.go('/profile'),
+                          onTap: selectedIndex == 4 ? null : () => context.go('/profile'),
                           child: Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: selectedIndex == 3 ? const Color(0xFF2563EB) : Colors.transparent,
+                                color: selectedIndex == 4 ? const Color(0xFF2563EB) : Colors.transparent,
                                 width: 2,
                               ),
                             ),
@@ -256,6 +262,11 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                   icon: Icon(Icons.groups_outlined),
                   selectedIcon: Icon(Icons.groups),
                   label: 'Groups',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.chat_bubble_outline_rounded),
+                  selectedIcon: Icon(Icons.chat_bubble_rounded),
+                  label: 'Inbox',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.person_outline),

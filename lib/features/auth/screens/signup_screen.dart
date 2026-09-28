@@ -90,6 +90,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         throw Exception('User account could not be created.');
       }
 
+      await user.updateDisplayName(_nameController.text.trim());
+
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'name': _nameController.text.trim(),

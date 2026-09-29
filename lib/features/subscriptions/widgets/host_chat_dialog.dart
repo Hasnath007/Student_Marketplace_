@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class HostChatDialog extends StatefulWidget {
   final String hostName;
@@ -56,62 +59,12 @@ class HostChatDialog extends StatefulWidget {
 class _HostChatDialogState extends State<HostChatDialog> {
   final TextEditingController _msgController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  bool _isTyping = false;
 
-  late final List<Map<String, dynamic>> _messages;
+  String get _chatId => '${widget.groupTitle}_${widget.hostName}'.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
 
   @override
   void initState() {
     super.initState();
-    if (widget.isHostMode) {
-      // Host Perspective: Members are asking the Host questions!
-      _messages = [
-        {
-          'isMe': false,
-          'sender': 'Sarah Jenkins (Member)',
-          'text': 'Hi Alex! I just paid my monthly share via bKash. Could you confirm?',
-          'time': '10:15 AM',
-        },
-        {
-          'isMe': false,
-          'sender': 'Tanvir Hossain (Member)',
-          'text': 'Alex, is the new token or profile PIN updated for this month?',
-          'time': '10:22 AM',
-        },
-      ];
-    } else if (widget.isSellerMode) {
-      // Marketplace Buyer Perspective: Buyer is chatting with the Campus Seller
-      _messages = [
-        {
-          'isMe': false,
-          'sender': widget.hostName,
-          'text': 'Hi! Thanks for checking out "${widget.groupTitle}". 👋',
-          'time': 'Just now',
-        },
-        {
-          'isMe': false,
-          'sender': widget.hostName,
-          'text': 'Feel free to ask any questions about product condition, handover location (Central Library / TSC), or timing on campus!',
-          'time': 'Just now',
-        },
-      ];
-    } else {
-      // Subscription Member Perspective: Member is chatting with the Group Host
-      _messages = [
-        {
-          'isMe': false,
-          'sender': widget.hostName,
-          'text': 'Hi! Welcome to the ${widget.groupTitle} split group. 👋',
-          'time': 'Just now',
-        },
-        {
-          'isMe': false,
-          'sender': widget.hostName,
-          'text': 'I manage this subscription. Feel free to ask any questions about profile access, PIN, or payment.',
-          'time': 'Just now',
-        },
-      ];
-    }
   }
 
   @override
@@ -133,119 +86,25 @@ class _HostChatDialogState extends State<HostChatDialog> {
     });
   }
 
-  void _sendMessage(String text) {
+  Future<void> _sendMessage(String text) async {
     final clean = text.trim();
     if (clean.isEmpty) return;
 
     _msgController.clear();
-    setState(() {
-      _messages.add({
-        'isMe': true,
-        'sender': widget.isHostMode ? 'You (Host / Admin)' : 'You',
-        'text': clean,
-        'time': 'Just now',
-      });
-    });
-    _scrollToBottom();
 
-    if (widget.isHostMode) {
-      // Host answered members -> Members acknowledge!
-      _simulateMemberAcknowledgement();
-    } else {
-      // Member asked Host -> Host answers!
-      _simulateHostReply(clean);
-    }
-  }
+    final user = FirebaseAuth.instance.currentUser;
+    final currentUserName = user?.displayName ?? user?.email?.split('@')[0] ?? 'You';
+    final senderName = widget.isHostMode ? '$currentUserName (Admin)' : currentUserName;
 
-  void _simulateMemberAcknowledgement() {
-    setState(() => _isTyping = true);
-    _scrollToBottom();
-
-    Timer(const Duration(milliseconds: 1400), () {
-      if (!mounted) return;
-      setState(() {
-        _isTyping = false;
-        _messages.add({
-          'isMe': false,
-          'sender': 'Sarah Jenkins (Member)',
-          'text': 'Got it, thank you so much Alex! Working great now 👍',
-          'time': 'Just now',
-        });
-      });
-      _scrollToBottom();
-    });
-  }
-
-  void _simulateHostReply(String userMessage) {
-    setState(() => _isTyping = true);
-    _scrollToBottom();
-
-    Timer(const Duration(milliseconds: 1400), () {
-      if (!mounted) return;
-      final lower = userMessage.toLowerCase();
-      String reply;
-
-      if (widget.isSellerMode) {
-        if (lower.contains('meet') ||
-            lower.contains('where') ||
-            lower.contains('library') ||
-            lower.contains('লাইব্রেরি') ||
-            lower.contains('tsc') ||
-            lower.contains('ক্যাম্পাস') ||
-            lower.contains('দেখা') ||
-            lower.contains('জায়গা')) {
-          reply = 'Sure! I am on campus today and can meet near Central Library or TSC around 3:30 PM. Let me know when you arrive!';
-        } else if (lower.contains('condition') ||
-            lower.contains('page') ||
-            lower.contains('বই') ||
-            lower.contains('অবস্থা') ||
-            lower.contains('ছিঁড়া') ||
-            lower.contains('fresh')) {
-          reply = 'The item is in great condition, properly preserved with clean pages and no missing sections.';
-        } else if (lower.contains('price') ||
-            lower.contains('টাকা') ||
-            lower.contains('দাম') ||
-            lower.contains('discount') ||
-            lower.contains('কম')) {
-          reply = 'The price is already student-discounted, but I can offer a small ৳20-30 concession if you pick it up today!';
-        } else if (lower.contains('paid') ||
-            lower.contains('payment') ||
-            lower.contains('bkash') ||
-            lower.contains('nagad') ||
-            lower.contains('টাকা পাঠিয়েছি')) {
-          reply = 'Received your payment escrow notification! I will bring the item directly to our meetup spot.';
-        } else if (lower.contains('hi') ||
-            lower.contains('hello') ||
-            lower.contains('hey') ||
-            lower.contains('সালাম')) {
-          reply = 'Hello! Yes, "${widget.groupTitle}" is still available. When would you like to collect it on campus?';
-        } else {
-          reply = 'Got your message! Let me know what time works best for you to meet on campus for the handover. 😊';
-        }
-      } else {
-        if (lower.contains('pin') || lower.contains('password') || lower.contains('code') || lower.contains('লগইন')) {
-          reply = 'Your profile PIN is "${widget.pinCode ?? '5829'}" for ${widget.assignedScreen ?? 'Screen 3'}. Enter it on your device to log in!';
-        } else if (lower.contains('invite') || lower.contains('email') || lower.contains('link') || lower.contains('ইমেইল')) {
-          reply = 'I have sent the family plan invite link to ${widget.accountEmail ?? 'your campus email'}. Please check your inbox!';
-        } else if (lower.contains('payment') || lower.contains('bkash') || lower.contains('nagad') || lower.contains('টাকা')) {
-          reply = 'Payment verified successfully! Your slot is 100% active for the entire month.';
-        } else if (lower.contains('hi') || lower.contains('hello') || lower.contains('hey') || lower.contains('সালাম')) {
-          reply = 'Hello! Hope everything is working smoothly with ${widget.groupTitle}. Let me know if you face any issues!';
-        } else {
-          reply = 'Thanks for your message! Everything is set up for you. Enjoy streaming/access! 😊';
-        }
-      }
-
-      setState(() {
-        _isTyping = false;
-        _messages.add({
-          'isMe': false,
-          'sender': widget.hostName,
-          'text': reply,
-          'time': 'Just now',
-        });
-      });
-      _scrollToBottom();
+    await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(_chatId)
+        .collection('messages')
+        .add({
+      'text': clean,
+      'sender': senderName,
+      'isHost': widget.isHostMode,
+      'timestamp': FieldValue.serverTimestamp(),
     });
   }
 
@@ -433,98 +292,121 @@ class _HostChatDialogState extends State<HostChatDialog> {
             Expanded(
               child: Container(
                 color: const Color(0xFFF8FAFC),
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = _messages[index];
-                    final isMe = msg['isMe'] as bool;
-                    final sender = msg['sender'] as String?;
-
-                    return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isMe
-                              ? (isHost ? const Color(0xFF059669) : const Color(0xFF2563EB))
-                              : Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(16),
-                            topRight: const Radius.circular(16),
-                            bottomLeft: Radius.circular(isMe ? 16 : 4),
-                            bottomRight: Radius.circular(isMe ? 4 : 16),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('chats')
+                      .doc(_chatId)
+                      .collection('messages')
+                      .orderBy('timestamp', descending: false)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No messages yet. Say hi!',
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                         ),
-                        child: Column(
-                          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                          children: [
-                            if (!isMe && sender != null) ...[
-                              Text(
-                                sender,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSeller ? const Color(0xFF4F46E5) : const Color(0xFF2563EB),
-                                ),
+                      );
+                    }
+
+                    final docs = snapshot.data!.docs;
+                    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = docs[index];
+                        final msg = doc.data() as Map<String, dynamic>;
+
+                        final user = FirebaseAuth.instance.currentUser;
+                        final currentUserName = user?.displayName ?? user?.email?.split('@')[0] ?? 'You';
+
+                        final sender = msg['sender'] as String? ?? 'Unknown';
+                        final isMe = sender == currentUserName || sender == '$currentUserName (Admin)';
+
+                        String timeStr = 'Just now';
+                        if (msg['timestamp'] != null) {
+                          timeStr = DateFormat('hh:mm a').format((msg['timestamp'] as Timestamp).toDate());
+                        }
+
+                        return Align(
+                          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isMe
+                                  ? (isHost ? const Color(0xFF059669) : const Color(0xFF2563EB))
+                                  : Colors.white,
+                              borderRadius: BorderRadius.only(
+                                topLeft: const Radius.circular(16),
+                                topRight: const Radius.circular(16),
+                                bottomLeft: Radius.circular(isMe ? 16 : 4),
+                                bottomRight: Radius.circular(isMe ? 4 : 16),
                               ),
-                              const SizedBox(height: 3),
-                            ],
-                            Text(
-                              msg['text'] as String,
-                              style: TextStyle(
-                                color: isMe ? Colors.white : const Color(0xFF1E293B),
-                                fontSize: 13,
-                                height: 1.35,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  msg['time'] as String,
-                                  style: TextStyle(
-                                    color: isMe ? Colors.white70 : const Color(0xFF94A3B8),
-                                    fontSize: 10,
-                                  ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
-                                if (isMe) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.done_all_rounded, size: 12, color: Colors.white70),
-                                ],
                               ],
                             ),
-                          ],
-                        ),
-                      ),
+                            child: Column(
+                              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              children: [
+                                if (!isMe) ...[
+                                  Text(
+                                    sender,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSeller ? const Color(0xFF4F46E5) : const Color(0xFF2563EB),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                ],
+                                Text(
+                                  msg['text'] as String? ?? '',
+                                  style: TextStyle(
+                                    color: isMe ? Colors.white : const Color(0xFF1E293B),
+                                    fontSize: 13,
+                                    height: 1.35,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      timeStr,
+                                      style: TextStyle(
+                                        color: isMe ? Colors.white70 : const Color(0xFF94A3B8),
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                    if (isMe) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.done_all_rounded, size: 12, color: Colors.white70),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
               ),
             ),
-
-            // Typing Indicator
-            if (_isTyping)
-              Container(
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                color: const Color(0xFFF8FAFC),
-                child: Text(
-                  isHost ? 'Sarah Jenkins is typing...' : '${widget.hostName} is typing...',
-                  style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Color(0xFF64748B)),
-                ),
-              ),
 
             // Quick Answer Chips for Host, Seller, or Member
             Container(
@@ -535,11 +417,11 @@ class _HostChatDialogState extends State<HostChatDialog> {
                 child: Row(
                   children: isHost
                       ? [
-                          _buildQuickChip('🔑 Send PIN (5829)', 'Hi Sarah & Tanvir, your profile PIN for this month is 5829!'),
+                          _buildQuickChip('👋 Welcome', 'Welcome to the group! Everything is ready for you to enjoy.'),
                           const SizedBox(width: 6),
-                          _buildQuickChip('✅ Confirm Payment', 'Thanks! Your monthly payment has been verified and confirmed.'),
+                          _buildQuickChip('✅ Confirm Payment', 'Thanks! Your payment is confirmed and slot is active.'),
                           const SizedBox(width: 6),
-                          _buildQuickChip('🔗 Invite Link Sent', 'I have approved and sent the new invite link to your campus emails.'),
+                          _buildQuickChip('⚙️ Check Vault', 'Please check the blue Credentials Vault on your screen for login details.'),
                         ]
                       : (isSeller
                           ? [
@@ -552,9 +434,9 @@ class _HostChatDialogState extends State<HostChatDialog> {
                               _buildQuickChip('💵 Is Price Negotiable?', 'Is the price negotiable if I collect it today?'),
                             ]
                           : [
-                              _buildQuickChip('🔑 Need Profile PIN', 'Can you please give me the profile PIN?'),
+                              _buildQuickChip('👋 Hi Host', 'Hi, I just joined the group!'),
                               const SizedBox(width: 6),
-                              _buildQuickChip('📩 Resend Invite Link', 'Could you resend the family invite link?'),
+                              _buildQuickChip('⚙️ Issue with Login', 'I am having some trouble logging in. Can you help?'),
                               const SizedBox(width: 6),
                               _buildQuickChip('⚡ Slot Active?', 'Is my slot fully active now?'),
                             ]),

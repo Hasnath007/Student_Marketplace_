@@ -11,6 +11,8 @@ class PaymentCheckoutDialog extends StatefulWidget {
   final String? pinCode;
   final String? assignedScreen;
   final String? hostName;
+  final String? accessMethod;
+  final String? inviteLink;
   final VoidCallback? onOpenChat;
   final VoidCallback onPaymentSuccess;
 
@@ -23,6 +25,8 @@ class PaymentCheckoutDialog extends StatefulWidget {
     this.pinCode,
     this.assignedScreen,
     this.hostName,
+    this.accessMethod,
+    this.inviteLink,
     this.onOpenChat,
     required this.onPaymentSuccess,
   });
@@ -36,6 +40,8 @@ class PaymentCheckoutDialog extends StatefulWidget {
     String? pinCode,
     String? assignedScreen,
     String? hostName,
+    String? accessMethod,
+    String? inviteLink,
     VoidCallback? onOpenChat,
     required VoidCallback onPaymentSuccess,
   }) {
@@ -50,6 +56,8 @@ class PaymentCheckoutDialog extends StatefulWidget {
         pinCode: pinCode,
         assignedScreen: assignedScreen,
         hostName: hostName,
+        accessMethod: accessMethod,
+        inviteLink: inviteLink,
         onOpenChat: onOpenChat,
         onPaymentSuccess: onPaymentSuccess,
       ),
@@ -725,7 +733,56 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
             ),
           ),
           // Instant Access Credentials Card (If provided for subscription / digital access)
-          if (widget.pinCode != null || widget.accountEmail != null || widget.assignedScreen != null) ...[
+          if (widget.accessMethod == 'link' && widget.inviteLink != null && widget.inviteLink!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFEFF6FF), Color(0xFFF0FDF4)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFF2563EB).withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.link_rounded, color: Color(0xFF2563EB), size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Your Access Link',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E3A8A)),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(6)),
+                        child: const Text('UNLOCKED ✓', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCredentialRow(
+                    icon: Icons.link_rounded,
+                    label: 'Premium Invite Link:',
+                    value: widget.inviteLink!,
+                    isHighlight: true,
+                  ),
+                ],
+              ),
+            ),
+          ] else if (widget.pinCode != null || widget.accountEmail != null || widget.assignedScreen != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),

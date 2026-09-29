@@ -3,8 +3,11 @@
 // 🔗 ডায়ালগ: PaymentCheckoutDialog, HostChatDialog
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/providers/marketplace_provider.dart';
+import '../../../core/providers/subscriptions_provider.dart';
 import '../../marketplace/widgets/payment_checkout_dialog.dart';
 import '../widgets/host_chat_dialog.dart';
 
@@ -19,188 +22,48 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
   String _selectedCategory = 'All Categories';
   final List<String> _categories = ['All Categories', 'Entertainment', 'Academic', 'Productivity', 'AI Tools', 'Dev Tools'];
 
-  final List<Map<String, dynamic>> _groups = [
-    {
-      'id': 'g1',
-      'title': 'Netflix Premium 4K',
-      'host': 'Alex Chen',
-      'slotsText': '2/4 slots left',
-      'progress': 0.5,
-      'badge': 'ENTERTAINMENT',
-      'category': 'Entertainment',
-      'price': '৳250',
-      'period': '/mo',
-      'isFull': false,
-      'isJoined': false,
-      'color': Colors.red.shade900,
-      'logo': 'N',
-      'totalSlots': 4,
-      'filledSlots': 2,
-      'accountEmail': 'campus_netflix_4k@gmail.com',
-      'pinCode': '5829',
-      'assignedScreen': 'Screen 3',
-      'members': [
-        {'name': 'Alex Chen', 'role': 'Host (Owner)', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80', 'screen': 'Screen 1'},
-        {'name': 'Sarah Jenkins', 'role': 'Member', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80', 'screen': 'Screen 2'},
-        {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Screen 3'},
-        {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Screen 4'},
-      ],
-    },
-    {
-      'id': 'g2',
-      'title': 'Spotify Family Plan',
-      'host': 'Sarah J.',
-      'slotsText': '1/6 slots left',
-      'progress': 0.83,
-      'badge': 'ENTERTAINMENT',
-      'category': 'Entertainment',
-      'price': '৳120',
-      'period': '/mo',
-      'isFull': false,
-      'isJoined': false,
-      'color': Colors.black,
-      'logo': '🟢',
-      'totalSlots': 6,
-      'filledSlots': 5,
-      'accountEmail': 'spotify_family_sarah@gmail.com',
-      'pinCode': 'Family Invite Token',
-      'assignedScreen': 'Personal Account Seat #6',
-      'members': [
-        {'name': 'Sarah J.', 'role': 'Host (Owner)', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80', 'screen': 'Seat 1'},
-        {'name': 'Tanvir Hossain', 'role': 'Member', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80', 'screen': 'Seat 2'},
-        {'name': 'Nabila R.', 'role': 'Member', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80', 'screen': 'Seat 3'},
-        {'name': 'Rahim Khan', 'role': 'Member', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80', 'screen': 'Seat 4'},
-        {'name': 'Afsana Mimi', 'role': 'Member', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80', 'screen': 'Seat 5'},
-        {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Seat 6'},
-      ],
-    },
-    {
-      'id': 'g3',
-      'title': 'Coursera Plus (Annual Split)',
-      'host': 'CS Study Group',
-      'slotsText': '3/5 slots left',
-      'progress': 0.4,
-      'badge': 'ACADEMIC',
-      'category': 'Academic',
-      'isVerified': true,
-      'price': '৳1200',
-      'period': '/yr',
-      'isFull': false,
-      'isJoined': false,
-      'color': const Color(0xFF0056D2),
-      'logo': 'C',
-      'totalSlots': 5,
-      'filledSlots': 2,
-      'accountEmail': 'stanford_cs_coursera@group.edu',
-      'pinCode': 'Org Invite License #3',
-      'assignedScreen': 'Seat #3',
-      'members': [
-        {'name': 'CS Study Group', 'role': 'Host Admin', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=150&q=80', 'screen': 'Admin Seat'},
-        {'name': 'David K.', 'role': 'Member', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80', 'screen': 'Seat 2'},
-        {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Seat 3'},
-        {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Seat 4'},
-        {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Seat 5'},
-      ],
-    },
-    {
-      'id': 'g4',
-      'title': 'Adobe Creative Cloud Team',
-      'host': 'Design Club',
-      'slotsText': '0/2 slots left',
-      'progress': 1.0,
-      'badge': 'PRODUCTIVITY',
-      'category': 'Productivity',
-      'price': '৳450',
-      'period': '/mo',
-      'isFull': true,
-      'isJoined': false,
-      'color': const Color(0xFFFF0000),
-      'logo': 'Ai',
-      'totalSlots': 2,
-      'filledSlots': 2,
-      'accountEmail': 'design_club_adobe@stanford.edu',
-      'pinCode': 'Team License Seat 2',
-      'assignedScreen': 'Seat #2',
-      'members': [
-        {'name': 'Design Club', 'role': 'Host', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80', 'screen': 'Seat 1'},
-        {'name': 'Chloe Miller', 'role': 'Member', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80', 'screen': 'Seat 2'},
-      ],
-    },
-  ];
 
-  void _showHowItWorksDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB)),
-            SizedBox(width: 10),
-            Text('How Subscription Sharing Works', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHowItWorksStep('1', 'Host creates group', 'A student with a multi-screen or family plan lists the service and sets the price per member.'),
-            const SizedBox(height: 12),
-            _buildHowItWorksStep('2', 'Students join & split bill', 'Peers pick an available slot and pay their share easily via bKash, Nagad, or Card.'),
-            const SizedBox(height: 12),
-            _buildHowItWorksStep('3', 'Instant Access & PIN Vault', 'Once payment is confirmed, login credentials and profile PIN are instantly unlocked.'),
-            const SizedBox(height: 12),
-            _buildHowItWorksStep('4', 'Monthly Renewals', 'Auto-reminders before billing dates ensure continuous and fair subscription access.'),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Got it!'),
-          ),
-        ],
-      ),
-    );
+
+  Map<String, dynamic> _getBrandStyle(String title) {
+    final t = title.toLowerCase();
+    if (t.contains('netflix')) {
+      return {'color': Colors.red.shade900, 'logo': 'N'};
+    } else if (t.contains('spotify')) {
+      return {'color': Colors.black, 'logo': '🟢'};
+    } else if (t.contains('coursera')) {
+      return {'color': const Color(0xFF0056D2), 'logo': 'C'};
+    } else if (t.contains('adobe')) {
+      return {'color': const Color(0xFFFF0000), 'logo': 'Ai'};
+    } else if (t.contains('canva')) {
+      return {'color': const Color(0xFF00C4CC), 'logo': 'C'};
+    } else if (t.contains('prime') || t.contains('amazon')) {
+      return {'color': const Color(0xFF00A8E1), 'logo': 'a'};
+    } else if (t.contains('chatgpt') || t.contains('openai')) {
+      return {'color': const Color(0xFF10A37F), 'logo': '🤖'};
+    } else if (t.contains('youtube')) {
+      return {'color': Colors.red, 'logo': '▶'};
+    } else {
+      final firstLetter = title.isNotEmpty ? title[0].toUpperCase() : '⭐';
+      final colors = [const Color(0xFF2563EB), const Color(0xFF9333EA), const Color(0xFF0D9488), const Color(0xFFEA580C), const Color(0xFFE11D48)];
+      final color = title.isNotEmpty ? colors[title.codeUnitAt(0) % colors.length] : const Color(0xFF2563EB);
+      return {'color': color, 'logo': firstLetter};
+    }
   }
 
-  static Widget _buildHowItWorksStep(String num, String title, String desc) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 26,
-          height: 26,
-          decoration: const BoxDecoration(color: Color(0xFFDBEAFE), shape: BoxShape.circle),
-          child: Center(child: Text(num, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2563EB)))),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-              const SizedBox(height: 2),
-              Text(desc, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.3)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   void _showGroupDetailsModal(Map<String, dynamic> group) {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final isJoined = group['isJoined'] == true;
-          final isFull = group['isFull'] == true;
+          final user = FirebaseAuth.instance.currentUser;
+          final currentUserName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Hasnat';
+          
           final members = (group['members'] as List<dynamic>?) ?? [];
+          final isJoined = members.any((m) => m['name'] == currentUserName && m['status'] != 'Vacant');
+          
+          final isFull = group['isFull'] == true;
+          final isHost = group['host'] == currentUserName;
 
           return Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -242,7 +105,11 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             ),
                           ],
                         ),
-                        IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close, size: 20, color: Color(0xFF94A3B8))),
+                        Row(
+                          children: [
+                            IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close, size: 20, color: Color(0xFF94A3B8))),
+                          ],
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -263,7 +130,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             children: [
                               const Text('Cost per Member', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                               const SizedBox(height: 2),
-                              Text('${group['price']}${group['period']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
+                              Text('৳${((group['totalPrice'] as int? ?? 0) / ((group['totalSlots'] as int? ?? 1) == 0 ? 1 : (group['totalSlots'] as int? ?? 1))).round()}${group['period']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
                             ],
                           ),
                           Container(
@@ -273,7 +140,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              isJoined ? 'You are a Member ✓' : (group['slotsText'] as String),
+                              isJoined ? 'You are a Member ✓' : (group['slotsText'] as String? ?? ''),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -312,8 +179,13 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                 else
                                   CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: const Color(0xFFF1F5F9),
-                                    child: Icon(isVacant ? Icons.person_add_alt_1_rounded : Icons.person, size: 16, color: const Color(0xFF94A3B8)),
+                                    backgroundColor: isVacant ? const Color(0xFFF1F5F9) : const Color(0xFFE0E7FF),
+                                    child: isVacant
+                                        ? const Icon(Icons.person_add_alt_1_rounded, size: 16, color: Color(0xFF94A3B8))
+                                        : Text(
+                                            (m['name'] as String).isNotEmpty ? (m['name'] as String)[0].toUpperCase() : 'U',
+                                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                                          ),
                                   ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -352,29 +224,192 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     const SizedBox(height: 20),
 
                     // Unlocked Credentials Card if joined
-                    if (isJoined) ...[
+                    if (isJoined || isHost) ...[
                       Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.vpn_key_rounded, size: 16, color: Color(0xFF2563EB)),
-                                SizedBox(width: 8),
-                                Text('Your Access Credentials', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E40AF))),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text('Login: ${group['accountEmail'] ?? 'group_access@campus.edu'}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B))),
-                            const SizedBox(height: 2),
-                            Text('Profile: ${group['assignedScreen'] ?? 'Screen 3'} | PIN: ${group['pinCode'] ?? '4829'}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF334155)),
+                          boxShadow: [
+                            BoxShadow(color: const Color(0xFF0F172A).withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 6)),
                           ],
+                        ),
+                        child: Builder(
+                          builder: (context) {
+                            final accessMethod = group['accessMethod'] as String? ?? 'login';
+                            
+                            if (accessMethod == 'link') {
+                              final inviteLink = group['inviteLink']?.toString() ?? 'No invite link provided';
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.shield_moon_rounded, size: 18, color: Color(0xFF38BDF8)),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        isHost ? 'Host Access Credentials' : 'Your Secure Vault',
+                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.white, letterSpacing: 0.5),
+                                      ),
+                                      const Spacer(),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(color: const Color(0xFF047857).withValues(alpha: 0.3), borderRadius: BorderRadius.circular(6)),
+                                        child: const Text('ACTIVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF34D399))),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 18),
+                                  const Text('PREMIUM INVITE LINK', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1.0)),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0F172A),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFF334155)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            inviteLink,
+                                            style: const TextStyle(fontSize: 13, color: Color(0xFF38BDF8), decoration: TextDecoration.underline),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        ElevatedButton.icon(
+                                          onPressed: () {
+                                            Clipboard.setData(ClipboardData(text: inviteLink));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Invite Link copied!'), backgroundColor: Color(0xFF0F172A), duration: Duration(seconds: 2))
+                                            );
+                                          },
+                                          icon: const Icon(Icons.copy_rounded, size: 14),
+                                          label: const Text('Copy', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF38BDF8),
+                                            foregroundColor: const Color(0xFF0F172A),
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                            minimumSize: const Size(0, 32),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text('Click Copy and paste this link in your browser to join the Family plan.', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                ],
+                              );
+                            } else {
+                              final loginEmail = group['accountEmail'] ?? 'group_access@campus.edu';
+                              final mySeat = members.firstWhere(
+                                (m) => m['name'] == currentUserName,
+                                orElse: () => {'screen': group['assignedScreen'] ?? 'N/A'},
+                              )['screen'];
+                              final seatStr = mySeat != null && mySeat.toString().isNotEmpty ? mySeat.toString() : 'N/A';
+                              final pinStr = (group['pinCode'] != null && group['pinCode'].toString().isNotEmpty) ? group['pinCode'].toString() : 'N/A';
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.shield_moon_rounded, size: 18, color: Color(0xFF38BDF8)),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        isHost ? 'Host Access Credentials' : 'Your Secure Vault',
+                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.white, letterSpacing: 0.5),
+                                      ),
+                                      const Spacer(),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(color: const Color(0xFF047857).withValues(alpha: 0.3), borderRadius: BorderRadius.circular(6)),
+                                        child: const Text('ACTIVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF34D399))),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 18),
+                                  
+                                  // Login Email
+                                  const Text('ACCOUNT LOGIN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1.0)),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(loginEmail.toString(), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFF8FAFC))),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          Clipboard.setData(ClipboardData(text: loginEmail.toString()));
+                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email copied to clipboard!'), backgroundColor: Color(0xFF0F172A), duration: Duration(seconds: 1)));
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(6)),
+                                          child: const Icon(Icons.copy_rounded, size: 14, color: Color(0xFF38BDF8)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  
+                                  const SizedBox(height: 14),
+                                  const Divider(color: Color(0xFF334155), height: 1),
+                                  const SizedBox(height: 14),
+                                  
+                                  // Profile & PIN
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('YOUR PROFILE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1.0)),
+                                            const SizedBox(height: 6),
+                                            Text(seatStr, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFF8FAFC))),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('PROFILE PIN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1.0)),
+                                            const SizedBox(height: 6),
+                                            Row(
+                                              children: [
+                                                Text(pinStr, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFFF8FAFC), letterSpacing: 1.5)),
+                                                const SizedBox(width: 8),
+                                                InkWell(
+                                                  onTap: () {
+                                                    Clipboard.setData(ClipboardData(text: pinStr));
+                                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN copied to clipboard!'), backgroundColor: Color(0xFF0F172A), duration: Duration(seconds: 1)));
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(6),
+                                                    decoration: BoxDecoration(color: const Color(0xFF334155), borderRadius: BorderRadius.circular(6)),
+                                                    child: const Icon(Icons.copy_rounded, size: 14, color: Color(0xFF38BDF8)),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            }
+                          }
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -393,12 +428,13 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                 accountEmail: group['accountEmail'] as String?,
                                 pinCode: group['pinCode'] as String?,
                                 assignedScreen: group['assignedScreen'] as String?,
+                                isHostMode: isHost,
                               );
                             },
-                            icon: const Icon(Icons.chat_outlined, size: 16),
-                            label: const Text('Chat with Host', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            icon: Icon(isHost ? Icons.forum_rounded : Icons.chat_outlined, size: 16),
+                            label: Text(isHost ? 'Manage Group Chat' : 'Chat with Host', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF475569),
+                              foregroundColor: isHost ? const Color(0xFF0F172A) : const Color(0xFF475569),
                               side: const BorderSide(color: Color(0xFFCBD5E1)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -408,19 +444,19 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: isFull && !isJoined
+                            onPressed: (isFull && !isJoined) || isHost
                                 ? null
                                 : () {
                                     Navigator.pop(ctx);
                                     _toggleJoinGroup(group);
                                   },
-                            icon: Icon(isJoined ? Icons.check_circle_rounded : Icons.lock_open_rounded, size: 16),
+                            icon: Icon(isJoined ? Icons.exit_to_app_rounded : (isHost ? Icons.admin_panel_settings : Icons.lock_open_rounded), size: 16),
                             label: Text(
-                              isJoined ? 'Leave Group' : (isFull ? 'Group Full' : 'Join & Split Now'),
+                              isHost ? 'You are Host' : (isJoined ? 'Leave Group' : (isFull ? 'Group Full' : 'Join & Split Now')),
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isJoined ? const Color(0xFFDC2626) : const Color(0xFF2563EB),
+                              backgroundColor: isJoined ? const Color(0xFFDC2626) : (isHost ? const Color(0xFF94A3B8) : const Color(0xFF2563EB)),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -445,7 +481,9 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
     final totalSlotsCtrl = TextEditingController(text: '4');
     final emailCtrl = TextEditingController();
     final pinCtrl = TextEditingController();
+    final inviteLinkCtrl = TextEditingController();
     String selectedCategory = 'Entertainment';
+    String accessMethod = 'login';
 
     showDialog(
       context: context,
@@ -529,14 +567,14 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Price / Member', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              const Text('Total Price', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: priceCtrl,
                                 keyboardType: TextInputType.number,
                                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                 decoration: InputDecoration(
-                                  hintText: '৳250 /mo',
+                                  hintText: '৳1000 /mo',
                                   hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.normal),
                                   prefixIcon: const Padding(
                                     padding: EdgeInsets.all(12),
@@ -580,61 +618,170 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     ),
                     const SizedBox(height: 16),
 
-                    // Input 3: Category & Login Email
+                    // Input 3: Category
+                    const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedCategory,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'Entertainment', child: Text('Entertainment')),
+                        DropdownMenuItem(value: 'Academic', child: Text('Academic')),
+                        DropdownMenuItem(value: 'Productivity', child: Text('Productivity')),
+                        DropdownMenuItem(value: 'AI Tools', child: Text('AI Tools')),
+                        DropdownMenuItem(value: 'Dev Tools', child: Text('Dev Tools')),
+                        DropdownMenuItem(value: 'Others', child: Text('Others')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => selectedCategory = val);
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Access Method Selector
+                    const Text('How will members access this?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
-                              const SizedBox(height: 6),
-                              DropdownButtonFormField<String>(
-                                initialValue: selectedCategory,
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                ),
-                                items: const [
-                                  DropdownMenuItem(value: 'Entertainment', child: Text('Entertainment')),
-                                  DropdownMenuItem(value: 'Academic', child: Text('Academic')),
-                                  DropdownMenuItem(value: 'Productivity', child: Text('Productivity')),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) setModalState(() => selectedCategory = val);
-                                },
+                          child: InkWell(
+                            onTap: () => setModalState(() => accessMethod = 'login'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: accessMethod == 'login' ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: accessMethod == 'login' ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0), width: accessMethod == 'login' ? 1.5 : 1.0),
                               ),
-                            ],
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.password_rounded, size: 16, color: accessMethod == 'login' ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
+                                  const SizedBox(width: 6),
+                                  Text('Shared Login', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: accessMethod == 'login' ? const Color(0xFF1E40AF) : const Color(0xFF64748B))),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Profile PIN / Token', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
-                              const SizedBox(height: 6),
-                              TextField(
-                                controller: pinCtrl,
-                                decoration: InputDecoration(
-                                  hintText: 'e.g. 4829 or Invite link',
-                                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                                  prefixIcon: const Icon(Icons.vpn_key_outlined, size: 18, color: Color(0xFF64748B)),
-                                  filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                ),
+                          child: InkWell(
+                            onTap: () => setModalState(() => accessMethod = 'link'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: accessMethod == 'link' ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: accessMethod == 'link' ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0), width: accessMethod == 'link' ? 1.5 : 1.0),
                               ),
-                            ],
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.link_rounded, size: 16, color: accessMethod == 'link' ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
+                                  const SizedBox(width: 6),
+                                  Text('Invite Link', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: accessMethod == 'link' ? const Color(0xFF1E40AF) : const Color(0xFF64748B))),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    // Helper text for Hosts to understand what to choose
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFE2E8F0))),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF64748B)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              accessMethod == 'login' 
+                                  ? 'Share your Email & Password/PIN (e.g., Netflix, ChatGPT Plus).'
+                                  : 'Share a Premium Invite Link. No password needed (e.g., Spotify, Canva).',
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Dynamic Inputs based on accessMethod
+                    if (accessMethod == 'login') ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Account Email', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: emailCtrl,
+                                  decoration: InputDecoration(
+                                    hintText: 'e.g. host@email.com',
+                                    hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                                    prefixIcon: const Icon(Icons.email_outlined, size: 18, color: Color(0xFF64748B)),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF8FAFC),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Password / Profile PIN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: pinCtrl,
+                                  decoration: InputDecoration(
+                                    hintText: 'e.g. 4829 or MyPass123',
+                                    hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                                    prefixIcon: const Icon(Icons.vpn_key_outlined, size: 18, color: Color(0xFF64748B)),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF8FAFC),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      const Text('Premium Invite Link', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: inviteLinkCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'https://spotify.com/invite/...',
+                          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                          prefixIcon: const Icon(Icons.link_rounded, size: 18, color: Color(0xFF64748B)),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 28),
 
                     // Actions Bar (Cancel & Publish)
@@ -653,41 +800,65 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         const SizedBox(width: 12),
                         ElevatedButton.icon(
                           onPressed: () {
-                            if (titleCtrl.text.isNotEmpty) {
-                              final total = int.tryParse(totalSlotsCtrl.text.trim()) ?? 4;
-                              final price = priceCtrl.text.isEmpty ? '250' : priceCtrl.text.replaceAll('৳', '').replaceAll('\$', '');
-                              setState(() {
-                                _groups.insert(0, {
-                                  'id': DateTime.now().toString(),
-                                  'title': titleCtrl.text,
-                                  'host': 'You (Alex R.)',
-                                  'slotsText': '1/$total slots filled',
-                                  'progress': 1 / total,
-                                  'badge': selectedCategory.toUpperCase(),
-                                  'category': selectedCategory,
-                                  'price': '৳$price',
-                                  'period': '/mo',
-                                  'isFull': false,
-                                  'isJoined': true,
-                                  'color': const Color(0xFF2563EB),
-                                  'logo': '⭐',
-                                  'totalSlots': total,
-                                  'filledSlots': 1,
-                                  'accountEmail': emailCtrl.text.isNotEmpty ? emailCtrl.text : 'you.campus@stanford.edu',
-                                  'pinCode': pinCtrl.text.isNotEmpty ? pinCtrl.text : 'Active Host PIN',
-                                  'assignedScreen': 'Host Screen 1',
-                                  'members': [
-                                    {'name': 'You (Alex Rivera)', 'role': 'Host (Owner)', 'status': 'Active', 'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80', 'screen': 'Screen 1'},
-                                    for (int i = 2; i <= total; i++)
-                                      {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Screen $i'},
-                                  ],
-                                });
+                            if (titleCtrl.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a Service or Group Name.'), backgroundColor: Color(0xFFDC2626)));
+                              return;
+                            }
+                            if (priceCtrl.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter the Total Price.'), backgroundColor: Color(0xFFDC2626)));
+                              return;
+                            }
+                            
+                            if (accessMethod == 'login') {
+                              if (emailCtrl.text.trim().isEmpty || pinCtrl.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account Email and Password/PIN are required for Shared Login.'), backgroundColor: Color(0xFFDC2626)));
+                                return;
+                              }
+                            } else {
+                              if (inviteLinkCtrl.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Premium Invite Link is required.'), backgroundColor: Color(0xFFDC2626)));
+                                return;
+                              }
+                            }
+
+                            final total = int.tryParse(totalSlotsCtrl.text.trim()) ?? 4;
+                            final rawPriceStr = priceCtrl.text.replaceAll(RegExp(r'[^\d]'), '');
+                            final parsedPrice = int.tryParse(rawPriceStr) ?? 1000;
+                            final user = FirebaseAuth.instance.currentUser;
+                            final userName = user?.displayName ?? user?.email?.split('@')[0] ?? 'You';
+                            final userEmail = user?.email ?? emailCtrl.text;
+                            final brandStyle = _getBrandStyle(titleCtrl.text);
+                            
+                            ref.read(subscriptionsProvider.notifier).addGroup({
+                                'id': DateTime.now().toString(),
+                                'title': titleCtrl.text,
+                                'host': userName,
+                                'slotsText': '0/$total slots filled',
+                                'progress': 0.0,
+                                'badge': selectedCategory.toUpperCase(),
+                                'category': selectedCategory,
+                                'totalPrice': parsedPrice,
+                                'period': '/mo',
+                                'isFull': false,
+                                'isJoined': false,
+                                'color': brandStyle['color'],
+                                'logo': brandStyle['logo'],
+                                'totalSlots': total,
+                                'filledSlots': 0,
+                                'accessMethod': accessMethod,
+                                'inviteLink': inviteLinkCtrl.text,
+                                'accountEmail': emailCtrl.text.isNotEmpty ? emailCtrl.text : userEmail,
+                                'pinCode': pinCtrl.text.isNotEmpty ? pinCtrl.text : 'Active Host PIN',
+                                'assignedScreen': '',
+                                'members': [
+                                  for (int i = 1; i <= total; i++)
+                                    {'name': 'Available Slot', 'role': 'Open', 'status': 'Vacant', 'avatar': null, 'screen': 'Seat $i'},
+                                ],
                               });
                               Navigator.pop(ctx);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Subscription Group created successfully!'), backgroundColor: Color(0xFF2563EB)),
                               );
-                            }
                           },
                           icon: const Icon(Icons.rocket_launch_rounded, size: 18),
                           label: const Text('Publish Group', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -712,17 +883,23 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
   }
 
   void _toggleJoinGroup(Map<String, dynamic> group) {
-    final isJoined = group['isJoined'] == true;
+    final user = FirebaseAuth.instance.currentUser;
+    final currentUserName = user?.displayName ?? user?.email?.split('@')[0] ?? 'You';
+    final membersList = (group['members'] as List<dynamic>?) ?? [];
+    final isJoined = membersList.any((m) => m['name'] == currentUserName && m['status'] != 'Vacant');
+
     if (!isJoined) {
       PaymentCheckoutDialog.show(
         context,
         itemName: group['title'] ?? 'Subscription Group',
-        priceText: '${group['price'] ?? '৳250'}${group['period'] ?? '/mo'}',
+        priceText: '৳${((group['totalPrice'] as int? ?? 0) / ((group['totalSlots'] as int? ?? 1) == 0 ? 1 : (group['totalSlots'] as int? ?? 1))).round()}${group['period'] ?? '/mo'}',
         category: group['category'] ?? 'Subscription',
         accountEmail: group['accountEmail'] as String?,
         pinCode: group['pinCode'] as String?,
         assignedScreen: group['assignedScreen'] as String?,
         hostName: group['host'] as String?,
+        accessMethod: group['accessMethod'] as String?,
+        inviteLink: group['inviteLink'] as String?,
         onOpenChat: () {
           HostChatDialog.show(
             context,
@@ -734,22 +911,32 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
           );
         },
         onPaymentSuccess: () {
-          setState(() {
-            group['isJoined'] = true;
-            group['slotsText'] = 'Joined ✓';
-            final members = group['members'] as List<dynamic>?;
-            if (members != null) {
-              for (final m in members) {
-                if (m['status'] == 'Vacant') {
-                  m['name'] = 'You (Joined)';
-                  m['role'] = 'Member';
-                  m['status'] = 'Active';
-                  m['avatar'] = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
-                  break;
-                }
+          final updatedGroup = Map<String, dynamic>.from(group);
+          final members = List<dynamic>.from(updatedGroup['members'] ?? []);
+          if (members.isNotEmpty) {
+            for (int i = 0; i < members.length; i++) {
+              final m = Map<String, dynamic>.from(members[i]);
+              if (m['status'] == 'Vacant') {
+                final user = FirebaseAuth.instance.currentUser;
+                final userName = user?.displayName ?? user?.email?.split('@')[0] ?? 'You';
+                
+                m['name'] = userName;
+                m['role'] = 'Member';
+                m['status'] = 'Active';
+                m['avatar'] = null;
+                members[i] = m;
+                final currentFilled = (updatedGroup['filledSlots'] as int? ?? 0) + 1;
+                final total = updatedGroup['totalSlots'] as int? ?? 4;
+                updatedGroup['filledSlots'] = currentFilled;
+                updatedGroup['slotsText'] = '$currentFilled/$total slots filled';
+                updatedGroup['isFull'] = currentFilled >= total;
+                break;
               }
             }
-          });
+          }
+          updatedGroup['members'] = members;
+          ref.read(subscriptionsProvider.notifier).updateGroup(updatedGroup['id'], updatedGroup);
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Joined ${group['title']} successfully! Check credentials now.'),
@@ -759,10 +946,30 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
         },
       );
     } else {
-      setState(() {
-        group['isJoined'] = false;
-        group['slotsText'] = '2/4 slots left';
-      });
+      final updatedGroup = Map<String, dynamic>.from(group);
+      
+      final members = List<dynamic>.from(updatedGroup['members'] ?? []);
+      for (int i = 0; i < members.length; i++) {
+        final m = Map<String, dynamic>.from(members[i]);
+        if (m['name'] == currentUserName) {
+          m['name'] = 'Available Slot';
+          m['role'] = 'Open';
+          m['status'] = 'Vacant';
+          m['avatar'] = null;
+          members[i] = m;
+          break;
+        }
+      }
+      updatedGroup['members'] = members;
+
+      final total = updatedGroup['totalSlots'] as int? ?? 4;
+      final filled = (updatedGroup['filledSlots'] as int? ?? 1) - 1;
+      updatedGroup['filledSlots'] = filled;
+      updatedGroup['slotsText'] = '$filled/$total slots filled';
+      updatedGroup['isFull'] = false;
+      
+      ref.read(subscriptionsProvider.notifier).updateGroup(updatedGroup['id'], updatedGroup);
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Left ${group['title']} group.'),
@@ -775,9 +982,10 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
   @override
   Widget build(BuildContext context) {
     final searchQuery = ref.watch(searchQueryProvider);
+    final groups = ref.watch(subscriptionsProvider);
     final cleanSearch = searchQuery.trim().toLowerCase();
 
-    final filteredGroups = _groups.where((g) {
+    final filteredGroups = groups.where((g) {
       final gCat = (g['category'] as String? ?? '').toLowerCase();
       final gTitle = (g['title'] as String? ?? '').toLowerCase();
       final gBadge = (g['badge'] as String? ?? '').toLowerCase();
@@ -808,7 +1016,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
             (g['host'] as String? ?? '').toLowerCase().contains(term) ||
             gCat.contains(term) ||
             gBadge.contains(term) ||
-            (g['price'] as String? ?? '').toLowerCase().contains(term) ||
+            ((g['totalPrice'] ?? 0).toString()).contains(term) ||
             (g['accountEmail'] as String? ?? '').toLowerCase().contains(term));
       }
 
@@ -816,9 +1024,9 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
     }).toList();
 
     int getSubCategoryCount(String cat) {
-      if (cat == 'All Categories' || cat == 'All') return _groups.length;
+      if (cat == 'All Categories' || cat == 'All') return groups.length;
       final sel = cat.toLowerCase();
-      return _groups.where((g) {
+      return groups.where((g) {
         final gCat = (g['category'] as String? ?? '').toLowerCase();
         final gTitle = (g['title'] as String? ?? '').toLowerCase();
         final gBadge = (g['badge'] as String? ?? '').toLowerCase();
@@ -888,18 +1096,6 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     ),
                     Row(
                       children: [
-                        OutlinedButton.icon(
-                          onPressed: _showHowItWorksDialog,
-                          icon: const Icon(Icons.help_outline_rounded, size: 16),
-                          label: const Text('How it Works', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF2563EB),
-                            side: const BorderSide(color: Color(0xFF93C5FD)),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         ElevatedButton.icon(
                           onPressed: _showCreateGroupModal,
                           icon: const Icon(Icons.add_rounded, size: 18),
@@ -1047,6 +1243,9 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                 else
                   LayoutBuilder(
                     builder: (context, constraints) {
+                      final currentUser = FirebaseAuth.instance.currentUser;
+                      final currentUserName = currentUser?.displayName ?? currentUser?.email?.split('@')[0] ?? 'You';
+
                       int crossAxisCount = 4;
                       double childAspectRatio = 0.90;
                       if (constraints.maxWidth < 620) {
@@ -1076,18 +1275,31 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         itemBuilder: (context, index) {
                           final group = filteredGroups[index];
                           final isFull = group['isFull'] == true;
-                          final isJoined = group['isJoined'] == true;
+                          final isHost = group['host'] == currentUserName;
+                          
+                          // Check if current user is in the members list
+                          final members = (group['members'] as List<dynamic>?) ?? [];
+                          final isJoined = members.any((m) => m['name'] == currentUserName && m['status'] != 'Vacant');
+
+                          String btnText = 'Join Group';
+                          if (isHost) {
+                            btnText = 'Your Group';
+                          } else if (isJoined) {
+                            btnText = 'Joined ✓';
+                          } else if (isFull) {
+                            btnText = 'Full';
+                          }
 
                           return _buildGroupCard(
                             title: group['title'],
                             host: group['host'],
-                            slotsText: group['slotsText'],
+                            slotsText: isJoined ? 'Joined ✓' : (group['slotsText'] ?? ''),
                             progress: group['progress'],
                             badge: group['badge'],
-                            price: group['price'],
+                            price: '৳${((group['totalPrice'] as int? ?? 0) / ((group['totalSlots'] as int? ?? 1) == 0 ? 1 : (group['totalSlots'] as int? ?? 1))).round()}',
                             period: group['period'],
-                            buttonText: isJoined ? 'Joined ✓' : (isFull ? 'Full' : 'Join Group'),
-                            isDisabled: isFull,
+                            buttonText: btnText,
+                            isDisabled: isFull || isHost,
                             isJoined: isJoined,
                             onPressed: () => _toggleJoinGroup(group),
                             onCardTap: () => _showGroupDetailsModal(group),
@@ -1201,7 +1413,6 @@ class _GroupCardWidgetState extends State<_GroupCardWidget> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          transform: Matrix4.translationValues(0, _isHovered ? -4 : 0, 0),
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -1210,7 +1421,7 @@ class _GroupCardWidgetState extends State<_GroupCardWidget> {
               color: widget.isJoined
                   ? const Color(0xFF10B981)
                   : (_isHovered ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0)),
-              width: widget.isJoined ? 2 : (_isHovered ? 1.5 : 1.0),
+              width: widget.isJoined ? 2.0 : 1.0,
             ),
             boxShadow: [
               BoxShadow(

@@ -32,7 +32,7 @@ class SubscriptionsNotifier extends Notifier<List<Map<String, dynamic>>> {
   Future<void> addGroup(Map<String, dynamic> group) async {
     final Map<String, dynamic> dataToSave = Map.from(group);
     if (dataToSave['color'] is Color) {
-      dataToSave['color'] = (dataToSave['color'] as Color).value;
+      dataToSave['color'] = (dataToSave['color'] as Color).toARGB32();
     }
     dataToSave.remove('id'); 
     await FirebaseFirestore.instance.collection('subscriptions').add(dataToSave);
@@ -41,7 +41,7 @@ class SubscriptionsNotifier extends Notifier<List<Map<String, dynamic>>> {
   Future<void> updateGroup(String id, Map<String, dynamic> updatedGroup) async {
     final Map<String, dynamic> dataToUpdate = Map.from(updatedGroup);
     if (dataToUpdate['color'] is Color) {
-      dataToUpdate['color'] = (dataToUpdate['color'] as Color).value;
+      dataToUpdate['color'] = (dataToUpdate['color'] as Color).toARGB32();
     }
     dataToUpdate.remove('id');
     await FirebaseFirestore.instance

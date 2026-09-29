@@ -23,7 +23,6 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
   final List<String> _categories = ['All Categories', 'Entertainment', 'Academic', 'Productivity', 'AI Tools', 'Dev Tools'];
 
 
-  void _showHowItWorksDialog() {}
 
   Map<String, dynamic> _getBrandStyle(String title) {
     final t = title.toLowerCase();
@@ -51,30 +50,6 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
     }
   }
 
-  static Widget _buildHowItWorksStep(String num, String title, String desc) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 26,
-          height: 26,
-          decoration: const BoxDecoration(color: Color(0xFFDBEAFE), shape: BoxShape.circle),
-          child: Center(child: Text(num, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2563EB)))),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-              const SizedBox(height: 2),
-              Text(desc, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.3)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   void _showGroupDetailsModal(Map<String, dynamic> group) {
     showDialog(
@@ -1007,10 +982,10 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
   @override
   Widget build(BuildContext context) {
     final searchQuery = ref.watch(searchQueryProvider);
-    final _groups = ref.watch(subscriptionsProvider);
+    final groups = ref.watch(subscriptionsProvider);
     final cleanSearch = searchQuery.trim().toLowerCase();
 
-    final filteredGroups = _groups.where((g) {
+    final filteredGroups = groups.where((g) {
       final gCat = (g['category'] as String? ?? '').toLowerCase();
       final gTitle = (g['title'] as String? ?? '').toLowerCase();
       final gBadge = (g['badge'] as String? ?? '').toLowerCase();

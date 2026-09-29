@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../subscriptions/widgets/host_chat_dialog.dart';
 import '../../../core/providers/marketplace_provider.dart';
+import '../../../core/providers/subscriptions_provider.dart';
 import '../../../models/product.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -662,6 +663,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final subscriptions = ref.watch(subscriptionsProvider);
+    final authUser = FirebaseAuth.instance.currentUser;
+    final authUserName = authUser?.displayName ?? authUser?.email?.split('@')[0] ?? 'Hasnat';
+    
+    final hostedGroups = subscriptions.where((g) => g['host'] == authUserName).toList();
+    final joinedGroups = subscriptions.where((g) {
+      final members = (g['members'] as List<dynamic>?) ?? [];
+      return members.any((m) => m['name'] == authUserName);
+    }).toList();
+    final totalSubs = hostedGroups.length + joinedGroups.length;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
@@ -831,7 +843,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         return p.sellerId == (u?.uid ?? '') || p.sellerName == (u?.displayName ?? '') || (prefix.isNotEmpty && p.sellerName == prefix);
                       }).length}'),
                       const SizedBox(width: 24),
-                      _buildTabItem(1, 'Subscriptions', '3'),
+                      _buildTabItem(1, 'Subscriptions', '$totalSubs'),
                       const SizedBox(width: 24),
                       _buildTabItem(2, 'My Orders (Escrow)', _linearAlgebraReceived ? '0 Active' : '1 Active'),
                       const SizedBox(width: 24),
@@ -946,6 +958,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       );
     } else if (_selectedTab == 1) {
+      final subscriptions = ref.watch(subscriptionsProvider);
+      final user = FirebaseAuth.instance.currentUser;
+      final userName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Hasnat';
+      
+      final hostedGroups = subscriptions.where((g) => g['host'] == userName).toList();
+      final joinedGroups = subscriptions.where((g) {
+        final members = (g['members'] as List<dynamic>?) ?? [];
+        return members.any((m) => m['name'] == userName);
+      }).toList();
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -963,7 +985,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               OutlinedButton.icon(
                 onPressed: () => context.go('/subscriptions'),
                 icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Start Another Group', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                label: Text(hostedGroups.isEmpty ? 'Start a Group' : 'Start Another Group', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF2563EB),
                   side: const BorderSide(color: Color(0xFF2563EB)),
@@ -975,15 +997,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 14),
 
           // Hosted Card
-          _buildHostedGroupCard(
-            title: 'ChatGPT Plus & Team Split',
-            price: '৳350 / mo',
-            filledSlots: '3/4 slots filled',
-            totalRevenue: '+৳1,050 / mo',
-            email: 'alex.rivera.chatgpt@stanford.edu',
-            pin: 'Active Workspace Invite Token',
-            members: const ['You (Host)', 'Sarah J.', 'Tanvir H.', '1 Open Slot'],
-          ),
+          if (hostedGroups.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Text('You are not hosting any groups.', style: TextStyle(color: Colors.grey)),
+            )
+          else
+            Column(
+              children: hostedGroups.map((g) {
+                final members = (g['members'] as List<dynamic>?) ?? [];
+                final memberNames = members.map((m) => m['name'] as String).toList();
+                final pricePerSeat = ((g['totalPrice'] as int? ?? 0) / ((g['totalSlots'] as int? ?? 1) == 0 ? 1 : (g['totalSlots'] as int? ?? 1))).round();
+                final revenue = pricePerSeat * (g['filledSlots'] as int? ?? 0);
+                
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: _buildHostedGroupCard(
+                    groupId: g['id'],
+                    title: g['title'],
+                    price: '৳$pricePerSeat ${g['period']}',
+                    filledSlots: '${g['filledSlots']}/${g['totalSlots']} slots filled',
+                    totalRevenue: '+৳$revenue ${g['period']}',
+                    email: g['accountEmail'],
+                    pin: g['pinCode'],
+                    members: memberNames,
+                  ),
+                );
+              }).toList(),
+            ),
           const SizedBox(height: 32),
 
           // SECTION 2: GROUPS JOINED AS MEMBER
@@ -995,33 +1036,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _buildJoinedGroupCard(
-                  'Netflix Premium 4K',
-                  '৳250 / mo',
-                  'Alex Chen (Host)',
-                  'Next billing: Sep 25, 2026',
-                  'campus_netflix_4k@gmail.com',
-                  'Screen 3 (Your Profile)',
-                  '5829',
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildJoinedGroupCard(
-                  'Coursera Plus Annual',
-                  '৳1200 / yr',
-                  'CS Study Group (Host)',
-                  'Next billing: Jan 15, 2027',
-                  'stanford_cs_coursera@group.edu',
-                  'Member Seat #4',
-                  'Org Invite License #4',
-                ),
-              ),
-            ],
-          ),
+          if (joinedGroups.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Text('You have not joined any groups.', style: TextStyle(color: Colors.grey)),
+            )
+          else
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: joinedGroups.map((g) {
+                final pricePerSeat = ((g['totalPrice'] as int? ?? 0) / ((g['totalSlots'] as int? ?? 1) == 0 ? 1 : (g['totalSlots'] as int? ?? 1))).round();
+                return SizedBox(
+                  width: 320,
+                  child: _buildJoinedGroupCard(
+                    g['title'],
+                    '৳$pricePerSeat ${g['period']}',
+                    '${g['host']} (Host)',
+                    'Next billing: N/A',
+                    g['accountEmail'],
+                    'Your Seat', 
+                    g['pinCode'],
+                  ),
+                );
+              }).toList(),
+            ),
         ],
       );
     } else if (_selectedTab == 2) {
@@ -2033,6 +2072,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildHostedGroupCard({
+    required String groupId,
     required String title,
     required String price,
     required String filledSlots,
@@ -2081,13 +2121,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text('HOSTED BY YOU', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text('HOSTED BY YOU', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () {
+                      ref.read(subscriptionsProvider.notifier).deleteGroup(groupId);
+                    },
+                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                    tooltip: 'Delete Group',
+                  ),
+                ],
               ),
             ],
           ),

@@ -1024,9 +1024,9 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
     }).toList();
 
     int getSubCategoryCount(String cat) {
-      if (cat == 'All Categories' || cat == 'All') return _groups.length;
+      if (cat == 'All Categories' || cat == 'All') return groups.length;
       final sel = cat.toLowerCase();
-      return _groups.where((g) {
+      return groups.where((g) {
         final gCat = (g['category'] as String? ?? '').toLowerCase();
         final gTitle = (g['title'] as String? ?? '').toLowerCase();
         final gBadge = (g['badge'] as String? ?? '').toLowerCase();

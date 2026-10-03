@@ -1418,10 +1418,8 @@ class _GroupCardWidgetState extends State<_GroupCardWidget> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: widget.isJoined
-                  ? const Color(0xFF10B981)
-                  : (_isHovered ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0)),
-              width: widget.isJoined ? 2.0 : 1.0,
+              color: _isHovered ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
+              width: 1.0,
             ),
             boxShadow: [
               BoxShadow(

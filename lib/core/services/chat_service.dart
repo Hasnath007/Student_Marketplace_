@@ -46,7 +46,7 @@ class ChatService {
   // Send a message
   Future<void> sendMessage(String roomId, String text) async {
     final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null || roomId.trim().isEmpty) return;
 
     final msgData = {
       'senderId': currentUser.uid,
@@ -55,9 +55,9 @@ class ChatService {
       'timestamp': FieldValue.serverTimestamp(),
     };
 
-    await _firestore.collection('chats').doc(roomId).collection('messages').add(msgData);
+    await _firestore.collection('chats').doc(roomId.trim()).collection('messages').add(msgData);
 
-    await _firestore.collection('chats').doc(roomId).update({
+    await _firestore.collection('chats').doc(roomId.trim()).update({
       'lastMessage': text,
       'lastMessageTime': FieldValue.serverTimestamp(),
     });
@@ -76,9 +76,13 @@ class ChatService {
 
   // Stream for messages in a specific room
   Stream<QuerySnapshot> getMessagesStream(String roomId) {
+    if (roomId.trim().isEmpty) {
+      return const Stream.empty();
+    }
+
     return _firestore
         .collection('chats')
-        .doc(roomId)
+        .doc(roomId.trim())
         .collection('messages')
         .orderBy('timestamp', descending: false)
         .snapshots();

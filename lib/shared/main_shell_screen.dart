@@ -203,9 +203,18 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                               ),
                             ),
                             child: StreamBuilder<DocumentSnapshot>(
-                              stream: (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null)
-                                  ? FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).snapshots()
-                                  : const Stream.empty(),
+                              stream: () {
+                                if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();
+                                final uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
+                                if (uid.isNotEmpty && !uid.contains('/')) {
+                                  try {
+                                    return FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
+                                  } catch (_) {
+                                    return const Stream<DocumentSnapshot>.empty();
+                                  }
+                                }
+                                return const Stream<DocumentSnapshot>.empty();
+                              }(),
                               builder: (context, snapshot) {
                                 String? photoUrl;
                                 String userName = '';

@@ -637,19 +637,27 @@ class _ProductCardState extends State<_ProductCard> {
                         
                         String targetUid = item.sellerId ?? '';
                         
-                        if (targetUid.isEmpty) {
+                        if (targetUid.trim().isEmpty) {
                           final currUser = FirebaseAuth.instance.currentUser;
                           if (currUser != null) {
-                            final prefix = currUser.email?.split('@')[0] ?? '';
-                            final isOwner = item.sellerName == currUser.displayName ||
-                                (prefix.isNotEmpty && item.sellerName == prefix);
-                            if (isOwner) targetUid = currUser.uid;
+                            final prefix = (currUser.email?.split('@')[0] ?? '').trim();
+                            final isOwner = item.sellerName.trim() == (currUser.displayName ?? '').trim() ||
+                                (prefix.isNotEmpty && item.sellerName.trim() == prefix);
+                            if (isOwner && currUser.uid.trim().isNotEmpty) {
+                              targetUid = currUser.uid.trim();
+                            }
                           }
                         }
 
-                        return targetUid.isNotEmpty 
-                            ? FirebaseFirestore.instance.collection('users').doc(targetUid).snapshots()
-                            : const Stream<DocumentSnapshot>.empty();
+                        final uid = targetUid.trim();
+                        if (uid.isNotEmpty && !uid.contains('/')) {
+                          try {
+                            return FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
+                          } catch (_) {
+                            return const Stream<DocumentSnapshot>.empty();
+                          }
+                        }
+                        return const Stream<DocumentSnapshot>.empty();
                       }(),
                       builder: (context, snapshot) {
                         String displaySellerName = item.sellerName;

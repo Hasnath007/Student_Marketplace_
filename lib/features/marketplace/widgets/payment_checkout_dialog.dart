@@ -15,6 +15,7 @@ class PaymentCheckoutDialog extends StatefulWidget {
   final String? inviteLink;
   final VoidCallback? onOpenChat;
   final VoidCallback onPaymentSuccess;
+  final void Function(String method, String trxId)? onPaymentCompleted;
 
   const PaymentCheckoutDialog({
     super.key,
@@ -29,6 +30,7 @@ class PaymentCheckoutDialog extends StatefulWidget {
     this.inviteLink,
     this.onOpenChat,
     required this.onPaymentSuccess,
+    this.onPaymentCompleted,
   });
 
   static Future<void> show(
@@ -44,6 +46,7 @@ class PaymentCheckoutDialog extends StatefulWidget {
     String? inviteLink,
     VoidCallback? onOpenChat,
     required VoidCallback onPaymentSuccess,
+    void Function(String method, String trxId)? onPaymentCompleted,
   }) {
     return showDialog(
       context: context,
@@ -60,6 +63,7 @@ class PaymentCheckoutDialog extends StatefulWidget {
         inviteLink: inviteLink,
         onOpenChat: onOpenChat,
         onPaymentSuccess: onPaymentSuccess,
+        onPaymentCompleted: onPaymentCompleted,
       ),
     );
   }
@@ -137,13 +141,15 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
 
     await Future.delayed(const Duration(milliseconds: 1200));
 
-    if (!mounted) return;
-
     setState(() {
       _isVerifying = false;
       _currentStep = 2; // Success
     });
 
+    widget.onPaymentCompleted?.call(
+      _selectedMethod == PaymentMethod.bkash ? 'bKash' : 'Nagad',
+      trx,
+    );
     widget.onPaymentSuccess();
   }
 

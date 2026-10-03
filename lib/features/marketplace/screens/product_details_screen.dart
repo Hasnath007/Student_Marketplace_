@@ -10,6 +10,7 @@ import '../widgets/payment_checkout_dialog.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../chat/widgets/dynamic_chat_dialog.dart';
 import '../../../core/services/chat_service.dart';
+import '../../../core/services/order_service.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final Product? product;
@@ -109,6 +110,11 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
           }
 
           final seller = displaySellerName;
+          final currentAuthUser = FirebaseAuth.instance.currentUser;
+          final bool isOwner = currentAuthUser != null &&
+              ((activeProduct.sellerId.isNotEmpty && activeProduct.sellerId == currentAuthUser.uid) ||
+               (activeProduct.sellerName.isNotEmpty && activeProduct.sellerName == currentAuthUser.displayName) ||
+               (currentAuthUser.email != null && activeProduct.sellerName.toLowerCase() == currentAuthUser.email!.split('@')[0].toLowerCase()));
 
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
@@ -455,6 +461,40 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                               ),
                             ),
                             const SizedBox(height: 10),
+                          ] else if (isOwner) ...[
+                            // Owner banner - don't allow buying or chatting with oneself
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFC7D2FE)),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.verified_user_rounded, color: Color(0xFF4F46E5), size: 20),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'This is your listing',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF3730A3)),
+                                        ),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          'You are the seller of this item. Manage it from your Profile tab.',
+                                          style: TextStyle(fontSize: 11, color: Color(0xFF6366F1)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
                           ] else ...[
                             // Buy Now / Pay with bKash/Nagad Button
                             SizedBox(
@@ -476,8 +516,25 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                         isSellerMode: true,
                                       );
                                     },
+                                    onPaymentCompleted: (method, trxId) async {
+                                      try {
+                                        await orderService.createOrder(
+                                          product: activeProduct,
+                                          paymentMethod: method,
+                                          trxId: trxId,
+                                        );
+                                      } catch (e) {
+                                        debugPrint('Error placing order: $e');
+                                      }
+                                    },
                                     onPaymentSuccess: () {
                                       setState(() => _isOrderPlaced = true);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('🎉 Payment secured in SafePay! Track in Profile > My Orders.'),
+                                          backgroundColor: Color(0xFF10B981),
+                                        ),
+                                      );
                                     },
                                   );
                                 },
@@ -492,43 +549,43 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                               ),
                             ),
                             const SizedBox(height: 10),
-                          ],
 
-                          // Contact Seller Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                final roomId = await chatService.getOrCreateChatRoom(
-                                  productId: activeProduct.id,
-                                  productTitle: activeProduct.title,
-                                  sellerId: activeProduct.sellerId.isNotEmpty ? activeProduct.sellerId : 'dummy_seller',
-                                  sellerName: seller,
-                                );
-                                if (context.mounted) {
-                                  DynamicChatDialog.show(
-                                    context,
-                                    roomId: roomId,
-                                    targetUserName: seller,
-                                    productTitle: title,
-                                    isSellerMode: true,
+                            // Contact Seller Button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final roomId = await chatService.getOrCreateChatRoom(
+                                    productId: activeProduct.id,
+                                    productTitle: activeProduct.title,
+                                    sellerId: activeProduct.sellerId.isNotEmpty ? activeProduct.sellerId : 'dummy_seller',
+                                    sellerName: seller,
                                   );
-                                }
-                              },
-                              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                              label: Text(
-                                _isOrderPlaced ? 'CHAT WITH SELLER (SCHEDULE MEETUP)' : 'CONTACT SELLER',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
-                                foregroundColor: const Color(0xFF2563EB),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  if (context.mounted) {
+                                    DynamicChatDialog.show(
+                                      context,
+                                      roomId: roomId,
+                                      targetUserName: seller,
+                                      productTitle: title,
+                                      isSellerMode: true,
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                                label: Text(
+                                  _isOrderPlaced ? 'CHAT WITH SELLER (SCHEDULE MEETUP)' : 'CONTACT SELLER',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                  foregroundColor: const Color(0xFF2563EB),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
+                            const SizedBox(height: 8),
+                          ],
                           const Center(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,

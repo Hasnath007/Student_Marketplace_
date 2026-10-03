@@ -9,6 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/providers/admin_provider.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/providers/subscriptions_provider.dart';
+import '../../../core/services/order_service.dart';
+import '../../../core/models/order_model.dart';
 import '../../../models/product.dart';
 
 class AdminPanelScreen extends ConsumerStatefulWidget {
@@ -1209,66 +1211,91 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   // TAB 3: Reports
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildReportsTab(List<AdminReport> reports) {
-    final statusFilters = ['All', 'Pending', 'Resolved', 'Dismissed'];
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: orderService.streamAllReports(),
+      builder: (context, snapshot) {
+        final liveReports = <AdminReport>[];
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          for (final doc in snapshot.data!) {
+            liveReports.add(AdminReport(
+              id: doc['id'] ?? '',
+              type: doc['type'] ?? 'product',
+              reportedItem: doc['reportedItem'] ?? 'SafePay Order',
+              reportedBy: doc['reportedBy'] ?? 'Student Buyer',
+              reason: '${doc['reason'] ?? ''}${doc['notes'] != null && doc['notes'].toString().isNotEmpty ? ' - ${doc['notes']}' : ''}',
+              date: doc['date'] ?? 'Today',
+              status: doc['status'] ?? 'pending',
+            ));
+          }
+        }
 
-    final filtered = reports.where((r) {
-      return _reportFilterStatus == 'All' || r.status.toLowerCase() == _reportFilterStatus.toLowerCase();
-    }).toList();
+        final combinedReports = [
+          ...liveReports,
+          ...reports.where((r) => !liveReports.any((lr) => lr.id == r.id)),
+        ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+        final statusFilters = ['All', 'Pending', 'Resolved', 'Dismissed'];
+
+        final filtered = combinedReports.where((r) {
+          return _reportFilterStatus == 'All' || r.status.toLowerCase() == _reportFilterStatus.toLowerCase();
+        }).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Content Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-            const Spacer(),
-            ...statusFilters.map((status) {
-              final isSel = _reportFilterStatus == status;
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: ChoiceChip(
-                  label: Text(status),
-                  selected: isSel,
-                  onSelected: (s) {
-                    if (s) setState(() => _reportFilterStatus = status);
-                  },
-                  selectedColor: const Color(0xFF2563EB),
-                  backgroundColor: const Color(0xFFEEF2FF),
-                  labelStyle: TextStyle(
-                    color: isSel ? Colors.white : const Color(0xFF475569),
-                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                    fontSize: 12,
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-              );
-            }),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        ...filtered.map((report) => _buildReportCard(report)),
-
-        if (filtered.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 48),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: const Column(
+            Row(
               children: [
-                Icon(Icons.check_circle_outline_rounded, size: 48, color: Color(0xFF94A3B8)),
-                SizedBox(height: 12),
-                Text('No reports in this category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                SizedBox(height: 4),
-                Text('All clear! No pending reports found.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                const Text('Content Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                const Spacer(),
+                ...statusFilters.map((status) {
+                  final isSel = _reportFilterStatus == status;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(status),
+                      selected: isSel,
+                      onSelected: (s) {
+                        if (s) setState(() => _reportFilterStatus = status);
+                      },
+                      selectedColor: const Color(0xFF2563EB),
+                      backgroundColor: const Color(0xFFEEF2FF),
+                      labelStyle: TextStyle(
+                        color: isSel ? Colors.white : const Color(0xFF475569),
+                        fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                  );
+                }),
               ],
             ),
-          ),
-      ],
+            const SizedBox(height: 20),
+
+            ...filtered.map((report) => _buildReportCard(report)),
+
+            if (filtered.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 48),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(Icons.check_circle_outline_rounded, size: 48, color: Color(0xFF94A3B8)),
+                    SizedBox(height: 12),
+                    Text('No reports in this category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                    SizedBox(height: 4),
+                    Text('All clear! No pending reports found.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -1390,8 +1417,9 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                 SizedBox(
                   height: 32,
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
                       ref.read(adminReportsProvider.notifier).resolveReport(report.id);
+                      await orderService.resolveReport(report.id);
                       _showSnack('Report "${report.reportedItem}" resolved.', const Color(0xFF059669));
                     },
                     icon: const Icon(Icons.check_rounded, size: 14),
@@ -1408,8 +1436,9 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                 SizedBox(
                   height: 32,
                   child: OutlinedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       ref.read(adminReportsProvider.notifier).dismissReport(report.id);
+                      await orderService.dismissReport(report.id);
                       _showSnack('Report dismissed.', const Color(0xFF64748B));
                     },
                     style: OutlinedButton.styleFrom(
@@ -1431,65 +1460,97 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   // TAB 4: Escrow Transactions
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildTransactionsTab(List<AdminTransaction> transactions) {
-    final statusFilters = ['All', 'Pending_Verification', 'Held_In_Escrow', 'Released_To_Seller', 'Refunded'];
+    return StreamBuilder<List<OrderModel>>(
+      stream: orderService.streamAllOrders(),
+      builder: (context, snapshot) {
+        final liveTrx = <AdminTransaction>[];
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          for (final ord in snapshot.data!) {
+            final st = ord.status == 'completed'
+                ? 'released_to_seller'
+                : ord.status == 'refunded'
+                    ? 'refunded'
+                    : 'held_in_escrow';
+            liveTrx.add(AdminTransaction(
+              id: ord.id,
+              buyerName: ord.buyerName,
+              sellerName: ord.sellerName,
+              itemName: ord.productTitle,
+              amount: ord.price,
+              status: st,
+              date: '${ord.createdAt.day}/${ord.createdAt.month}/${ord.createdAt.year}',
+              method: ord.paymentMethod,
+              trxId: ord.trxId,
+            ));
+          }
+        }
 
-    final filtered = transactions.where((t) {
-      return _transactionFilterStatus == 'All' || t.status.toLowerCase() == _transactionFilterStatus.toLowerCase();
-    }).toList();
+        final combinedTransactions = [
+          ...liveTrx,
+          ...transactions.where((t) => !liveTrx.any((lt) => lt.id == t.id)),
+        ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+        final statusFilters = ['All', 'Pending_Verification', 'Held_In_Escrow', 'Released_To_Seller', 'Refunded'];
+
+        final filtered = combinedTransactions.where((t) {
+          return _transactionFilterStatus == 'All' || t.status.toLowerCase() == _transactionFilterStatus.toLowerCase();
+        }).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('SafePay Payments & Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-            const Spacer(),
-            ...statusFilters.map((status) {
-              final isSel = _transactionFilterStatus == status;
-              final label = status.replaceAll('_', ' ');
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: ChoiceChip(
-                  label: Text(label),
-                  selected: isSel,
-                  onSelected: (s) {
-                    if (s) setState(() => _transactionFilterStatus = status);
-                  },
-                  selectedColor: const Color(0xFF2563EB),
-                  backgroundColor: const Color(0xFFEEF2FF),
-                  labelStyle: TextStyle(
-                    color: isSel ? Colors.white : const Color(0xFF475569),
-                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                    fontSize: 12,
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-              );
-            }),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        ...filtered.map((trx) => _buildTransactionCard(trx)),
-
-        if (filtered.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 48),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: const Column(
+            Row(
               children: [
-                Icon(Icons.receipt_long_rounded, size: 48, color: Color(0xFF94A3B8)),
-                SizedBox(height: 12),
-                Text('No transactions found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                const Text('SafePay Payments & Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                const Spacer(),
+                ...statusFilters.map((status) {
+                  final isSel = _transactionFilterStatus == status;
+                  final label = status.replaceAll('_', ' ');
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(label),
+                      selected: isSel,
+                      onSelected: (s) {
+                        if (s) setState(() => _transactionFilterStatus = status);
+                      },
+                      selectedColor: const Color(0xFF2563EB),
+                      backgroundColor: const Color(0xFFEEF2FF),
+                      labelStyle: TextStyle(
+                        color: isSel ? Colors.white : const Color(0xFF475569),
+                        fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                  );
+                }),
               ],
             ),
-          ),
-      ],
+            const SizedBox(height: 20),
+
+            ...filtered.map((trx) => _buildTransactionCard(trx)),
+
+            if (filtered.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 48),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(Icons.receipt_long_rounded, size: 48, color: Color(0xFF94A3B8)),
+                    SizedBox(height: 12),
+                    Text('No transactions found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -1601,8 +1662,9 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                 SizedBox(
                   height: 32,
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
                       ref.read(adminTransactionsProvider.notifier).releaseToSeller(trx.id);
+                      await orderService.completeHandover(trx.id);
                       _showSnack('Funds released to seller via bKash/Nagad.', const Color(0xFF2563EB));
                     },
                     icon: const Icon(Icons.send_rounded, size: 14),
@@ -1619,8 +1681,9 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                 SizedBox(
                   height: 32,
                   child: OutlinedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       ref.read(adminTransactionsProvider.notifier).refundToBuyer(trx.id);
+                      await orderService.refundOrder(trx.id);
                       _showSnack('Funds refunded to buyer.', const Color(0xFFDC2626));
                     },
                     style: OutlinedButton.styleFrom(

@@ -80,21 +80,28 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
         stream: () {
           if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();
           
-          String targetUid = activeProduct.sellerId;
+          String targetUid = activeProduct.sellerId.trim();
           
           if (targetUid.isEmpty) {
             final currUser = FirebaseAuth.instance.currentUser;
             if (currUser != null) {
-              final prefix = currUser.email?.split('@')[0] ?? '';
-              final isOwner = activeProduct.sellerName == currUser.displayName ||
-                  (prefix.isNotEmpty && activeProduct.sellerName == prefix);
-              if (isOwner) targetUid = currUser.uid;
+              final prefix = (currUser.email?.split('@')[0] ?? '').trim();
+              final isOwner = activeProduct.sellerName.trim() == (currUser.displayName ?? '').trim() ||
+                  (prefix.isNotEmpty && activeProduct.sellerName.trim() == prefix);
+              if (isOwner && currUser.uid.trim().isNotEmpty) {
+                targetUid = currUser.uid.trim();
+              }
             }
           }
 
-          return targetUid.isNotEmpty 
-              ? FirebaseFirestore.instance.collection('users').doc(targetUid).snapshots()
-              : const Stream<DocumentSnapshot>.empty();
+          if (targetUid.isNotEmpty && !targetUid.contains('/')) {
+            try {
+              return FirebaseFirestore.instance.collection('users').doc(targetUid).snapshots();
+            } catch (_) {
+              return const Stream<DocumentSnapshot>.empty();
+            }
+          }
+          return const Stream<DocumentSnapshot>.empty();
         }(),
         builder: (context, snapshot) {
           String displaySellerName = activeProduct.sellerName;

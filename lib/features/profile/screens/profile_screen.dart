@@ -692,9 +692,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: StreamBuilder<DocumentSnapshot>(
-                    stream: (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null)
-                        ? FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).snapshots()
-                        : const Stream.empty(),
+                    stream: () {
+                      if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();
+                      final uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
+                      if (uid.isNotEmpty && !uid.contains('/')) {
+                        try {
+                          return FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
+                        } catch (_) {
+                          return const Stream<DocumentSnapshot>.empty();
+                        }
+                      }
+                      return const Stream<DocumentSnapshot>.empty();
+                    }(),
                     builder: (context, snapshot) {
                       String userName = 'Student';
                       String userDept = 'University Student';

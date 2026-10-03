@@ -700,12 +700,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       String userDept = 'University Student';
                       String joinedDate = 'Joined Recently';
                       String? photoUrl;
+                      bool isAdmin = false;
 
                       if (snapshot.hasData && snapshot.data!.exists) {
                         final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
                         userName = data['name'] ?? userName;
                         userDept = data['department'] ?? userDept;
                         photoUrl = data['photoUrl'] ?? data['profileImageUrl'];
+                        final role = (data['role'] ?? '').toString().toLowerCase();
+                        final userEmail = (FirebaseAuth.instance.currentUser?.email ?? '').toLowerCase();
+                        if (role == 'admin' ||
+                            data['isAdmin'] == true ||
+                            userEmail == 'studentmarket@gmail.com' ||
+                            userEmail.startsWith('studentmarket') ||
+                            userEmail.startsWith('admin@')) {
+                          isAdmin = true;
+                        }
                         if (data['createdAt'] != null) {
                           final date = (data['createdAt'] as Timestamp).toDate();
                           const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -802,6 +812,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               ],
                             ),
                           ),
+
+                          // Admin Dashboard Button (Only for Admins)
+                          if (isAdmin) ...[
+                            ElevatedButton.icon(
+                              onPressed: () => context.go('/admin'),
+                              icon: const Icon(Icons.admin_panel_settings_rounded, size: 16, color: Colors.white),
+                              label: const Text(
+                                'Admin Panel',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0052CC),
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
 
                           // Sign Out Button
                           ElevatedButton.icon(

@@ -892,11 +892,12 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
-              ref.read(marketplaceProvider.notifier).editProduct(
-                p.id,
-                title: titleCtrl.text.trim(),
-                price: double.tryParse(priceCtrl.text) ?? p.price,
-                category: categoryCtrl.text.trim(),
+              ref.read(marketplaceProvider.notifier).updateProduct(
+                p.copyWith(
+                  title: titleCtrl.text.trim(),
+                  price: double.tryParse(priceCtrl.text) ?? p.price,
+                  category: categoryCtrl.text.trim(),
+                ),
               );
               Navigator.pop(ctx);
               _showSnack('Listing updated successfully!', const Color(0xFF059669));

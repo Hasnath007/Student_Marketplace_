@@ -24,13 +24,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   String _userFilterStatus = 'All';
   String _reportFilterStatus = 'All';
   String _transactionFilterStatus = 'All';
-  final TextEditingController _messageController = TextEditingController();
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +32,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     final products = ref.watch(marketplaceProvider);
     final subscriptions = ref.watch(subscriptionsProvider);
     final transactions = ref.watch(adminTransactionsProvider);
-    final messages = ref.watch(adminMessagesProvider);
 
     // Summary stats
     final totalUsers = users.length;
@@ -49,6 +41,13 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     final totalSubscriptions = subscriptions.length;
     final pendingReports = reports.where((r) => r.status == 'pending').length;
     final pendingTransactions = transactions.where((t) => t.status == 'pending_verification').length;
+
+    double escrowBalance = 0;
+    for (var t in transactions) {
+      if (t.status == 'held_in_escrow' || t.status == 'pending_verification') {
+        escrowBalance += t.amount;
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -209,12 +208,12 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                           width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
                         ),
                         _buildStatCard(
-                          icon: Icons.flag_rounded,
-                          iconBg: pendingReports > 0 ? const Color(0xFFFEE2E2) : const Color(0xFFF1F5F9),
-                          iconColor: pendingReports > 0 ? const Color(0xFFDC2626) : const Color(0xFF64748B),
-                          label: 'Pending Reports',
-                          value: '$pendingReports',
-                          subtitle: '${reports.length} total reports',
+                          icon: Icons.payments_rounded,
+                          iconBg: const Color(0xFFDCFCE7),
+                          iconColor: const Color(0xFF16A34A),
+                          label: 'Escrow Vault',
+                          value: '৳${escrowBalance.toStringAsFixed(0)}',
+                          subtitle: '$pendingTransactions pending verification',
                           width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
                         ),
                       ],
@@ -236,10 +235,8 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                       _buildTab(0, Icons.people_alt_rounded, 'Users', totalUsers),
                       _buildTab(1, Icons.storefront_rounded, 'Listings', totalProducts),
                       _buildTab(2, Icons.groups_rounded, 'Subscriptions', totalSubscriptions),
-                      _buildTab(3, Icons.flag_rounded, 'Reports', pendingReports),
-                      _buildTab(4, Icons.payments_rounded, 'Escrow', pendingTransactions),
-                      _buildTab(5, Icons.chat_bubble_rounded, 'Messages', null),
-                      _buildTab(6, Icons.analytics_rounded, 'Analytics', null),
+                      _buildTab(3, Icons.payments_rounded, 'Escrow', pendingTransactions),
+                      _buildTab(4, Icons.flag_rounded, 'Reports', pendingReports),
                     ],
                   ),
                 ),
@@ -249,10 +246,8 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                 if (_selectedTab == 0) _buildUsersTab(users),
                 if (_selectedTab == 1) _buildListingsTab(products),
                 if (_selectedTab == 2) _buildSubscriptionsTab(subscriptions),
-                if (_selectedTab == 3) _buildReportsTab(reports),
-                if (_selectedTab == 4) _buildTransactionsTab(transactions),
-                if (_selectedTab == 5) _buildMessagesTab(messages),
-                if (_selectedTab == 6) _buildAnalyticsTab(users, products, reports, transactions),
+                if (_selectedTab == 3) _buildTransactionsTab(transactions),
+                if (_selectedTab == 4) _buildReportsTab(reports),
               ],
             ),
           ),
@@ -1062,16 +1057,27 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
-                childAspectRatio: 2.4,
+                childAspectRatio: 2.1,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
               itemCount: subscriptions.length,
               itemBuilder: (context, index) {
-                final sub = subscriptions[index];
-                final fillRate = sub.currentMembers / sub.maxMembers;
+                final sub = subscriptions[index] as Map<String, dynamic>;
+                final subId = sub['id'] as String? ?? '';
+                final title = sub['title'] as String? ?? 'Untitled Group';
+                final category = sub['category'] as String? ?? 'Productivity';
+                final host = sub['host'] as String? ?? 'Unknown Host';
+                final filledSlots = (sub['filledSlots'] as int?) ?? 1;
+                final totalSlots = (sub['totalSlots'] as int?) ?? 4;
+                final fillRate = totalSlots > 0 ? (filledSlots / totalSlots).clamp(0.0, 1.0) : 0.0;
+                final totalPrice = (sub['totalPrice'] as int?) ?? 0;
+                final pricePerSlot = totalSlots > 0 ? (totalPrice / totalSlots).round() : 0;
+                final period = sub['period'] as String? ?? '/mo';
+                final isVerified = sub['isVerified'] == true;
+
                 return Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -1086,12 +1092,13 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              sub.title,
+                              title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
@@ -1099,7 +1106,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              sub.category,
+                              category.toUpperCase(),
                               style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                             ),
                           ),
@@ -1109,11 +1116,15 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                         children: [
                           const Icon(Icons.person_outline_rounded, size: 14, color: Color(0xFF64748B)),
                           const SizedBox(width: 4),
-                          Text('Admin: ${sub.adminName}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text('Host: $host', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          if (isVerified) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.verified_rounded, size: 14, color: Color(0xFF2563EB)),
+                          ],
                           const Spacer(),
                           Text(
-                            '\$${sub.monthlyPricePerMember.toStringAsFixed(2)}/mo',
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF2563EB)),
+                            '৳$pricePerSlot$period',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF2563EB)),
                           ),
                         ],
                       ),
@@ -1124,7 +1135,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '${sub.currentMembers}/${sub.maxMembers} members',
+                                '$filledSlots/$totalSlots slots filled',
                                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
                               ),
                               Text(
@@ -1148,6 +1159,38 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                               ),
                               minHeight: 6,
                             ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFDC2626)),
+                            tooltip: 'Delete Group',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Delete Subscription Group?'),
+                                  content: Text('Are you sure you want to remove "$title"?'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      style: TextButton.styleFrom(foregroundColor: const Color(0xFFDC2626)),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true && subId.isNotEmpty) {
+                                ref.read(subscriptionsProvider.notifier).deleteGroup(subId);
+                                _showSnack('Group "$title" removed successfully.', const Color(0xFF059669));
+                              }
+                            },
                           ),
                         ],
                       ),
@@ -1596,556 +1639,8 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // TAB 5: Messages (Admin Chat)
-  // ═══════════════════════════════════════════════════════════════════════
-  Widget _buildMessagesTab(List<AdminMessage> messages) {
-    return Container(
-      height: 600,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.support_agent_rounded, color: Color(0xFF2563EB)),
-                SizedBox(width: 12),
-                Text('Admin Support Chat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(24),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final msg = messages[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    mainAxisAlignment: msg.isFromAdmin ? MainAxisAlignment.end : MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (!msg.isFromAdmin)
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundColor: const Color(0xFFE2E8F0),
-                          child: Text(msg.sender[0], style: const TextStyle(fontSize: 12, color: Color(0xFF475569))),
-                        ),
-                      if (!msg.isFromAdmin) const SizedBox(width: 8),
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: msg.isFromAdmin ? const Color(0xFF2563EB) : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(16).copyWith(
-                              bottomRight: msg.isFromAdmin ? const Radius.circular(4) : const Radius.circular(16),
-                              bottomLeft: !msg.isFromAdmin ? const Radius.circular(4) : const Radius.circular(16),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: msg.isFromAdmin ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                msg.isFromAdmin ? 'To: ${msg.receiver}' : msg.sender,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: msg.isFromAdmin ? Colors.blue.shade100 : const Color(0xFF64748B),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                msg.content,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: msg.isFromAdmin ? Colors.white : const Color(0xFF0F172A),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (msg.isFromAdmin) const SizedBox(width: 8),
-                      if (msg.isFromAdmin)
-                        const CircleAvatar(
-                          radius: 14,
-                          backgroundColor: Color(0xFFDBEAFE),
-                          child: Icon(Icons.shield_rounded, size: 14, color: Color(0xFF2563EB)),
-                        ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Type your message...',
-                      hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                      filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onSubmitted: (val) {
-                      if (val.trim().isNotEmpty) {
-                        ref.read(adminMessagesProvider.notifier).sendMessage('All Users', val);
-                        _messageController.clear();
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                InkWell(
-                  onTap: () {
-                    final val = _messageController.text.trim();
-                    if (val.isNotEmpty) {
-                      ref.read(adminMessagesProvider.notifier).sendMessage('All Users', val);
-                      _messageController.clear();
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2563EB),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // TAB 6: Analytics
-  // ═══════════════════════════════════════════════════════════════════════
-  Widget _buildAnalyticsTab(List<AdminUser> users, List products, List<AdminReport> reports, List<AdminTransaction> transactions) {
-    final activeUsers = users.where((u) => u.status == 'active').length;
 
-    // Revenue simulation
-    double totalRevenue = 0;
-    for (final p in products) {
-      totalRevenue += p.price;
-    }
-
-    // Escrow simulation
-    double escrowBalance = 0;
-    for (final t in transactions) {
-      if (t.status == 'held_in_escrow' || t.status == 'pending_verification') {
-        escrowBalance += t.amount;
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Platform Analytics Overview', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)),
-                const SizedBox(height: 6),
-                Text(
-                  'Comprehensive insights into marketplace performance, user growth, and escrow funds.',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)]),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(color: const Color(0xFF2563EB).withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.download_rounded, color: Colors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text('Download Report', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 32),
-
-        // ── HERO METRICS ROW ──
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 900;
-            return Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                _buildPremiumMetricCard(
-                  title: 'Total Revenue (Est.)',
-                  value: '৳${totalRevenue.toStringAsFixed(0)}',
-                  change: '+15.2%',
-                  isPositive: true,
-                  icon: Icons.auto_graph_rounded,
-                  colors: [const Color(0xFF10B981), const Color(0xFF059669)],
-                  width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
-                ),
-                _buildPremiumMetricCard(
-                  title: 'Escrow Balance',
-                  value: '৳${escrowBalance.toStringAsFixed(0)}',
-                  change: 'Pending & Held',
-                  isPositive: true,
-                  icon: Icons.account_balance_rounded,
-                  colors: [const Color(0xFF3B82F6), const Color(0xFF2563EB)],
-                  width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
-                ),
-                _buildPremiumMetricCard(
-                  title: 'Total Users',
-                  value: '${users.length}',
-                  change: '+12 this month',
-                  isPositive: true,
-                  icon: Icons.rocket_launch_rounded,
-                  colors: [const Color(0xFF8B5CF6), const Color(0xFF7C3AED)],
-                  width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
-                ),
-                _buildPremiumMetricCard(
-                  title: 'Active User Rate',
-                  value: '${((activeUsers / (users.isEmpty ? 1 : users.length)) * 100).toStringAsFixed(0)}%',
-                  change: 'Healthy engagement',
-                  isPositive: true,
-                  icon: Icons.local_fire_department_rounded,
-                  colors: [const Color(0xFFF59E0B), const Color(0xFFD97706)],
-                  width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 24),
-
-        // ── SECOND ROW: CHARTS & TOP DEPARTMENTS ──
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 800;
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: isWide ? 2 : 1,
-                  child: _buildRevenueBreakdownCard(),
-                ),
-                if (isWide) const SizedBox(width: 16),
-                if (isWide)
-                  Expanded(
-                    flex: 1,
-                    child: _buildTopDepartmentsCard(users),
-                  ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 24),
-
-        // ── THIRD ROW: RECENT ACTIVITY ──
-        _buildActivityFeed(),
-      ],
-    );
-  }
-
-  Widget _buildPremiumMetricCard({
-    required String title,
-    required String value,
-    required String change,
-    required bool isPositive,
-    required IconData icon,
-    required List<Color> colors,
-    required double width,
-  }) {
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.white, colors[0].withValues(alpha: 0.03)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors[0].withValues(alpha: 0.2), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: colors[0].withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: colors),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(color: colors[0].withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3)),
-                  ],
-                ),
-                child: Icon(icon, size: 18, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -1)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                size: 16,
-                color: isPositive ? const Color(0xFF059669) : const Color(0xFFDC2626),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                change,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isPositive ? const Color(0xFF059669) : const Color(0xFFDC2626),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRevenueBreakdownCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(color: const Color(0xFFE2E8F0).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Revenue by Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-              Text('Last 30 Days', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildRevenueBar('Books', 0.35, const Color(0xFF2563EB), '৳950'),
-          const SizedBox(height: 16),
-          _buildRevenueBar('Electronics', 0.55, const Color(0xFF059669), '৳1,500'),
-          const SizedBox(height: 16),
-          _buildRevenueBar('Stationery', 0.15, const Color(0xFFD97706), '৳250'),
-          const SizedBox(height: 16),
-          _buildRevenueBar('Notes', 0.25, const Color(0xFF7C3AED), '৳330'),
-          const SizedBox(height: 16),
-          _buildRevenueBar('Digital Services', 0.10, const Color(0xFFDC2626), '৳300'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopDepartmentsCard(List<AdminUser> users) {
-    // Count users by department
-    final Map<String, int> deptCounts = {};
-    for (var u in users) {
-      deptCounts[u.department] = (deptCounts[u.department] ?? 0) + 1;
-    }
-    final sortedDepts = deptCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(color: const Color(0xFFE2E8F0).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Top Departments', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-              Icon(Icons.school_rounded, color: Color(0xFF94A3B8), size: 18),
-            ],
-          ),
-          const SizedBox(height: 24),
-          ...sortedDepts.take(5).map((entry) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        entry.key.isNotEmpty ? entry.key[0] : '?',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      entry.key,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
-                    ),
-                  ),
-                  Text(
-                    '${entry.value} users',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRevenueBar(String label, double progress, Color color, String amount) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 110,
-          child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
-        ),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: const Color(0xFFF1F5F9),
-              valueColor: AlwaysStoppedAnimation(color),
-              minHeight: 12,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        SizedBox(
-          width: 60,
-          child: Text(amount, textAlign: TextAlign.right, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivityFeed() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(color: const Color(0xFFE2E8F0).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Recent Platform Activity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-          const SizedBox(height: 20),
-          _buildActivityItem(Icons.person_add_rounded, const Color(0xFF2563EB), 'David Kim', 'registered a new account', '5 min ago'),
-          _buildActivityItem(Icons.storefront_rounded, const Color(0xFF059669), 'Sarah J.', 'listed "Organic Chemistry 10th Ed"', '12 min ago'),
-          _buildActivityItem(Icons.groups_rounded, const Color(0xFFD97706), 'Farhan K.', 'joined Netflix Premium 4K group', '28 min ago'),
-          _buildActivityItem(Icons.flag_rounded, const Color(0xFFDC2626), 'Michael R.', 'reported suspicious product listing', '1 hour ago'),
-          _buildActivityItem(Icons.payments_rounded, const Color(0xFF7C3AED), 'Alex Rivera', 'withdrew ৳1,500 via bKash', '2 hours ago'),
-          _buildActivityItem(Icons.check_circle_rounded, const Color(0xFF059669), 'Admin', 'resolved report on Netflix group', 'Yesterday'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(IconData icon, Color color, String user, String action, String time) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: const TextStyle(fontSize: 14, color: Color(0xFF475569), fontFamily: 'Roboto'),
-                children: [
-                  TextSpan(text: user, style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-                  TextSpan(text: ' $action'),
-                ],
-              ),
-            ),
-          ),
-          Text(time, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
-        ],
-      ),
-    );
-  }
 
   void _showSnack(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(

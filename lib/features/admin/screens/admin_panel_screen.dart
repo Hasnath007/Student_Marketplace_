@@ -37,7 +37,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     // Summary stats
     final totalUsers = users.length;
     final activeUsers = users.where((u) => u.status == 'active').length;
-    final suspendedUsers = users.where((u) => u.status == 'suspended').length;
     final totalProducts = products.length;
     final totalSubscriptions = subscriptions.length;
     final pendingReports = reports.where((r) => r.status == 'pending').length;
@@ -185,7 +184,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                           iconColor: const Color(0xFF2563EB),
                           label: 'Total Users',
                           value: '$totalUsers',
-                          subtitle: '$activeUsers active  •  $suspendedUsers suspended',
+                          subtitle: '$activeUsers active students across campus',
                           width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
                         ),
                         _buildStatCard(
@@ -361,7 +360,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   // TAB 0: Users Management
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildUsersTab(List<AdminUser> users) {
-    final statusFilters = ['All', 'Active', 'Suspended'];
+    final statusFilters = ['All', 'Active'];
 
     final filtered = users.where((u) {
       final matchesSearch = _userSearchQuery.isEmpty ||
@@ -467,7 +466,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                     Expanded(flex: 1, child: Text('Role', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.5))),
                     Expanded(flex: 1, child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.5))),
                     Expanded(flex: 1, child: Text('Listings', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.5))),
-                    SizedBox(width: 120, child: Text('Actions', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.5))),
+                    SizedBox(width: 80, child: Text('Actions', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.5))),
                   ],
                 ),
               ),
@@ -608,7 +607,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
           ),
           // Actions
           SizedBox(
-            width: 120,
+            width: 80,
             child: Row(
               children: [
                 _buildActionButton(
@@ -617,20 +616,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                   'Edit User',
                   () => _showEditUserDialog(user),
                 ),
-                const SizedBox(width: 4),
-                _buildActionButton(
-                  user.status == 'active' ? Icons.block_rounded : Icons.check_circle_outline_rounded,
-                  user.status == 'active' ? const Color(0xFFF59E0B) : const Color(0xFF059669),
-                  user.status == 'active' ? 'Suspend' : 'Activate',
-                  () {
-                    ref.read(adminUsersProvider.notifier).toggleUserStatus(user.id);
-                    _showSnack(
-                      user.status == 'active' ? '${user.name} suspended.' : '${user.name} re-activated.',
-                      user.status == 'active' ? const Color(0xFFF59E0B) : const Color(0xFF059669),
-                    );
-                  },
-                ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
                 _buildActionButton(
                   Icons.delete_outline_rounded,
                   const Color(0xFFDC2626),

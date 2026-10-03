@@ -507,12 +507,47 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             height: 48,
                             child: OutlinedButton.icon(
                               onPressed: () async {
+                                final currUser = FirebaseAuth.instance.currentUser;
+                                final isOwner = currUser != null &&
+                                    (activeProduct.sellerId == currUser.uid ||
+                                     (activeProduct.sellerId.isEmpty &&
+                                      activeProduct.sellerName.toLowerCase() == (currUser.displayName ?? currUser.email?.split('@')[0] ?? '').toLowerCase()));
+
+                                if (isOwner) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Row(
+                                        children: [
+                                          Icon(Icons.info_outline_rounded, color: Colors.white, size: 20),
+                                          SizedBox(width: 8),
+                                          Text('This is your own listing! You cannot chat with yourself.'),
+                                        ],
+                                      ),
+                                      backgroundColor: Color(0xFF2563EB),
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 final roomId = await chatService.getOrCreateChatRoom(
                                   productId: activeProduct.id,
                                   productTitle: activeProduct.title,
                                   sellerId: activeProduct.sellerId.isNotEmpty ? activeProduct.sellerId : 'dummy_seller',
                                   sellerName: seller,
                                 );
+
+                                if (roomId.trim().isEmpty) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Cannot initiate chat for this listing.'),
+                                        backgroundColor: Color(0xFFDC2626),
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
+
                                 if (context.mounted) {
                                   DynamicChatDialog.show(
                                     context,

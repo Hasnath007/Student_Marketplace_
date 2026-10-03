@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isAuthenticated();
+    }
+
+    // 2. Marketplace Products collection
+    match /products/{productId} {
+      allow read: if true; // Publicly viewable listings
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+
+    // 3. Subscription Groups collection
+    match /subscriptions/{groupId} {
+      allow read: if isAuthenticated();
+      allow write, create, update, delete: if isAuthenticated();
+    }
+
+    // 4. SafePay Orders collection
+    match /orders/{orderId} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // 5. Dispute Reports collection
+    match /reports/{reportId} {
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+
+    // 6. Direct Messaging & Chats
+    match /chats/{chatId} {
+      allow read, write, create, update: if isAuthenticated();
+
+      match /messages/{messageId} {
+        allow read, write, create: if isAuthenticated();
+      }
+    }
+  }
+}

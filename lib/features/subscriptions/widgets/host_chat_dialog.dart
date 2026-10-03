@@ -60,7 +60,16 @@ class _HostChatDialogState extends State<HostChatDialog> {
   final TextEditingController _msgController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  String get _chatId => '${widget.groupTitle}_${widget.hostName}'.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+  String get _chatId {
+    String hName = widget.hostName.trim();
+    if (hName.startsWith('You')) {
+      final user = FirebaseAuth.instance.currentUser;
+      hName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Host';
+    }
+    final cleanTitle = widget.groupTitle.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final cleanHost = hName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    return '${cleanTitle}_$cleanHost';
+  }
 
   @override
   void initState() {
@@ -106,6 +115,13 @@ class _HostChatDialogState extends State<HostChatDialog> {
       'isHost': widget.isHostMode,
       'timestamp': FieldValue.serverTimestamp(),
     });
+
+    await FirebaseFirestore.instance.collection('chats').doc(_chatId).set({
+      'lastMessage': clean,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'groupTitle': widget.groupTitle,
+      'hostName': widget.hostName,
+    }, SetOptions(merge: true));
   }
 
   @override

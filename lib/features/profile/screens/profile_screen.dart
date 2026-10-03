@@ -1229,6 +1229,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: _buildHostedGroupCard(
                     groupId: g['id'],
                     title: g['title'],
+                    host: g['host'] as String? ?? (FirebaseAuth.instance.currentUser?.displayName ?? 'Host'),
                     price: '৳$pricePerSeat ${g['period']}',
                     filledSlots: '${g['filledSlots']}/${g['totalSlots']} slots filled',
                     totalRevenue: '+৳$revenue ${g['period']}',
@@ -2324,6 +2325,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildHostedGroupCard({
     required String groupId,
     required String title,
+    required String host,
     required String price,
     required String filledSlots,
     required String totalRevenue,
@@ -2466,7 +2468,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onPressed: () {
                   HostChatDialog.show(
                     context,
-                    hostName: 'You (Alex Rivera)',
+                    hostName: host,
                     groupTitle: title,
                     accountEmail: email,
                     pinCode: pin,

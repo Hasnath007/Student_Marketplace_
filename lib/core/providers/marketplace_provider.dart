@@ -2,6 +2,7 @@
 // 📌 কাজ: সব প্রোডাক্টের লিস্ট ধরে রাখা, নতুন প্রোডাক্ট অ্যাড করা (addProduct), সার্চ কিওয়ার্ড ও ক্যাটাগরি ফিল্টার স্টেট সংরক্ষণ।
 // 🔗 ব্যবহৃত হয়: MarketplaceScreen, SellItemScreen, ProductDetailsScreen
 
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/product.dart';
@@ -103,19 +104,20 @@ class MarketplaceLoadingNotifier extends Notifier<bool> {
 final marketplaceLoadingProvider = NotifierProvider<MarketplaceLoadingNotifier, bool>(MarketplaceLoadingNotifier.new);
 
 class MarketplaceNotifier extends Notifier<List<Product>> {
+  StreamSubscription? _subscription;
+
   @override
   List<Product> build() {
-    _fetchProducts();
+    _listenToProducts();
+    ref.onDispose(() => _subscription?.cancel());
     return []; // Start empty
   }
 
-  Future<void> _fetchProducts() async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('products')
-          .orderBy('createdAt', descending: true)
-          .get();
-      
+  void _listenToProducts() {
+    _subscription = FirebaseFirestore.instance
+        .collection('products')
+        .snapshots()
+        .listen((snapshot) {
       final products = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
@@ -123,12 +125,11 @@ class MarketplaceNotifier extends Notifier<List<Product>> {
       }).toList();
 
       state = products;
-    } catch (e) {
-      // Failed to fetch, set empty
-      state = [];
-    } finally {
       ref.read(marketplaceLoadingProvider.notifier).setLoading(false);
-    }
+    }, onError: (e) {
+      state = [];
+      ref.read(marketplaceLoadingProvider.notifier).setLoading(false);
+    });
   }
 
   Future<void> addProduct(Product product) async {

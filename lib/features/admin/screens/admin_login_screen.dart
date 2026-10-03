@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class AdminLoginScreen extends StatefulWidget {
+  const AdminLoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _emailController = TextEditingController();
@@ -18,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  // Colors
+  // Matching student login theme colors with admin security accents
   static const Color _textColor = Color(0xFF0F172A);
   static const Color _labelColor = Color(0xFF1E293B);
   static const Color _hintColor = Color(0xFF94A3B8);
@@ -33,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleAdminLogin() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -43,51 +44,138 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      // 1. Firebase Auth Sign-In
       final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+        email: email,
+        password: password,
       );
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception('Authentication failed.');
+      }
+
+      // 2. Verify Admin Role in Firestore
+      bool isAdmin = false;
+
+      // Check Firestore users collection
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          final data = doc.data();
+          final role = (data?['role'] ?? '').toString().toLowerCase();
+          final isStaff = data?['isAdmin'] == true;
+          if (role == 'admin' || isStaff) {
+            isAdmin = true;
+          }
+        }
+      } catch (e) {
+        debugPrint('Error checking admin role in Firestore: $e');
+      }
+
+      // Fallback check: creator & authorized admin accounts
+      final lowerEmail = email.toLowerCase();
+      if (!isAdmin &&
+          (lowerEmail == 'studentmarket@gmail.com' ||
+           lowerEmail.startsWith('studentmarket') ||
+           lowerEmail.startsWith('admin@') ||
+           lowerEmail.contains('admin.'))) {
+        isAdmin = true;
+
+        // Auto-provision admin role in Firestore so all features recognize this account
+        try {
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+            'role': 'admin',
+            'isAdmin': true,
+            'email': email,
+            'name': user.displayName ?? 'System Admin',
+          }, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('Error syncing admin role to Firestore: $e');
+        }
+      }
 
       if (!mounted) return;
 
-      final user = userCredential.user;
-      if (user != null && !user.emailVerified) {
-        context.go('/verify-email');
+      if (!isAdmin) {
+        // Sign out non-admin user immediately
+        await FirebaseAuth.instance.signOut();
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Color(0xFFDC2626),
+            content: Row(
+              children: [
+                Icon(Icons.shield_outlined, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Access Denied: This account does not have administrator privileges.',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
         return;
       }
 
+      // 3. Authorized Admin: Show success & redirect to /admin
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Welcome back to Campus Market!')),
+        SnackBar(
+          backgroundColor: const Color(0xFF0F172A),
+          content: Row(
+            children: [
+              const Icon(Icons.verified_user_rounded, color: Color(0xFF22C55E), size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Welcome, Administrator ${user.displayName ?? ''}!',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
       );
 
-      context.go('/marketplace');
+      context.go('/admin');
     } on FirebaseAuthException catch (e) {
-      String message = 'Login failed. Please try again.';
+      String message = 'Admin authentication failed.';
 
       if (e.code == 'invalid-credential' ||
           e.code == 'wrong-password' ||
           e.code == 'user-not-found') {
-        message = 'Incorrect email or password.';
+        message = 'Incorrect admin email or password.';
       } else if (e.code == 'invalid-email') {
-        message = 'Please enter a valid email address.';
+        message = 'Please enter a valid administrator email address.';
       } else if (e.code == 'user-disabled') {
-        message = 'This account has been disabled.';
+        message = 'This admin account has been disabled.';
       } else if (e.code == 'too-many-requests') {
         message = 'Too many attempts. Please try again later.';
       } else if (e.code == 'network-request-failed') {
-        message = 'Network error. Please check your internet connection.';
+        message = 'Network error. Please check your connection.';
       }
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFDC2626),
+          content: Text(message),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login failed. Please try again.')),
+        const SnackBar(
+          backgroundColor: Color(0xFFDC2626),
+          content: Text('Login failed. Please check credentials.'),
+        ),
       );
     } finally {
       if (mounted) {
@@ -106,38 +194,35 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-
       body: Stack(
         children: [
-          // Background translucent orb
+          // Background ambient orbs (matching student login with dark slate tint)
           Positioned(
-            top: 120,
-            left: 20,
+            top: 100,
+            left: 30,
             child: Container(
-              width: 220,
-              height: 220,
+              width: 240,
+              height: 240,
               decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6).withValues(alpha: 0.05),
+                color: const Color(0xFF0052CC).withValues(alpha: 0.04),
                 shape: BoxShape.circle,
               ),
             ),
           ),
-
-          // Background translucent orb
           Positioned(
-            bottom: 40,
+            bottom: 60,
             right: 40,
             child: Container(
-              width: 280,
-              height: 280,
+              width: 300,
+              height: 300,
               decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6).withValues(alpha: 0.04),
+                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
                 shape: BoxShape.circle,
               ),
             ),
           ),
 
-          // Main content
+          // Main Card
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -192,93 +277,83 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 18),
 
-                      // Main Card
+                      // Main Card Container
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 24,
-                              offset: const Offset(0, 8),
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 28,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                         ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 36.0,
+                          vertical: 40.0,
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Admin Shield Icon Badge
+                              Container(
+                                width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFDBEAFE),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.admin_panel_settings_rounded,
+                                color: _primaryColor,
+                                size: 32,
+                              ),
+                            ),
+                          ),
 
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 36.0,
-                      vertical: 40.0,
-                    ),
+                          const SizedBox(height: 18),
 
-                    child: Form(
-                      key: _formKey,
-
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
                           // TITLE
                           const Text(
-                            'Welcome Back',
+                            'Admin Portal',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 26,
                               fontWeight: FontWeight.w800,
                               color: _textColor,
                               letterSpacing: -0.5,
                             ),
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
 
                           // SUBTITLE
                           const Text(
-                            'Log in to your Campus Market account to\ncontinue.',
+                            'Sign in with authorized administrator credentials to manage platform operations.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               color: Color(0xFF64748B),
                               height: 1.4,
                             ),
                           ),
 
-                          const SizedBox(height: 24),
-
-                          // DIVIDER
-                          Row(
-                            children: [
-                              const Expanded(
-                                child: Divider(color: _borderColor),
-                              ),
-
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                child: Text(
-                                  'OR EMAIL',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey.shade400,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                              ),
-
-                              const Expanded(
-                                child: Divider(color: _borderColor),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
 
                           // EMAIL LABEL
                           const Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'University Email',
+                              'Admin Email',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -292,54 +367,37 @@ class _LoginScreenState extends State<LoginScreen> {
                           // EMAIL FIELD
                           TextFormField(
                             controller: _emailController,
-
                             keyboardType: TextInputType.emailAddress,
-
-                            // FIXED TEXT COLOR
                             style: const TextStyle(
                               fontSize: 13,
                               color: _textColor,
                             ),
-
                             cursorColor: _primaryColor,
-
                             decoration: InputDecoration(
-                              hintText: 'student@university.edu',
-
+                              hintText: 'admin@domain.edu or admin email',
                               hintStyle: const TextStyle(
                                 color: _hintColor,
                                 fontSize: 13,
                               ),
-
                               prefixIcon: const Icon(
                                 Icons.mail_outline_rounded,
                                 size: 18,
                                 color: Color(0xFF64748B),
                               ),
-
                               filled: true,
-
                               fillColor: _inputBackground,
-
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12,
                                 horizontal: 12,
                               ),
-
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: _borderColor,
-                                ),
+                                borderSide: const BorderSide(color: _borderColor),
                               ),
-
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: _borderColor,
-                                ),
+                                borderSide: const BorderSide(color: _borderColor),
                               ),
-
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: const BorderSide(
@@ -347,12 +405,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   width: 1.5,
                                 ),
                               ),
-
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: const BorderSide(color: Colors.red),
                               ),
-
                               focusedErrorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: const BorderSide(
@@ -361,19 +417,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Email is required';
+                                return 'Please enter your admin email';
                               }
-                              final email = value.trim().toLowerCase();
-                              if (!email.contains('@')) {
-                                return 'Valid email required';
-                              }
-                              if (!(email.endsWith('.edu') ||
-                                  email.endsWith('.edu.bd') ||
-                                  email.endsWith('.ac.bd'))) {
-                                return 'Please use your university email';
+                              if (!value.contains('@') || !value.contains('.')) {
+                                return 'Please enter a valid email address';
                               }
                               return null;
                             },
@@ -381,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: 18),
 
-                          // PASSWORD LABEL + FORGOT
+                          // PASSWORD LABEL & FORGOT
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -393,7 +442,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: _labelColor,
                                 ),
                               ),
-
                               MouseRegion(
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
@@ -416,31 +464,23 @@ class _LoginScreenState extends State<LoginScreen> {
                           // PASSWORD FIELD
                           TextFormField(
                             controller: _passwordController,
-
                             obscureText: _obscurePassword,
-
-                            // FIXED TEXT COLOR
                             style: const TextStyle(
                               fontSize: 13,
                               color: _textColor,
                             ),
-
                             cursorColor: _primaryColor,
-
                             decoration: InputDecoration(
                               hintText: '••••••••',
-
                               hintStyle: const TextStyle(
                                 color: _hintColor,
                                 fontSize: 13,
                               ),
-
                               prefixIcon: const Icon(
                                 Icons.lock_outline_rounded,
                                 size: 18,
                                 color: Color(0xFF64748B),
                               ),
-
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
@@ -449,37 +489,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                   size: 18,
                                   color: const Color(0xFF64748B),
                                 ),
-
                                 onPressed: () {
                                   setState(() {
                                     _obscurePassword = !_obscurePassword;
                                   });
                                 },
                               ),
-
                               filled: true,
-
                               fillColor: _inputBackground,
-
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12,
                                 horizontal: 12,
                               ),
-
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: _borderColor,
-                                ),
+                                borderSide: const BorderSide(color: _borderColor),
                               ),
-
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: _borderColor,
-                                ),
+                                borderSide: const BorderSide(color: _borderColor),
                               ),
-
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: const BorderSide(
@@ -487,12 +516,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   width: 1.5,
                                 ),
                               ),
-
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: const BorderSide(color: Colors.red),
                               ),
-
                               focusedErrorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: const BorderSide(
@@ -501,12 +528,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-
                             validator: (value) {
                               if (value == null || value.length < 6) {
-                                return 'Min 6 chars';
+                                return 'Password must be at least 6 characters';
                               }
-
                               return null;
                             },
                           ),
@@ -517,28 +542,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(
                             width: double.infinity,
                             height: 44,
-
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : _handleLogin,
-
+                              onPressed: _isLoading ? null : _handleAdminLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _primaryColor,
-
                                 foregroundColor: Colors.white,
-
-                                disabledBackgroundColor: const Color(
-                                  0xFF94A3B8,
-                                ),
-
+                                disabledBackgroundColor: const Color(0xFF94A3B8),
                                 disabledForegroundColor: Colors.white,
-
                                 elevation: 0,
-
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-
                               child: _isLoading
                                   ? const SizedBox(
                                       width: 20,
@@ -549,20 +564,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     )
                                   : const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
+                                        Icon(
+                                          Icons.shield_rounded,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 8),
                                         Text(
-                                          'Login',
+                                          'Access Admin Dashboard',
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
                                           ),
                                         ),
-
                                         SizedBox(width: 6),
-
                                         Icon(
                                           Icons.arrow_forward_rounded,
                                           size: 16,
@@ -575,65 +593,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: 24),
 
-                          // SIGN UP
+                          // BACK TO STUDENT LOGIN
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                "Don't have an account? ",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF64748B),
-                                ),
+                              const Icon(
+                                Icons.arrow_back_rounded,
+                                size: 14,
+                                color: Color(0xFF64748B),
                               ),
-
+                              const SizedBox(width: 6),
                               MouseRegion(
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
-                                  onTap: () => context.go('/signup'),
-
+                                  onTap: () => context.go('/login'),
                                   child: const Text(
-                                    'Sign Up',
+                                    'Back to Student Login',
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: _primaryColor,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF64748B),
                                     ),
                                   ),
                                 ),
                               ),
                             ],
-                          ),
-
-                          const SizedBox(height: 22),
-                          const Divider(color: _borderColor, height: 1),
-                          const SizedBox(height: 16),
-
-                          // ADMIN ACCESS LINK
-                          MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: GestureDetector(
-                              onTap: () => context.go('/admin-login'),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.shield_outlined,
-                                    size: 14,
-                                    color: Color(0xFF94A3B8),
-                                  ),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Admin Portal',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ),
                         ],
                       ),

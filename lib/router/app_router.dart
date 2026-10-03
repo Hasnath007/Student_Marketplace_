@@ -19,6 +19,8 @@ import '../features/marketplace/screens/sell_item_screen.dart';
 import '../features/subscriptions/screens/subscription_groups_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/chat/screens/inbox_screen.dart';
+import '../features/admin/screens/admin_panel_screen.dart';
+import '../features/admin/screens/admin_login_screen.dart';
 import '../shared/main_shell_screen.dart';
 import '../models/product.dart';
 
@@ -45,21 +47,31 @@ final appRouter = GoRouter(
 
     final user = FirebaseAuth.instance.currentUser;
     final isLoggedIn = user != null;
-    
+    final loc = state.matchedLocation;
+
+    // Admin routes handling
+    if (loc == '/admin-login') {
+      return null; // Always allow accessing admin login
+    }
+
+    if (loc == '/admin' && !isLoggedIn) {
+      return '/admin-login';
+    }
+
     // Allowed routes without login
-    final isAuthRoute = state.matchedLocation == '/landing' ||
-        state.matchedLocation == '/login' ||
-        state.matchedLocation == '/signup' ||
-        state.matchedLocation == '/verify-email' ||
-        state.matchedLocation == '/forgot-password' ||
-        state.matchedLocation == '/reset-password';
+    final isAuthRoute = loc == '/landing' ||
+        loc == '/login' ||
+        loc == '/signup' ||
+        loc == '/verify-email' ||
+        loc == '/forgot-password' ||
+        loc == '/reset-password';
 
     // If user is NOT logged in and trying to access a protected page
     if (!isLoggedIn && !isAuthRoute) {
       return '/landing';
     }
 
-    // If user IS logged in but tries to access login/signup page again
+    // If user IS logged in but tries to access student auth page again
     if (isLoggedIn && isAuthRoute) {
       return '/marketplace';
     }
@@ -67,6 +79,16 @@ final appRouter = GoRouter(
     return null; // No redirect needed
   },
   routes: [
+    // Admin Routes
+    GoRoute(
+      path: '/admin-login',
+      pageBuilder: (context, state) => const NoTransitionPage(child: AdminLoginScreen()),
+    ),
+    GoRoute(
+      path: '/admin',
+      pageBuilder: (context, state) => const NoTransitionPage(child: AdminPanelScreen()),
+    ),
+
     // Auth Routes
     GoRoute(
       path: '/landing',

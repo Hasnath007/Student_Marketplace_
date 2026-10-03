@@ -160,6 +160,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+            tooltip: 'Back to Home',
+            onPressed: () => context.go('/landing'),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => context.go('/login'),

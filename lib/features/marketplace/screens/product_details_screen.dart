@@ -656,16 +656,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       children: moreDeals.map((deal) {
                         return SizedBox(
                           width: 260,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () => context.go('/product-details/${deal.id}', extra: deal),
-                            child: _buildSmallCard(
-                              deal.title,
-                              '৳${deal.price.toStringAsFixed(0)}',
-                              deal.condition,
-                              deal.imageUrl,
-                            ),
-                          ),
+                          child: _MoreDealCard(product: deal),
                         );
                       }).toList(),
                     );
@@ -680,90 +671,152 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
       ),
     );
   }
+}
 
-  Widget _buildSmallCard(String title, String price, String badge, String imgUrl) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+class _MoreDealCard extends StatefulWidget {
+  final Product product;
+  const _MoreDealCard({required this.product});
+
+  @override
+  State<_MoreDealCard> createState() => _MoreDealCardState();
+}
+
+class _MoreDealCardState extends State<_MoreDealCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final deal = widget.product;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: () => context.go('/product-details/${deal.id}', extra: deal),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.translationValues(0, _isHovered ? -5 : 0, 0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _isHovered ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
+              width: _isHovered ? 1.5 : 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _isHovered
+                    ? const Color(0xFF2563EB).withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.03),
+                blurRadius: _isHovered ? 18 : 6,
+                offset: Offset(0, _isHovered ? 8 : 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                height: 160,
-                width: double.infinity,
-                child: Image.network(
-                  imgUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: const Color(0xFFF1F5F9),
-                    child: const Center(
-                      child: Icon(Icons.image_outlined, size: 36, color: Color(0xFF94A3B8)),
+              Stack(
+                children: [
+                  SizedBox(
+                    height: 160,
+                    width: double.infinity,
+                    child: Image.network(
+                      deal.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: const Color(0xFFF1F5F9),
+                        child: const Center(
+                          child: Icon(Icons.image_outlined, size: 36, color: Color(0xFF94A3B8)),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 4,
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
-                    ],
+                      child: Text(
+                        deal.condition,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    badge,
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        deal.category,
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      deal.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '৳${deal.price.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: _isHovered ? const Color(0xFF1D4ED8) : const Color(0xFF2563EB),
+                          ),
+                        ),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: _isHovered ? const Color(0xFF2563EB) : const Color(0xFFF1F5F9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 13,
+                            color: _isHovered ? Colors.white : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      price,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF2563EB)),
-                    ),
-                    const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

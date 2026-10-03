@@ -9,8 +9,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../subscriptions/widgets/host_chat_dialog.dart';
+import '../../chat/widgets/dynamic_chat_dialog.dart';
+import '../../../core/services/chat_service.dart';
+import '../../../core/services/order_service.dart';
+import '../../../core/models/order_model.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/providers/subscriptions_provider.dart';
+import '../../../core/providers/admin_provider.dart';
 import '../../../models/product.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -358,8 +363,179 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showWithdrawModal() {
-    final amountController = TextEditingController(text: '1000');
+  void _showHelpAndReportDialog({
+    required String itemTitle,
+    required String sellerName,
+    required double amount,
+  }) {
+    final issueController = TextEditingController();
+    final phoneController = TextEditingController();
+    String selectedReason = 'Payout delayed past 24 hours';
+    final reasons = [
+      'Payout delayed past 24 hours',
+      'Handover complete but balance not updated',
+      'Buyer did not show up on campus',
+      'Wrong payment amount received',
+      'Other payment/order issue',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.support_agent_rounded, color: Color(0xFFDC2626), size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Need Help / Report Issue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    Text('Direct message to Admin Support', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Order / Item: $itemTitle', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                        const SizedBox(height: 2),
+                        Text('Amount: ৳${amount.toStringAsFixed(0)} • Party: $sellerName', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Select Issue Reason', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedReason,
+                        isExpanded: true,
+                        items: reasons.map((r) => DropdownMenuItem(value: r, child: Text(r, style: const TextStyle(fontSize: 12)))).toList(),
+                        onChanged: (v) {
+                          if (v != null) setModalState(() => selectedReason = v);
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Your bKash / Nagad Number', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. 01712345678',
+                      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Details / Explanation (Optional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: issueController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Describe what happened...',
+                      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      contentPadding: const EdgeInsets.all(12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final user = FirebaseAuth.instance.currentUser;
+                final userName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Student';
+                final phone = phoneController.text.trim();
+                final note = issueController.text.trim();
+                
+                final fullReason = '$selectedReason ${phone.isNotEmpty ? "(Wallet: $phone)" : ""} ${note.isNotEmpty ? "- $note" : ""}';
+                
+                final newReport = AdminReport(
+                  id: 'rep_${DateTime.now().millisecondsSinceEpoch}',
+                  reportedItem: '$itemTitle (৳${amount.toStringAsFixed(0)})',
+                  reportedBy: userName,
+                  reason: fullReason,
+                  type: 'product',
+                  status: 'pending',
+                  date: 'Just now',
+                );
+
+                ref.read(adminReportsProvider.notifier).addReport(newReport);
+                orderService.submitDisputeReport(
+                  orderId: itemTitle,
+                  itemName: '$itemTitle (৳${amount.toStringAsFixed(0)})',
+                  reason: fullReason,
+                  contactNumber: phone,
+                  notes: note,
+                );
+                Navigator.pop(ctx);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Report submitted to Admin! They will review your payout promptly.'),
+                    backgroundColor: Color(0xFF059669),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Submit to Admin'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWithdrawModal([double? currentAvailable]) {
+    final effectiveAvailable = currentAvailable ?? _availableBalance;
+    final amountController = TextEditingController(text: effectiveAvailable > 0 ? (effectiveAvailable > 500 ? '500' : effectiveAvailable.toStringAsFixed(0)) : '0');
     final numberController = TextEditingController();
     String selectedMethod = 'bKash';
 
@@ -420,7 +596,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Available Balance:', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                        Text('৳${_availableBalance.toStringAsFixed(0)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+                        Text('৳${effectiveAvailable.toStringAsFixed(0)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
                       ],
                     ),
                   ),
@@ -883,9 +1059,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(width: 24),
                       _buildTabItem(1, 'Subscriptions', '$totalSubs'),
                       const SizedBox(width: 24),
-                      _buildTabItem(2, 'My Orders (Escrow)', _linearAlgebraReceived ? '0 Active' : '1 Active'),
+                      _buildTabItem(2, 'My Orders (SafePay)', null),
                       const SizedBox(width: 24),
-                      _buildTabItem(3, 'Seller Wallet & Payout', '৳${_availableBalance.toStringAsFixed(0)}'),
+                      _buildTabItem(3, 'Seller Wallet & Payout', null),
                       const SizedBox(width: 24),
                       _buildTabItem(4, 'Settings', null),
                     ],
@@ -1102,6 +1278,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       );
     } else if (_selectedTab == 2) {
+      return _buildDynamicBuyerOrdersTab();
+    } else if (_selectedTab == 3) {
+      return _buildDynamicSellerWalletTab();
+    } else if (_selectedTab == 9999) {
       // TAB 2: MY ORDERS & CAMPUS ESCROW HANDOVER
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1113,7 +1293,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('My Purchases & Escrow Handover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  Text('My Purchases & SafePay Handover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
                   SizedBox(height: 2),
                   Text('Track items you bought, view your 4-digit verification PIN, and confirm receipt', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
                 ],
@@ -1157,12 +1337,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Campus Escrow Protection is Active 🛡️',
+                        'Campus SafePay Protection is Active 🛡️',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E3A8A)),
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Your bKash / Nagad payment is held safely in Escrow. The seller does NOT receive payment until you meet in person on campus, check the item condition, and tap "Item Received" (or give your 4-digit PIN).',
+                        'Your bKash / Nagad payment is held safely in SafePay. The seller does NOT receive payment until you meet in person on campus, check the item condition, and tap "Item Received" (or give your 4-digit PIN).',
                         style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), height: 1.4),
                       ),
                     ],
@@ -1243,7 +1423,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  _linearAlgebraReceived ? 'COMPLETED ✓' : 'IN ESCROW VAULT',
+                                  _linearAlgebraReceived ? 'COMPLETED ✓' : 'IN SAFEPAY VAULT',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w900,
@@ -1375,6 +1555,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => _showHelpAndReportDialog(
+                        itemTitle: 'Introduction to Linear Algebra, 5th Ed',
+                        sellerName: 'Alex R.',
+                        amount: 1500,
+                      ),
+                      icon: const Icon(Icons.help_outline_rounded, size: 14, color: Color(0xFFDC2626)),
+                      label: const Text('Having an issue? Report to Admin', style: TextStyle(color: Color(0xFFDC2626), fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ] else ...[
                   // Completed Banner
                   Container(
@@ -1465,7 +1658,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _buildStepChip('1', 'bKash/Nagad in Escrow'),
+                    _buildStepChip('1', 'bKash/Nagad SafePay'),
                     const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
                     _buildStepChip('2', 'Campus Meetup'),
                     const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
@@ -1496,16 +1689,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Text('Track sales income, split revenue, and withdraw instantly', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
                 ],
               ),
-              ElevatedButton.icon(
-                onPressed: _showWithdrawModal,
-                icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
-                label: const Text('Withdraw Funds', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF059669),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _showHelpAndReportDialog(
+                      itemTitle: 'Seller Payout / Withdrawal',
+                      sellerName: 'Admin Support',
+                      amount: _availableBalance > 0 ? _availableBalance : 1000,
+                    ),
+                    icon: const Icon(Icons.help_outline_rounded, size: 14, color: Color(0xFFDC2626)),
+                    label: const Text('Report Payout Delay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFCA5A5)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    onPressed: _showWithdrawModal,
+                    icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
+                    label: const Text('Withdraw Funds', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1527,7 +1739,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: _buildWalletStatCard(
-                  title: 'Pending in Escrow',
+                  title: 'Pending in SafePay',
                   amount: '৳${_pendingBalance.toStringAsFixed(0)}',
                   subtitle: '1 order awaiting handover',
                   icon: Icons.hourglass_empty_rounded,
@@ -2271,6 +2483,690 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicBuyerOrdersTab() {
+    return StreamBuilder<List<OrderModel>>(
+      stream: orderService.streamBuyerOrders(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final orders = snapshot.data ?? [];
+        final activeOrders = orders.where((o) => o.status == 'in_safepay').toList();
+        final completedOrders = orders.where((o) => o.status == 'completed').toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('My Purchases & SafePay Handover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    SizedBox(height: 2),
+                    Text('Track items you bought, view your 4-digit verification PIN, and confirm receipt', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                  ],
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/marketplace'),
+                  icon: const Icon(Icons.shopping_bag_outlined, size: 16),
+                  label: const Text('Browse More Deals', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // SafePay Safety Explainer Banner
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2563EB),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.shield_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Campus SafePay Protection is Active 🛡️',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E3A8A)),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Your bKash / Nagad payment is held safely in SafePay. The seller does NOT receive payment until you meet in person on campus, check the item condition, and tap "Item Received" (or give your 4-digit PIN).',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ACTIVE ORDERS SECTION
+            Row(
+              children: [
+                Icon(
+                  activeOrders.isEmpty ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
+                  color: activeOrders.isEmpty ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  activeOrders.isEmpty ? 'Active Orders (0)' : 'Active Orders (${activeOrders.length} Awaiting Campus Handover)',
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            if (activeOrders.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.shopping_bag_outlined, size: 44, color: Color(0xFF94A3B8)),
+                    const SizedBox(height: 10),
+                    const Text('No Active SafePay Orders', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                    const SizedBox(height: 4),
+                    const Text('When you purchase an item using SafePay, your live order and 4-digit PIN will appear here.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    const SizedBox(height: 14),
+                    ElevatedButton(
+                      onPressed: () => context.go('/marketplace'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Browse Campus Deals'),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ...activeOrders.map((order) => _buildDynamicActiveOrderCard(order)),
+
+            const SizedBox(height: 32),
+
+            // PAST COMPLETED PURCHASES SECTION
+            const Text('Past Completed Purchases', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            const SizedBox(height: 12),
+
+            if (completedOrders.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Center(
+                  child: Text('No completed purchases yet.', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                ),
+              )
+            else
+              ...completedOrders.map((order) => _buildDynamicCompletedOrderCard(order)),
+
+            const SizedBox(height: 28),
+
+            // Admin Transparency Guide Card
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.hub_rounded, color: Color(0xFF475569), size: 18),
+                      SizedBox(width: 8),
+                      Text('How Admin & System Verifies Handover Automatically', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildStepChip('1', 'bKash/Nagad SafePay'),
+                      const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
+                      _buildStepChip('2', 'Campus Meetup'),
+                      const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
+                      _buildStepChip('3', 'Item Received / PIN'),
+                      const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
+                      _buildStepChip('4', 'Payout to Seller'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDynamicSellerWalletTab() {
+    return StreamBuilder<List<OrderModel>>(
+      stream: orderService.streamSellerOrders(),
+      builder: (context, snapshot) {
+        final sellerOrders = snapshot.data ?? [];
+        final activeSales = sellerOrders.where((o) => o.status == 'in_safepay').toList();
+        final completedSales = sellerOrders.where((o) => o.status == 'completed').toList();
+
+        final livePending = activeSales.fold<double>(0.0, (acc, o) => acc + o.price);
+        final liveAvailable = completedSales.fold<double>(0.0, (acc, o) => acc + o.price);
+        final liveTotalRevenue = liveAvailable + livePending;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with Quick Withdraw Action
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Seller Earnings & Wallet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    SizedBox(height: 2),
+                    Text('Track sales income, split revenue, and withdraw instantly', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                  ],
+                ),
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => _showHelpAndReportDialog(
+                        itemTitle: 'Seller Payout / Withdrawal',
+                        sellerName: 'Admin Support',
+                        amount: liveAvailable > 0 ? liveAvailable : 1000,
+                      ),
+                      icon: const Icon(Icons.help_outline_rounded, size: 14, color: Color(0xFFDC2626)),
+                      label: const Text('Report Payout Delay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFFCA5A5)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      onPressed: () => _showWithdrawModal(liveAvailable),
+                      icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
+                      label: const Text('Withdraw Funds', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF059669),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // 4 Metric Stat Cards
+            Row(
+              children: [
+                Expanded(
+                  child: _buildWalletStatCard(
+                    title: 'Available for Withdrawal',
+                    amount: '৳${liveAvailable.toStringAsFixed(0)}',
+                    subtitle: 'Ready to cash out',
+                    icon: Icons.check_circle_outline_rounded,
+                    iconColor: const Color(0xFF059669),
+                    bgColor: const Color(0xFFECFDF5),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildWalletStatCard(
+                    title: 'Pending in SafePay',
+                    amount: '৳${livePending.toStringAsFixed(0)}',
+                    subtitle: '${activeSales.length} item(s) awaiting handover',
+                    icon: Icons.hourglass_empty_rounded,
+                    iconColor: const Color(0xFFD97706),
+                    bgColor: const Color(0xFFFFFBEB),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildWalletStatCard(
+                    title: 'Total Revenue Earned',
+                    amount: '৳${liveTotalRevenue.toStringAsFixed(0)}',
+                    subtitle: 'From ${sellerOrders.length} sale(s)',
+                    icon: Icons.trending_up_rounded,
+                    iconColor: const Color(0xFF2563EB),
+                    bgColor: const Color(0xFFEFF6FF),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildWalletStatCard(
+                    title: 'Total Withdrawn',
+                    amount: '৳0',
+                    subtitle: 'Paid to bKash/Nagad',
+                    icon: Icons.payments_outlined,
+                    iconColor: const Color(0xFF7C3AED),
+                    bgColor: const Color(0xFFF5F3FF),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+
+            // Transactions History
+            const Text('Recent Earnings & Sales History', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            const SizedBox(height: 12),
+
+            if (sellerOrders.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(Icons.storefront_outlined, size: 40, color: Color(0xFF94A3B8)),
+                    SizedBox(height: 10),
+                    Text('No sales yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                    SizedBox(height: 4),
+                    Text('List your textbooks or stationery to earn campus income!', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  ],
+                ),
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: sellerOrders.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  itemBuilder: (context, index) {
+                    final order = sellerOrders[index];
+                    final isCompleted = order.status == 'completed';
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: (isCompleted ? const Color(0xFF059669) : const Color(0xFFD97706)).withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isCompleted ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
+                              color: isCompleted ? const Color(0xFF059669) : const Color(0xFFD97706),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(order.productTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                                const SizedBox(height: 2),
+                                Text('Buyer: ${order.buyerName} • via ${order.paymentMethod}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: (isCompleted ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isCompleted ? 'RELEASED' : 'IN SAFEPAY',
+                              style: TextStyle(
+                                color: isCompleted ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            '+৳${order.price.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDynamicActiveOrderCard(OrderModel order) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFDE68A),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  order.productImage,
+                  width: 70,
+                  height: 70,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 70,
+                    height: 70,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.inventory_2_outlined, color: Colors.grey),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            order.productTitle,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'IN SAFEPAY VAULT',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFB45309),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Paid ৳${order.price.toStringAsFixed(0)} via ${order.paymentMethod} • Seller: ${order.sellerName}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    const SizedBox(height: 4),
+                    const Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF2563EB)),
+                        SizedBox(width: 4),
+                        Text('Campus Handover: Central Library / TSC', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF2563EB))),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Handover PIN Box
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.key_rounded, size: 18, color: Color(0xFFB45309)),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Handover Verification PIN', style: TextStyle(fontSize: 10, color: Color(0xFF92400E), fontWeight: FontWeight.w600)),
+                        Text(
+                          'PIN: #${order.handoverPin}',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF78350F), letterSpacing: 1.5),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const Text('Tell seller this PIN or confirm below when meeting', style: TextStyle(fontSize: 10, color: Color(0xFF92400E))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Actions Row
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final roomId = await chatService.getOrCreateChatRoom(
+                      productId: order.productId,
+                      productTitle: order.productTitle,
+                      sellerId: order.sellerId,
+                      sellerName: order.sellerName,
+                    );
+                    if (mounted) {
+                      DynamicChatDialog.show(
+                        context,
+                        roomId: roomId,
+                        targetUserName: order.sellerName,
+                        productTitle: order.productTitle,
+                        isSellerMode: true,
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                  label: const Text('Chat with Seller (Schedule Meetup)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    foregroundColor: const Color(0xFF2563EB),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: const Row(
+                          children: [
+                            Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 24),
+                            SizedBox(width: 8),
+                            Text('Confirm Item Handover'),
+                          ],
+                        ),
+                        content: Text('Did you meet ${order.sellerName} and receive "${order.productTitle}" in good condition? This will release ৳${order.price.toStringAsFixed(0)} to the seller.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Not Yet'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              await orderService.completeHandover(order.id);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('🎉 Handover confirmed! ৳${order.price.toStringAsFixed(0)} released to ${order.sellerName}.'),
+                                    backgroundColor: const Color(0xFF10B981),
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Yes, Item Received ✓'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.check_circle_rounded, size: 16),
+                  label: const Text('Item Received (Complete Handover)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => _showHelpAndReportDialog(
+                itemTitle: order.productTitle,
+                sellerName: order.sellerName,
+                amount: order.price,
+              ),
+              icon: const Icon(Icons.help_outline_rounded, size: 14, color: Color(0xFFDC2626)),
+              label: const Text('Having an issue? Report to Admin', style: TextStyle(color: Color(0xFFDC2626), fontSize: 11, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicCompletedOrderCard(OrderModel order) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              order.productImage,
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Container(width: 50, height: 50, color: Colors.grey.shade200, child: const Icon(Icons.inventory_2_outlined, size: 20, color: Colors.grey)),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(order.productTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                const SizedBox(height: 2),
+                Text('৳${order.price.toStringAsFixed(0)} • Delivered • Seller: ${order.sellerName}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(6)),
+            child: const Text('DELIVERED ✓', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
           ),
         ],
       ),

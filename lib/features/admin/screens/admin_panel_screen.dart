@@ -10,7 +10,6 @@ import '../../../core/providers/admin_provider.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/providers/subscriptions_provider.dart';
 import '../../../core/services/order_service.dart';
-import '../../../core/models/order_model.dart';
 import '../../../models/product.dart';
 
 class AdminPanelScreen extends ConsumerStatefulWidget {
@@ -42,7 +41,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     final totalProducts = products.length;
     final totalSubscriptions = subscriptions.length;
     final pendingReports = reports.where((r) => r.status == 'pending').length;
-    final pendingTransactions = transactions.where((t) => t.status == 'pending_verification').length;
+    final heldInSafePay = transactions.where((t) => t.status == 'held_in_escrow' || t.status == 'pending_verification').length;
 
     double escrowBalance = 0;
     for (var t in transactions) {
@@ -62,45 +61,45 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Page Header ──────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 16,
+                  runSpacing: 16,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF2563EB), size: 24),
+                        ),
+                        const SizedBox(width: 14),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEEF2FF),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF2563EB), size: 24),
+                            Text(
+                              'Admin Dashboard',
+                              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.8),
                             ),
-                            const SizedBox(width: 14),
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Admin Dashboard',
-                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.8),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Manage users, listings, subscriptions, and platform analytics.',
-                                  style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-                                ),
-                              ],
+                            SizedBox(height: 2),
+                            Text(
+                              'Manage users, listings, subscriptions, and platform analytics.',
+                              style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
                             ),
                           ],
                         ),
                       ],
                     ),
                     // Actions & Live Status
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         // Live Status Badge
                         Container(
@@ -121,7 +120,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
 
                         // Back to Marketplace
                         OutlinedButton.icon(
@@ -142,7 +140,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
-                        const SizedBox(width: 10),
 
                         // Sign Out
                         ElevatedButton.icon(
@@ -215,7 +212,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                           iconColor: const Color(0xFF16A34A),
                           label: 'SafePay Vault',
                           value: '৳${escrowBalance.toStringAsFixed(0)}',
-                          subtitle: '$pendingTransactions pending verification',
+                          subtitle: '$heldInSafePay held in SafePay',
                           width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
                         ),
                       ],
@@ -237,7 +234,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                       _buildTab(0, Icons.people_alt_rounded, 'Users', totalUsers),
                       _buildTab(1, Icons.storefront_rounded, 'Listings', totalProducts),
                       _buildTab(2, Icons.groups_rounded, 'Subscriptions', totalSubscriptions),
-                      _buildTab(3, Icons.payments_rounded, 'Payments', pendingTransactions),
+                      _buildTab(3, Icons.payments_rounded, 'Payments', transactions.length),
                       _buildTab(4, Icons.flag_rounded, 'Reports', pendingReports),
                     ],
                   ),
@@ -379,11 +376,14 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Search + Filter Row
-        Row(
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 10,
           children: [
             // Search
-            Expanded(
-              flex: 5,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 260, maxWidth: 420),
               child: SizedBox(
                 height: 42,
                 child: TextField(
@@ -412,13 +412,13 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
             // Status filter chips
-            ...statusFilters.map((status) {
-              final isSel = _userFilterStatus == status;
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: ChoiceChip(
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: statusFilters.map((status) {
+                final isSel = _userFilterStatus == status;
+                return ChoiceChip(
                   label: Text(status),
                   selected: isSel,
                   onSelected: (s) {
@@ -432,9 +432,9 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                     fontSize: 12,
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-              );
-            }),
+                );
+              }).toList(),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -473,6 +473,20 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
               ),
               // Table Rows
               ...filtered.map((user) => _buildUserRow(user)),
+              if (filtered.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 48),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.people_outline_rounded, size: 48, color: Color(0xFF94A3B8)),
+                      SizedBox(height: 12),
+                      Text('No users found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                      SizedBox(height: 4),
+                      Text('No registered users match your criteria.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -515,7 +529,14 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundImage: NetworkImage(user.avatarUrl),
+                  backgroundColor: const Color(0xFFDBEAFE),
+                  backgroundImage: user.avatarUrl.isNotEmpty ? NetworkImage(user.avatarUrl) : null,
+                  child: user.avatarUrl.isEmpty
+                      ? Text(
+                          user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -860,7 +881,10 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                           CircleAvatar(
                             radius: 12,
                             backgroundColor: const Color(0xFFDBEAFE),
-                            child: Text(p.sellerName[0], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                            child: Text(
+                              p.sellerName.isNotEmpty ? p.sellerName[0].toUpperCase() : 'S',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(p.sellerName, style: const TextStyle(fontSize: 12, color: Color(0xFF475569))),
@@ -1211,91 +1235,70 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   // TAB 3: Reports
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildReportsTab(List<AdminReport> reports) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: orderService.streamAllReports(),
-      builder: (context, snapshot) {
-        final liveReports = <AdminReport>[];
-        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          for (final doc in snapshot.data!) {
-            liveReports.add(AdminReport(
-              id: doc['id'] ?? '',
-              type: doc['type'] ?? 'product',
-              reportedItem: doc['reportedItem'] ?? 'SafePay Order',
-              reportedBy: doc['reportedBy'] ?? 'Student Buyer',
-              reason: '${doc['reason'] ?? ''}${doc['notes'] != null && doc['notes'].toString().isNotEmpty ? ' - ${doc['notes']}' : ''}',
-              date: doc['date'] ?? 'Today',
-              status: doc['status'] ?? 'pending',
-            ));
-          }
-        }
+    final statusFilters = ['All', 'Pending', 'Resolved', 'Dismissed'];
 
-        final combinedReports = [
-          ...liveReports,
-          ...reports.where((r) => !liveReports.any((lr) => lr.id == r.id)),
-        ];
+    final filtered = reports.where((r) {
+      return _reportFilterStatus == 'All' || r.status.toLowerCase() == _reportFilterStatus.toLowerCase();
+    }).toList();
 
-        final statusFilters = ['All', 'Pending', 'Resolved', 'Dismissed'];
-
-        final filtered = combinedReports.where((r) {
-          return _reportFilterStatus == 'All' || r.status.toLowerCase() == _reportFilterStatus.toLowerCase();
-        }).toList();
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 10,
           children: [
-            Row(
+            const Text('Content Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: statusFilters.map((status) {
+                final isSel = _reportFilterStatus == status;
+                return ChoiceChip(
+                  label: Text(status),
+                  selected: isSel,
+                  onSelected: (s) {
+                    if (s) setState(() => _reportFilterStatus = status);
+                  },
+                  selectedColor: const Color(0xFF2563EB),
+                  backgroundColor: const Color(0xFFEEF2FF),
+                  labelStyle: TextStyle(
+                    color: isSel ? Colors.white : const Color(0xFF475569),
+                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        ...filtered.map((report) => _buildReportCard(report)),
+
+        if (filtered.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 48),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: const Column(
               children: [
-                const Text('Content Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-                const Spacer(),
-                ...statusFilters.map((status) {
-                  final isSel = _reportFilterStatus == status;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: ChoiceChip(
-                      label: Text(status),
-                      selected: isSel,
-                      onSelected: (s) {
-                        if (s) setState(() => _reportFilterStatus = status);
-                      },
-                      selectedColor: const Color(0xFF2563EB),
-                      backgroundColor: const Color(0xFFEEF2FF),
-                      labelStyle: TextStyle(
-                        color: isSel ? Colors.white : const Color(0xFF475569),
-                        fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                        fontSize: 12,
-                      ),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    ),
-                  );
-                }),
+                Icon(Icons.check_circle_outline_rounded, size: 48, color: Color(0xFF94A3B8)),
+                SizedBox(height: 12),
+                Text('No reports in this category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                SizedBox(height: 4),
+                Text('All clear! No pending reports found.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
               ],
             ),
-            const SizedBox(height: 20),
-
-            ...filtered.map((report) => _buildReportCard(report)),
-
-            if (filtered.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 48),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: const Column(
-                  children: [
-                    Icon(Icons.check_circle_outline_rounded, size: 48, color: Color(0xFF94A3B8)),
-                    SizedBox(height: 12),
-                    Text('No reports in this category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                    SizedBox(height: 4),
-                    Text('All clear! No pending reports found.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  ],
-                ),
-              ),
-          ],
-        );
-      },
+          ),
+      ],
     );
   }
 
@@ -1460,97 +1463,69 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   // TAB 4: Escrow Transactions
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildTransactionsTab(List<AdminTransaction> transactions) {
-    return StreamBuilder<List<OrderModel>>(
-      stream: orderService.streamAllOrders(),
-      builder: (context, snapshot) {
-        final liveTrx = <AdminTransaction>[];
-        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          for (final ord in snapshot.data!) {
-            final st = ord.status == 'completed'
-                ? 'released_to_seller'
-                : ord.status == 'refunded'
-                    ? 'refunded'
-                    : 'held_in_escrow';
-            liveTrx.add(AdminTransaction(
-              id: ord.id,
-              buyerName: ord.buyerName,
-              sellerName: ord.sellerName,
-              itemName: ord.productTitle,
-              amount: ord.price,
-              status: st,
-              date: '${ord.createdAt.day}/${ord.createdAt.month}/${ord.createdAt.year}',
-              method: ord.paymentMethod,
-              trxId: ord.trxId,
-            ));
-          }
-        }
+    final statusFilters = ['All', 'Pending_Verification', 'Held_In_Escrow', 'Released_To_Seller', 'Refunded'];
 
-        final combinedTransactions = [
-          ...liveTrx,
-          ...transactions.where((t) => !liveTrx.any((lt) => lt.id == t.id)),
-        ];
+    final filtered = transactions.where((t) {
+      return _transactionFilterStatus == 'All' || t.status.toLowerCase() == _transactionFilterStatus.toLowerCase();
+    }).toList();
 
-        final statusFilters = ['All', 'Pending_Verification', 'Held_In_Escrow', 'Released_To_Seller', 'Refunded'];
-
-        final filtered = combinedTransactions.where((t) {
-          return _transactionFilterStatus == 'All' || t.status.toLowerCase() == _transactionFilterStatus.toLowerCase();
-        }).toList();
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 10,
           children: [
-            Row(
+            const Text('SafePay Payments & Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: statusFilters.map((status) {
+                final isSel = _transactionFilterStatus == status;
+                final label = status.replaceAll('_', ' ');
+                return ChoiceChip(
+                  label: Text(label),
+                  selected: isSel,
+                  onSelected: (s) {
+                    if (s) setState(() => _transactionFilterStatus = status);
+                  },
+                  selectedColor: const Color(0xFF2563EB),
+                  backgroundColor: const Color(0xFFEEF2FF),
+                  labelStyle: TextStyle(
+                    color: isSel ? Colors.white : const Color(0xFF475569),
+                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        ...filtered.map((trx) => _buildTransactionCard(trx)),
+
+        if (filtered.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 48),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: const Column(
               children: [
-                const Text('SafePay Payments & Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-                const Spacer(),
-                ...statusFilters.map((status) {
-                  final isSel = _transactionFilterStatus == status;
-                  final label = status.replaceAll('_', ' ');
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: ChoiceChip(
-                      label: Text(label),
-                      selected: isSel,
-                      onSelected: (s) {
-                        if (s) setState(() => _transactionFilterStatus = status);
-                      },
-                      selectedColor: const Color(0xFF2563EB),
-                      backgroundColor: const Color(0xFFEEF2FF),
-                      labelStyle: TextStyle(
-                        color: isSel ? Colors.white : const Color(0xFF475569),
-                        fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                        fontSize: 12,
-                      ),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    ),
-                  );
-                }),
+                Icon(Icons.receipt_long_rounded, size: 48, color: Color(0xFF94A3B8)),
+                SizedBox(height: 12),
+                Text('No transactions found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
               ],
             ),
-            const SizedBox(height: 20),
-
-            ...filtered.map((trx) => _buildTransactionCard(trx)),
-
-            if (filtered.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 48),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: const Column(
-                  children: [
-                    Icon(Icons.receipt_long_rounded, size: 48, color: Color(0xFF94A3B8)),
-                    SizedBox(height: 12),
-                    Text('No transactions found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                  ],
-                ),
-              ),
-          ],
-        );
-      },
+          ),
+      ],
     );
   }
 

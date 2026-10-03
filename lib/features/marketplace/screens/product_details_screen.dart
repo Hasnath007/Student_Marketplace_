@@ -650,14 +650,20 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                         
                     if (moreDeals.isEmpty) return const SizedBox.shrink();
 
-                    return Row(
+                    return Wrap(
+                      spacing: 20,
+                      runSpacing: 20,
                       children: moreDeals.map((deal) {
-                        return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 16.0),
-                            child: InkWell(
-                              onTap: () => context.go('/product-details/${deal.id}', extra: deal),
-                              child: _buildSmallCard(deal.title, '৳${deal.price.toStringAsFixed(0)}', deal.condition, deal.imageUrl),
+                        return SizedBox(
+                          width: 260,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () => context.go('/product-details/${deal.id}', extra: deal),
+                            child: _buildSmallCard(
+                              deal.title,
+                              '৳${deal.price.toStringAsFixed(0)}',
+                              deal.condition,
+                              deal.imageUrl,
                             ),
                           ),
                         );
@@ -675,14 +681,19 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     );
   }
 
-
-
   Widget _buildSmallCard(String title, String price, String badge, String imgUrl) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -691,36 +702,64 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
           Stack(
             children: [
               SizedBox(
-                height: 120,
+                height: 160,
                 width: double.infinity,
                 child: Image.network(
                   imgUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: const Color(0xFFF1F5F9),
-                    child: const Icon(Icons.image_outlined, color: Color(0xFF94A3B8)),
+                    child: const Center(
+                      child: Icon(Icons.image_outlined, size: 36, color: Color(0xFF94A3B8)),
+                    ),
                   ),
                 ),
               ),
               Positioned(
-                top: 6,
-                right: 6,
+                top: 8,
+                right: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
-                  child: Text(badge, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    badge,
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                  ),
                 ),
               ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(price, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      price,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF2563EB)),
+                    ),
+                    const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
+                  ],
+                ),
               ],
             ),
           ),

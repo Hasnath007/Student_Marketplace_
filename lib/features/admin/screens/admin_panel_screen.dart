@@ -22,7 +22,6 @@ class AdminPanelScreen extends ConsumerStatefulWidget {
 class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   int _selectedTab = 0;
   String _userSearchQuery = '';
-  String _userFilterStatus = 'All';
   String _reportFilterStatus = 'All';
   String _transactionFilterStatus = 'All';
 
@@ -360,83 +359,48 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   // TAB 0: Users Management
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildUsersTab(List<AdminUser> users) {
-    final statusFilters = ['All', 'Active'];
-
     final filtered = users.where((u) {
-      final matchesSearch = _userSearchQuery.isEmpty ||
+      return _userSearchQuery.isEmpty ||
           u.name.toLowerCase().contains(_userSearchQuery.toLowerCase()) ||
           u.email.toLowerCase().contains(_userSearchQuery.toLowerCase()) ||
           u.department.toLowerCase().contains(_userSearchQuery.toLowerCase());
-      final matchesStatus = _userFilterStatus == 'All' || u.status.toLowerCase() == _userFilterStatus.toLowerCase();
-      return matchesSearch && matchesStatus;
     }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Search + Filter Row
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 12,
-          runSpacing: 10,
-          children: [
-            // Search
-            ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 260, maxWidth: 420),
-              child: SizedBox(
-                height: 42,
-                child: TextField(
-                  onChanged: (val) => setState(() => _userSearchQuery = val),
-                  style: const TextStyle(fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: 'Search users by name, email, or department...',
-                    hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                    prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
-                    ),
-                  ),
+        // Search
+        ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 260, maxWidth: 460),
+          child: SizedBox(
+            height: 42,
+            child: TextField(
+              onChanged: (val) => setState(() => _userSearchQuery = val),
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'Search users by name, email, or department...',
+                hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
                 ),
               ),
             ),
-            // Status filter chips
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: statusFilters.map((status) {
-                final isSel = _userFilterStatus == status;
-                return ChoiceChip(
-                  label: Text(status),
-                  selected: isSel,
-                  onSelected: (s) {
-                    if (s) setState(() => _userFilterStatus = status);
-                  },
-                  selectedColor: const Color(0xFF2563EB),
-                  backgroundColor: const Color(0xFFEEF2FF),
-                  labelStyle: TextStyle(
-                    color: isSel ? Colors.white : const Color(0xFF475569),
-                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                    fontSize: 12,
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                );
-              }).toList(),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
           'Showing ${filtered.length} of ${users.length} users',
           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF94A3B8)),

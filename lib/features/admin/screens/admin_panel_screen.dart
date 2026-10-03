@@ -361,7 +361,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   // TAB 0: Users Management
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildUsersTab(List<AdminUser> users) {
-    final statusFilters = ['All', 'Active', 'Suspended', 'Pending'];
+    final statusFilters = ['All', 'Active', 'Suspended'];
 
     final filtered = users.where((u) {
       final matchesSearch = _userSearchQuery.isEmpty ||
@@ -618,29 +618,18 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                   () => _showEditUserDialog(user),
                 ),
                 const SizedBox(width: 4),
-                if (user.status == 'pending')
-                  _buildActionButton(
-                    Icons.check_circle_outline_rounded,
-                    const Color(0xFF059669),
-                    'Approve',
-                    () {
-                      ref.read(adminUsersProvider.notifier).approveUser(user.id);
-                      _showSnack('${user.name} approved successfully!', const Color(0xFF059669));
-                    },
-                  )
-                else
-                  _buildActionButton(
-                    user.status == 'active' ? Icons.block_rounded : Icons.check_circle_outline_rounded,
-                    user.status == 'active' ? const Color(0xFFF59E0B) : const Color(0xFF059669),
-                    user.status == 'active' ? 'Suspend' : 'Activate',
-                    () {
-                      ref.read(adminUsersProvider.notifier).toggleUserStatus(user.id);
-                      _showSnack(
-                        user.status == 'active' ? '${user.name} suspended.' : '${user.name} re-activated.',
-                        user.status == 'active' ? const Color(0xFFF59E0B) : const Color(0xFF059669),
-                      );
-                    },
-                  ),
+                _buildActionButton(
+                  user.status == 'active' ? Icons.block_rounded : Icons.check_circle_outline_rounded,
+                  user.status == 'active' ? const Color(0xFFF59E0B) : const Color(0xFF059669),
+                  user.status == 'active' ? 'Suspend' : 'Activate',
+                  () {
+                    ref.read(adminUsersProvider.notifier).toggleUserStatus(user.id);
+                    _showSnack(
+                      user.status == 'active' ? '${user.name} suspended.' : '${user.name} re-activated.',
+                      user.status == 'active' ? const Color(0xFFF59E0B) : const Color(0xFF059669),
+                    );
+                  },
+                ),
                 const SizedBox(width: 4),
                 _buildActionButton(
                   Icons.delete_outline_rounded,
@@ -731,7 +720,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
           children: [
             TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
             TextField(controller: roleCtrl, decoration: const InputDecoration(labelText: 'Role (student/seller/admin)')),
-            TextField(controller: statusCtrl, decoration: const InputDecoration(labelText: 'Status (active/suspended/pending)')),
+            TextField(controller: statusCtrl, decoration: const InputDecoration(labelText: 'Status (active/suspended)')),
           ],
         ),
         actions: [

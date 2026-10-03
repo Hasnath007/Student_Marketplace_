@@ -211,7 +211,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                           icon: Icons.payments_rounded,
                           iconBg: const Color(0xFFDCFCE7),
                           iconColor: const Color(0xFF16A34A),
-                          label: 'Escrow Vault',
+                          label: 'SafePay Vault',
                           value: '৳${escrowBalance.toStringAsFixed(0)}',
                           subtitle: '$pendingTransactions pending verification',
                           width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
@@ -235,7 +235,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                       _buildTab(0, Icons.people_alt_rounded, 'Users', totalUsers),
                       _buildTab(1, Icons.storefront_rounded, 'Listings', totalProducts),
                       _buildTab(2, Icons.groups_rounded, 'Subscriptions', totalSubscriptions),
-                      _buildTab(3, Icons.payments_rounded, 'Escrow', pendingTransactions),
+                      _buildTab(3, Icons.payments_rounded, 'Payments', pendingTransactions),
                       _buildTab(4, Icons.flag_rounded, 'Reports', pendingReports),
                     ],
                   ),
@@ -1442,7 +1442,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
       children: [
         Row(
           children: [
-            const Text('Escrow Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+            const Text('SafePay Payments & Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
             const Spacer(),
             ...statusFilters.map((status) {
               final isSel = _transactionFilterStatus == status;

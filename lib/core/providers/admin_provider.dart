@@ -373,6 +373,10 @@ class AdminReportsNotifier extends Notifier<List<AdminReport>> {
   @override
   List<AdminReport> build() => sampleReports;
 
+  void addReport(AdminReport report) {
+    state = [report, ...state];
+  }
+
   void resolveReport(String reportId) {
     state = state.map((r) {
       if (r.id == reportId) return r.copyWith(status: 'resolved');

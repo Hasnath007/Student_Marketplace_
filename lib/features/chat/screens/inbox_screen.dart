@@ -148,6 +148,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       itemCount: chats.length,
       itemBuilder: (context, index) {
+        final chat = chats[index];
         final currentUid = currentUser?.uid ?? '';
         final unread = (chat['unreadCount_$currentUid'] as int?) ?? 0;
         final targetUserName = isBuyingTab ? chat['sellerName'] : chat['buyerName'];

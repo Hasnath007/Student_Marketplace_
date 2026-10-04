@@ -139,7 +139,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                           ),
                         ),
 
-                        // Sign Out
+                        // Log Out
                         ElevatedButton.icon(
                           onPressed: () async {
                             await FirebaseAuth.instance.signOut();
@@ -149,7 +149,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                           },
                           icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFFDC2626)),
                           label: const Text(
-                            'Sign Out',
+                            'Log Out',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

@@ -334,54 +334,151 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showEditProfileModal() {
-    final bioController = TextEditingController(text: 'Senior CS student. Selling textbooks, electronics, and sharing subscription slots.');
+  void _showEditProfileModal({
+    required String currentName,
+    required String currentDept,
+    required String currentBio,
+  }) {
+    final nameController = TextEditingController(text: currentName);
+    final deptController = TextEditingController(text: currentDept);
+    final bioController = TextEditingController(text: currentBio);
+    bool isSaving = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Edit Profile Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: bioController,
-              maxLines: 3,
-              style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration(
-                labelText: 'Bio & Campus Info',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      backgroundColor: context.cardBg,
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalCtx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Edit Profile Information',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: Icon(Icons.close_rounded, size: 20, color: context.textSecondary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Name field
+                  TextField(
+                    controller: nameController,
+                    style: TextStyle(fontSize: 14, color: context.textPrimary),
+                    decoration: InputDecoration(
+                      labelText: 'Full Name',
+                      labelStyle: TextStyle(color: context.textSecondary),
+                      prefixIcon: Icon(Icons.person_outline, size: 20, color: context.textSecondary),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Department field
+                  TextField(
+                    controller: deptController,
+                    style: TextStyle(fontSize: 14, color: context.textPrimary),
+                    decoration: InputDecoration(
+                      labelText: 'Department / Major',
+                      labelStyle: TextStyle(color: context.textSecondary),
+                      prefixIcon: Icon(Icons.school_outlined, size: 20, color: context.textSecondary),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Bio field
+                  TextField(
+                    controller: bioController,
+                    maxLines: 3,
+                    style: TextStyle(fontSize: 13, color: context.textPrimary),
+                    decoration: InputDecoration(
+                      labelText: 'Bio & Campus Info',
+                      labelStyle: TextStyle(color: context.textSecondary),
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: isSaving ? null : () async {
+                        final newName = nameController.text.trim();
+                        final newDept = deptController.text.trim();
+                        final newBio = bioController.text.trim();
+
+                        if (newName.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Name cannot be empty'), backgroundColor: Color(0xFFDC2626)),
+                          );
+                          return;
+                        }
+
+                        setModalState(() => isSaving = true);
+
+                        final uid = FirebaseAuth.instance.currentUser?.uid;
+                        if (uid != null && uid.isNotEmpty) {
+                          try {
+                            await FirebaseFirestore.instance.collection('users').doc(uid).set({
+                              'name': newName,
+                              'department': newDept.isNotEmpty ? newDept : 'Computer Science',
+                              'bio': newBio,
+                              'updatedAt': FieldValue.serverTimestamp(),
+                            }, SetOptions(merge: true));
+
+                            await FirebaseAuth.instance.currentUser?.updateDisplayName(newName);
+                          } catch (e) {
+                            debugPrint('Error updating profile: $e');
+                          }
+                        }
+
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                        }
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile updated successfully!'),
+                              backgroundColor: Color(0xFF2563EB),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: isSaving
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: Color(0xFF2563EB)),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -897,6 +994,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     builder: (context, snapshot) {
                       String userName = 'Student';
                       String userDept = 'University Student';
+                      String userBio = 'Student at the university. Interested in textbooks, electronics, and sharing subscriptions.';
                       String joinedDate = 'Joined Recently';
                       String? photoUrl;
                       bool isAdmin = false;
@@ -905,6 +1003,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
                         userName = data['name'] ?? userName;
                         userDept = data['department'] ?? userDept;
+                        userBio = (data['bio'] != null && data['bio'].toString().isNotEmpty) ? data['bio'].toString() : userBio;
                         photoUrl = data['photoUrl'] ?? data['profileImageUrl'];
                         final role = (data['role'] ?? '').toString().toLowerCase();
                         final userEmail = (FirebaseAuth.instance.currentUser?.email ?? '').toLowerCase();
@@ -976,7 +1075,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     ),
                                     const SizedBox(width: 10),
                                     IconButton(
-                                      onPressed: _showEditProfileModal,
+                                      onPressed: () => _showEditProfileModal(
+                                        currentName: userName,
+                                        currentDept: userDept,
+                                        currentBio: userBio,
+                                      ),
                                       icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF2563EB)),
                                       tooltip: 'Edit Profile',
                                     ),
@@ -1005,7 +1108,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  'Student at the university. Interested in textbooks, electronics, and sharing subscriptions.',
+                                  userBio,
                                   style: TextStyle(fontSize: 13, color: context.textSecondary, height: 1.4),
                                 ),
                               ],
@@ -1031,7 +1134,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             const SizedBox(width: 10),
                           ],
 
-                          // Sign Out Button
+                          // Log Out Button
                           ElevatedButton.icon(
                             onPressed: () async {
                               if (Firebase.apps.isNotEmpty) {
@@ -1045,7 +1148,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               }
                             },
                             icon: Icon(Icons.logout_rounded, size: 16, color: context.isDarkMode ? const Color(0xFFF87171) : const Color(0xFFDC2626)),
-                            label: Text('Sign Out', style: TextStyle(color: context.isDarkMode ? const Color(0xFFF87171) : const Color(0xFFDC2626), fontWeight: FontWeight.bold, fontSize: 13)),
+                            label: Text('Log Out', style: TextStyle(color: context.isDarkMode ? const Color(0xFFF87171) : const Color(0xFFDC2626), fontWeight: FontWeight.bold, fontSize: 13)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: context.isDarkMode ? const Color(0xFF7F1D1D).withValues(alpha: 0.35) : const Color(0xFFFEE2E2),
                               side: BorderSide(color: context.isDarkMode ? const Color(0xFFEF4444).withValues(alpha: 0.4) : const Color(0xFFFCA5A5)),

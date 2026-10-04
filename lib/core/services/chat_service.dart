@@ -50,16 +50,66 @@ class ChatService {
 
     final msgData = {
       'senderId': currentUser.uid,
-      'senderName': currentUser.displayName ?? 'User',
+      'senderName': currentUser.displayName ?? currentUser.email?.split('@')[0] ?? 'User',
       'text': text,
       'timestamp': FieldValue.serverTimestamp(),
     };
 
-    await _firestore.collection('chats').doc(roomId.trim()).collection('messages').add(msgData);
+    final docRef = _firestore.collection('chats').doc(roomId.trim());
+    await docRef.collection('messages').add(msgData);
 
-    await _firestore.collection('chats').doc(roomId.trim()).update({
+    final updateData = <String, dynamic>{
       'lastMessage': text,
       'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastSenderId': currentUser.uid,
+    };
+
+    try {
+      final docSnap = await docRef.get();
+      if (docSnap.exists) {
+        final data = docSnap.data();
+        final participants = List<dynamic>.from(data?['participants'] ?? []);
+        for (final p in participants) {
+          if (p is String && p != currentUser.uid) {
+            updateData['unreadCount_$p'] = FieldValue.increment(1);
+          }
+        }
+      }
+    } catch (_) {}
+
+    await docRef.set(updateData, SetOptions(merge: true));
+  }
+
+  // Mark chat as read for current user
+  Future<void> markChatAsRead(String roomId) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null || roomId.trim().isEmpty) return;
+    try {
+      await _firestore.collection('chats').doc(roomId.trim()).update({
+        'unreadCount_${currentUser.uid}': 0,
+      });
+    } catch (_) {}
+  }
+
+  // Stream total unread messages count across all chats
+  Stream<int> getTotalUnreadCountStream() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return Stream.value(0);
+
+    return _firestore
+        .collection('chats')
+        .where('participants', arrayContains: currentUser.uid)
+        .snapshots()
+        .map((snapshot) {
+      int total = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final count = data['unreadCount_${currentUser.uid}'];
+        if (count is int && count > 0) {
+          total += count;
+        }
+      }
+      return total;
     });
   }
 

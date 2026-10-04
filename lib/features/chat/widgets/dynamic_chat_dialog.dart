@@ -46,6 +46,14 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
   final currentUser = FirebaseAuth.instance.currentUser;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.roomId.trim().isNotEmpty) {
+      chatService.markChatAsRead(widget.roomId);
+    }
+  }
+
+  @override
   void dispose() {
     _msgController.dispose();
     _scrollController.dispose();

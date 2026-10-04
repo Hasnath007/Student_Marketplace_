@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/providers/marketplace_provider.dart';
+import '../core/services/chat_service.dart';
 
 class MainShellScreen extends ConsumerStatefulWidget {
   final Widget child;
@@ -266,42 +267,115 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       body: widget.child,
       bottomNavigationBar: isDesktop
           ? null
-          : NavigationBar(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (idx) => _onItemTapped(idx, context),
-              indicatorColor: theme.colorScheme.primaryContainer,
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.storefront_outlined),
-                  selectedIcon: Icon(Icons.storefront),
-                  label: 'Marketplace',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.add_circle_outline),
-                  selectedIcon: Icon(Icons.add_circle),
-                  label: 'Sell',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.groups_outlined),
-                  selectedIcon: Icon(Icons.groups),
-                  label: 'Groups',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.chat_bubble_outline_rounded),
-                  selectedIcon: Icon(Icons.chat_bubble_rounded),
-                  label: 'Inbox',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Profile',
-                ),
-              ],
+          : StreamBuilder<int>(
+              stream: chatService.getTotalUnreadCountStream(),
+              builder: (context, snapshot) {
+                final unread = snapshot.data ?? 0;
+                return NavigationBar(
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (idx) => _onItemTapped(idx, context),
+                  indicatorColor: theme.colorScheme.primaryContainer,
+                  destinations: [
+                    const NavigationDestination(
+                      icon: Icon(Icons.storefront_outlined),
+                      selectedIcon: Icon(Icons.storefront),
+                      label: 'Marketplace',
+                    ),
+                    const NavigationDestination(
+                      icon: Icon(Icons.add_circle_outline),
+                      selectedIcon: Icon(Icons.add_circle),
+                      label: 'Sell',
+                    ),
+                    const NavigationDestination(
+                      icon: Icon(Icons.groups_outlined),
+                      selectedIcon: Icon(Icons.groups),
+                      label: 'Groups',
+                    ),
+                    NavigationDestination(
+                      icon: unread > 0
+                          ? Badge.count(
+                              count: unread,
+                              backgroundColor: const Color(0xFFEF4444),
+                              child: const Icon(Icons.chat_bubble_outline_rounded),
+                            )
+                          : const Icon(Icons.chat_bubble_outline_rounded),
+                      selectedIcon: unread > 0
+                          ? Badge.count(
+                              count: unread,
+                              backgroundColor: const Color(0xFFEF4444),
+                              child: const Icon(Icons.chat_bubble_rounded),
+                            )
+                          : const Icon(Icons.chat_bubble_rounded),
+                      label: 'Inbox',
+                    ),
+                    const NavigationDestination(
+                      icon: Icon(Icons.person_outline),
+                      selectedIcon: Icon(Icons.person),
+                      label: 'Profile',
+                    ),
+                  ],
+                );
+              },
             ),
     );
   }
 
   Widget _buildNavItem(BuildContext context, String label, String route, bool isSelected) {
+    Widget titleWidget = Text(
+      label,
+      style: TextStyle(
+        fontSize: 14,
+        fontFamily: 'Roboto',
+        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        color: isSelected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    );
+
+    if (label == 'Inbox') {
+      titleWidget = StreamBuilder<int>(
+        stream: chatService.getTotalUnreadCountStream(),
+        builder: (context, snapshot) {
+          final unread = snapshot.data ?? 0;
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Roboto',
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (unread > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    unread > 99 ? '99+' : '$unread',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      );
+    }
+
     return InkWell(
       onTap: isSelected ? null : () => context.go(route),
       borderRadius: BorderRadius.circular(8),
@@ -314,25 +388,15 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontFamily: 'Roboto',
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-    ? Theme.of(context).colorScheme.primary
-    : Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
+            titleWidget,
             const SizedBox(height: 4),
             Container(
               height: 2.5,
               width: isSelected ? 36 : 0,
               decoration: BoxDecoration(
                 color: isSelected
-    ? Theme.of(context).colorScheme.primary
-    : Colors.transparent,
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

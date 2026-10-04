@@ -30,12 +30,16 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
   }
 
   void _openChat(Map<String, dynamic> chatData) {
+    final roomId = chatData['roomId']?.toString() ?? '';
+    if (roomId.isNotEmpty) {
+      chatService.markChatAsRead(roomId);
+    }
     final isMeBuyer = chatData['buyerId'] == currentUser?.uid;
     final targetUserName = isMeBuyer ? chatData['sellerName'] : chatData['buyerName'];
 
     DynamicChatDialog.show(
       context,
-      roomId: chatData['roomId'],
+      roomId: roomId,
       targetUserName: targetUserName ?? 'User',
       productTitle: chatData['productTitle'] ?? 'Item',
       isSellerMode: true,
@@ -144,8 +148,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       itemCount: chats.length,
       itemBuilder: (context, index) {
-        final chat = chats[index];
-        final unread = 0; // Unread logic can be added later
+        final currentUid = currentUser?.uid ?? '';
+        final unread = (chat['unreadCount_$currentUid'] as int?) ?? 0;
         final targetUserName = isBuyingTab ? chat['sellerName'] : chat['buyerName'];
         final avatarColor = isBuyingTab ? const Color(0xFF4F46E5) : const Color(0xFF10B981);
         
@@ -160,7 +164,10 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
           decoration: BoxDecoration(
             color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: context.borderColor, width: 1),
+            border: Border.all(
+              color: unread > 0 ? context.primaryAccent.withValues(alpha: 0.5) : context.borderColor,
+              width: unread > 0 ? 1.5 : 1.0,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -227,17 +234,40 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            (chat['lastMessage'] == null || chat['lastMessage'].toString().isEmpty) 
-                                ? 'Say hi to start the conversation!' 
-                                : chat['lastMessage'],
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: unread > 0 ? context.textPrimary : context.textSecondary,
-                              fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.normal,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  (chat['lastMessage'] == null || chat['lastMessage'].toString().isEmpty) 
+                                      ? 'Say hi to start the conversation!' 
+                                      : chat['lastMessage'],
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: unread > 0 ? context.textPrimary : context.textSecondary,
+                                    fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.normal,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (unread > 0)
+                                Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEF4444),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '$unread',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ],
                       ),

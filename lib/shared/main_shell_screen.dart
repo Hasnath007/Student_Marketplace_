@@ -9,7 +9,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/providers/marketplace_provider.dart';
-import '../core/theme/theme_mode_provider.dart';
 
 class MainShellScreen extends ConsumerStatefulWidget {
   final Widget child;
@@ -22,6 +21,26 @@ class MainShellScreen extends ConsumerStatefulWidget {
 
 class _MainShellScreenState extends ConsumerState<MainShellScreen> {
   final TextEditingController _searchController = TextEditingController();
+  Stream<DocumentSnapshot>? _userDocStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _initUserDocStream();
+  }
+
+  void _initUserDocStream() {
+    if (Firebase.apps.isNotEmpty) {
+      final uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
+      if (uid.isNotEmpty && !uid.contains('/')) {
+        try {
+          _userDocStream = FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
+          return;
+        } catch (_) {}
+      }
+    }
+    _userDocStream = const Stream<DocumentSnapshot>.empty();
+  }
 
   @override
   void dispose() {
@@ -192,31 +211,6 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
 
                   const SizedBox(width: 20),
 
-// Light / Dark Theme Toggle
-Tooltip(
-  message: Theme.of(context).brightness == Brightness.dark
-      ? 'Switch to light mode'
-      : 'Switch to dark mode',
-  child: IconButton(
-    onPressed: () {
-      final isDark =
-          Theme.of(context).brightness == Brightness.dark;
-
-      ref
-          .read(themeModeProvider.notifier)
-          .setThemeMode(
-            isDark ? ThemeMode.light : ThemeMode.dark,
-          );
-    },
-    icon: Icon(
-      Theme.of(context).brightness == Brightness.dark
-          ? Icons.light_mode_rounded
-          : Icons.dark_mode_rounded,
-    ),
-  ),
-),
-
-const SizedBox(width: 8),
 
                       // Profile Action Avatar with smooth hover
                       MouseRegion(
@@ -234,18 +228,7 @@ const SizedBox(width: 8),
                               ),
                             ),
                             child: StreamBuilder<DocumentSnapshot>(
-                              stream: () {
-                                if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();
-                                final uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
-                                if (uid.isNotEmpty && !uid.contains('/')) {
-                                  try {
-                                    return FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
-                                  } catch (_) {
-                                    return const Stream<DocumentSnapshot>.empty();
-                                  }
-                                }
-                                return const Stream<DocumentSnapshot>.empty();
-                              }(),
+                              stream: _userDocStream,
                               builder: (context, snapshot) {
                                 String? photoUrl;
                                 String userName = '';

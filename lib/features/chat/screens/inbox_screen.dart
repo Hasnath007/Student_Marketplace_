@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/services/chat_service.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../chat/widgets/dynamic_chat_dialog.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
@@ -52,26 +53,26 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
             children: [
               // Header & Tabs
               Container(
-                color: Theme.of(context).colorScheme.surface,
+                color: context.surfaceColor,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(32, 28, 32, 16),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 28, 32, 16),
                       child: Text(
                         'Messages',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: context.textPrimary,
                         ),
                       ),
                     ),
                     TabBar(
                       controller: _tabController,
-                      indicatorColor: const Color(0xFF2563EB),
-                      labelColor: const Color(0xFF2563EB),
-                      unselectedLabelColor: const Color(0xFF64748B),
+                      indicatorColor: context.primaryAccent,
+                      labelColor: context.primaryAccent,
+                      unselectedLabelColor: context.textSecondary,
                       labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       tabs: const [
                         Tab(text: 'Buying'),
@@ -157,14 +158,14 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-            boxShadow: const [
+            border: Border.all(color: context.borderColor, width: 1),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0A000000),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
-                offset: Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -173,7 +174,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
             child: InkWell(
               onTap: () => _openChat(chat),
               borderRadius: BorderRadius.circular(16),
-              hoverColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+              hoverColor: context.containerBg,
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Row(
@@ -204,7 +205,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: unread > 0 ? FontWeight.bold : FontWeight.w600,
-                                    color: const Color(0xFF0F172A),
+                                    color: context.textPrimary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -213,7 +214,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
                                 timeStr,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: unread > 0 ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                                  color: unread > 0 ? context.primaryAccent : context.textMuted,
                                   fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
@@ -222,7 +223,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
                           const SizedBox(height: 4),
                           Text(
                             chat['productTitle'] ?? 'Product',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                            style: TextStyle(fontSize: 12, color: context.textSecondary, fontWeight: FontWeight.w500),
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 6),
@@ -232,7 +233,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
                                 : chat['lastMessage'],
                             style: TextStyle(
                               fontSize: 14,
-                              color: unread > 0 ? const Color(0xFF1E293B) : const Color(0xFF64748B),
+                              color: unread > 0 ? context.textPrimary : context.textSecondary,
                               fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.normal,
                             ),
                             maxLines: 1,

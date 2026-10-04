@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/marketplace_provider.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/file_picker_helper.dart';
 import '../../../models/product.dart';
 
@@ -82,19 +83,19 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title & Subtitle Header
-                  const Text(
+                  Text(
                     'Create a Listing',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      color: context.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Turn your unused items into cash. Detailed listings with clear photos sell up to 40% faster on campus.',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 14, color: context.textSecondary),
                   ),
                   const SizedBox(height: 32),
 
@@ -111,12 +112,12 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                       child: GestureDetector(
                                         onTap: _pickImage,
                                         child: CustomPaint(
-                                          painter: _DashedBorderPainter(),
+                                          painter: _DashedBorderPainter(borderColor: context.borderColor),
                                           child: Container(
                                             width: double.infinity,
                                             padding: const EdgeInsets.symmetric(vertical: 36),
                                             decoration: BoxDecoration(
-                                             color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                              color: context.containerBg,
                                               borderRadius: BorderRadius.circular(12),
                                             ),
                                             child: Column(
@@ -125,31 +126,32 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                                 Container(
                                                   padding: const EdgeInsets.all(12),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.white,
+                                                    color: context.surfaceColor,
                                                     borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(color: context.borderColor),
                                                   ),
-                                                  child: const Icon(Icons.add_photo_alternate_outlined, size: 36, color: Color(0xFF2563EB)),
+                                                  child: Icon(Icons.add_photo_alternate_outlined, size: 36, color: context.primaryAccent),
                                                 ),
                                                 const SizedBox(height: 12),
                                                 RichText(
-                                                  text: const TextSpan(
-                                                    style: TextStyle(fontSize: 14, fontFamily: 'Roboto'),
+                                                  text: TextSpan(
+                                                    style: const TextStyle(fontSize: 14, fontFamily: 'Roboto'),
                                                     children: [
                                                       TextSpan(
                                                         text: 'Upload a photo ',
-                                                        style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                                                        style: TextStyle(fontWeight: FontWeight.w700, color: context.primaryAccent),
                                                       ),
                                                       TextSpan(
                                                         text: 'or drag and drop',
-                                                        style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                                                        style: TextStyle(fontWeight: FontWeight.w600, color: context.textPrimary),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
-                                                const Text(
+                                                Text(
                                                   'SVG, PNG, JPG, WEBP or GIF (max. 10MB)',
-                                                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                                  style: TextStyle(fontSize: 12, color: context.textSecondary),
                                                 ),
                                               ],
                                             ),
@@ -218,7 +220,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                   const SizedBox(height: 8),
                                   TextFormField(
                                     controller: _titleController,
-                                    style: const TextStyle(fontSize: 14),
+                                    style: TextStyle(fontSize: 14, color: context.textPrimary),
                                     decoration: _buildInputDecoration('What are you selling?'),
                                   ),
                                   const SizedBox(height: 20),
@@ -235,7 +237,8 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                             const SizedBox(height: 8),
                                             DropdownButtonFormField<String>(
                                               initialValue: _selectedCategory,
-                                              style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
+                                              dropdownColor: context.cardBg,
+                                              style: TextStyle(fontSize: 14, color: context.textPrimary),
                                               decoration: _buildInputDecoration(''),
                                               icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
                                               items: const [
@@ -271,10 +274,10 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                                       margin: const EdgeInsets.only(right: 6),
                                                       padding: const EdgeInsets.symmetric(vertical: 12),
                                                       decoration: BoxDecoration(
-                                                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF8FAFC),
+                                                        color: isSelected ? context.primaryAccent : context.containerBg,
                                                         borderRadius: BorderRadius.circular(10),
                                                         border: Border.all(
-                                                          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                                                          color: isSelected ? context.primaryAccent : context.borderColor,
                                                         ),
                                                       ),
                                                       child: Center(
@@ -283,7 +286,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                                           style: TextStyle(
                                                             fontSize: 13,
                                                             fontWeight: FontWeight.w700,
-                                                            color: isSelected ? Colors.white : const Color(0xFF475569),
+                                                            color: isSelected ? Colors.white : context.textSecondary,
                                                           ),
                                                         ),
                                                       ),
@@ -311,7 +314,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                   TextFormField(
                                     controller: _priceController,
                                     keyboardType: TextInputType.number,
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary),
                                     decoration: _buildInputDecoration('৳  0.00'),
                                   ),
                                   const SizedBox(height: 24),
@@ -319,14 +322,14 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       _buildFieldLabel('Description'),
-                                      const Text('0 / 500', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                                      Text('0 / 500', style: TextStyle(fontSize: 11, color: context.textMuted)),
                                     ],
                                   ),
                                   const SizedBox(height: 8),
                                   TextFormField(
                                     controller: _descController,
                                     maxLines: 5,
-                                    style: const TextStyle(fontSize: 14),
+                                    style: TextStyle(fontSize: 14, color: context.textPrimary),
                                     decoration: _buildInputDecoration('Describe your item in detail. Mention any flaws or important details buyers should know.'),
                                   ),
                                 ],
@@ -474,9 +477,9 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,18 +489,18 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.textPrimary),
               ),
               if (badge != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: context.containerBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     badge,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
                   ),
                 ),
             ],
@@ -512,28 +515,28 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
   Widget _buildFieldLabel(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary),
     );
   }
 
   InputDecoration _buildInputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+      hintStyle: TextStyle(color: context.textMuted, fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: context.containerBg,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: BorderSide(color: context.borderColor),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: BorderSide(color: context.borderColor),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+        borderSide: BorderSide(color: context.primaryAccent, width: 1.5),
       ),
     );
   }
@@ -543,10 +546,14 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
 
 // Custom Painter for dashed border rectangle container
 class _DashedBorderPainter extends CustomPainter {
+  final Color borderColor;
+
+  _DashedBorderPainter({this.borderColor = const Color(0xFFCBD5E1)});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFCBD5E1)
+      ..color = borderColor
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 

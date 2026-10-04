@@ -11,6 +11,7 @@ import '../../../core/providers/marketplace_provider.dart';
 import '../../chat/widgets/dynamic_chat_dialog.dart';
 import '../../../core/services/chat_service.dart';
 import '../../../core/services/order_service.dart';
+import '../../../core/theme/app_theme.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
   final Product? product;
@@ -183,10 +184,11 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: context.surfaceColor,
                                     borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: context.borderColor),
                                     boxShadow: [
-                                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8),
+                                      BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
                                     ],
                                   ),
                                   child: Row(
@@ -235,23 +237,23 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           const SizedBox(height: 10),
                           Text(
                             title,
-                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), height: 1.2),
+                            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: context.textPrimary, height: 1.2),
                           ),
                           const SizedBox(height: 12),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              Text(priceStr, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
+                              Text(priceStr, style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: context.primaryAccent)),
                             ],
                           ),
                           const SizedBox(height: 20),
 
-                          const Text('ITEM DESCRIPTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8)),
+                          Text('ITEM DESCRIPTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.textSecondary, letterSpacing: 0.8)),
                           const SizedBox(height: 6),
                           Text(
                             desc,
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.5),
+                            style: TextStyle(fontSize: 13, color: context.textSecondary, height: 1.5),
                           ),
                           const SizedBox(height: 20),
 
@@ -259,9 +261,9 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: context.cardBg,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(color: context.borderColor),
                             ),
                             child: Row(
                               children: [
@@ -292,13 +294,14 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           const SizedBox(height: 20),
 
                           // Seller Info Card
-                          const Text('POSTED BY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8)),
+                          Text('POSTED BY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.textSecondary, letterSpacing: 0.8)),
                           const SizedBox(height: 6),
                           Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEEF2FF),
+                                  color: context.surfaceColor,
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: context.borderColor),
                                 ),
                                 child: Row(
                                   children: [
@@ -317,13 +320,13 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(displaySellerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                        Text(displaySellerName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: context.textPrimary)),
                                         const SizedBox(height: 2),
-                                        const Text('Verified Student', style: TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                                        Text('Verified Student', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                                       ],
                                     ),
                                     const Spacer(),
-                                    const Icon(Icons.chevron_right, color: Color(0xFF475569)),
+                                    Icon(Icons.chevron_right, color: context.textSecondary),
                                   ],
                                 ),
                               ),
@@ -630,7 +633,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('More Campus Deals', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    Text('More Campus Deals', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.textPrimary)),
                     TextButton(
                       onPressed: () => context.go('/marketplace'),
                       child: const Text('View all ->', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
@@ -699,10 +702,10 @@ class _MoreDealCardState extends State<_MoreDealCard> {
           curve: Curves.easeOutCubic,
           transform: Matrix4.translationValues(0, _isHovered ? -5 : 0, 0),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _isHovered ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
+              color: _isHovered ? context.primaryAccent : context.borderColor,
               width: _isHovered ? 1.5 : 1.0,
             ),
             boxShadow: [
@@ -728,9 +731,9 @@ class _MoreDealCardState extends State<_MoreDealCard> {
                       deal.imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: const Color(0xFFF1F5F9),
-                        child: const Center(
-                          child: Icon(Icons.image_outlined, size: 36, color: Color(0xFF94A3B8)),
+                        color: context.containerBg,
+                        child: Center(
+                          child: Icon(Icons.image_outlined, size: 36, color: context.textSecondary),
                         ),
                       ),
                     ),
@@ -741,7 +744,7 @@ class _MoreDealCardState extends State<_MoreDealCard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: context.cardBg.withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
@@ -782,7 +785,7 @@ class _MoreDealCardState extends State<_MoreDealCard> {
                       deal.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary),
                     ),
                     const SizedBox(height: 6),
                     Row(

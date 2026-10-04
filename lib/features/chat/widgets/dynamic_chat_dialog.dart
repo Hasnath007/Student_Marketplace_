@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/services/chat_service.dart';
+import '../../../core/theme/app_theme.dart';
 
 class DynamicChatDialog extends StatefulWidget {
   final String roomId;
@@ -81,8 +82,9 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
         width: 490,
         height: 620,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: context.borderColor),
           boxShadow: const [
             BoxShadow(
               color: Color(0x29000000),
@@ -143,7 +145,7 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: const Color(0xFFEEF2FF),
+              color: context.isDarkMode ? const Color(0xFF1E1B4B).withValues(alpha: 0.5) : const Color(0xFFEEF2FF),
               child: Row(
                 children: [
                   const Icon(Icons.storefront_rounded, size: 14, color: Color(0xFF4F46E5)),
@@ -151,7 +153,7 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
                   Expanded(
                     child: Text(
                       'Live Chat for ${widget.productTitle}',
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF3730A3), fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 11, color: context.isDarkMode ? const Color(0xFFA5B4FC) : const Color(0xFF3730A3), fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -161,7 +163,7 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
             // Messages Stream
             Expanded(
               child: Container(
-                color: const Color(0xFFF8FAFC),
+                color: context.isDarkMode ? const Color(0xFF090A0E) : const Color(0xFFF8FAFC),
                 child: StreamBuilder<QuerySnapshot>(
                   stream: chatService.getMessagesStream(widget.roomId),
                   builder: (context, snapshot) {
@@ -201,13 +203,14 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
                             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              color: isMe ? const Color(0xFF2563EB) : Colors.white,
+                              color: isMe ? const Color(0xFF2563EB) : context.containerBg,
                               borderRadius: BorderRadius.only(
                                 topLeft: const Radius.circular(16),
                                 topRight: const Radius.circular(16),
                                 bottomLeft: Radius.circular(isMe ? 16 : 4),
                                 bottomRight: Radius.circular(isMe ? 4 : 16),
                               ),
+                              border: isMe ? null : Border.all(color: context.borderColor),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.04),
@@ -233,7 +236,7 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
                                 Text(
                                   text ?? '',
                                   style: TextStyle(
-                                    color: isMe ? Colors.white : const Color(0xFF1E293B),
+                                    color: isMe ? Colors.white : context.textPrimary,
                                     fontSize: 13,
                                     height: 1.35,
                                   ),
@@ -242,7 +245,7 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
                                 Text(
                                   timeStr,
                                   style: TextStyle(
-                                    color: isMe ? Colors.white70 : const Color(0xFF94A3B8),
+                                    color: isMe ? Colors.white70 : context.textSecondary,
                                     fontSize: 10,
                                   ),
                                 ),
@@ -257,12 +260,12 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
               ),
             ),
 
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            Divider(height: 1, color: context.borderColor),
 
             // Input Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              color: Colors.white,
+              color: context.cardBg,
               child: Row(
                 children: [
                   Expanded(
@@ -270,19 +273,20 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
                       controller: _msgController,
                       textInputAction: TextInputAction.send,
                       onSubmitted: _sendMessage,
+                      style: TextStyle(fontSize: 13, color: context.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
-                        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                        hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: context.containerBg,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: context.borderColor),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: context.borderColor),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),

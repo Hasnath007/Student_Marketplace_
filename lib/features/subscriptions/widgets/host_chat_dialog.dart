@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_theme.dart';
 
 class HostChatDialog extends StatefulWidget {
   final String hostName;
@@ -136,8 +137,9 @@ class _HostChatDialogState extends State<HostChatDialog> {
         width: 490,
         height: 620,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: context.borderColor),
           boxShadow: const [
             BoxShadow(
               color: Color(0x29000000),
@@ -359,13 +361,14 @@ class _HostChatDialogState extends State<HostChatDialog> {
                             decoration: BoxDecoration(
                               color: isMe
                                   ? (isHost ? const Color(0xFF059669) : const Color(0xFF2563EB))
-                                  : Colors.white,
+                                  : context.containerBg,
                               borderRadius: BorderRadius.only(
                                 topLeft: const Radius.circular(16),
                                 topRight: const Radius.circular(16),
                                 bottomLeft: Radius.circular(isMe ? 16 : 4),
                                 bottomRight: Radius.circular(isMe ? 4 : 16),
                               ),
+                              border: isMe ? null : Border.all(color: context.borderColor),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.04),
@@ -391,7 +394,7 @@ class _HostChatDialogState extends State<HostChatDialog> {
                                 Text(
                                   msg['text'] as String? ?? '',
                                   style: TextStyle(
-                                    color: isMe ? Colors.white : const Color(0xFF1E293B),
+                                    color: isMe ? Colors.white : context.textPrimary,
                                     fontSize: 13,
                                     height: 1.35,
                                   ),
@@ -403,7 +406,7 @@ class _HostChatDialogState extends State<HostChatDialog> {
                                     Text(
                                       timeStr,
                                       style: TextStyle(
-                                        color: isMe ? Colors.white70 : const Color(0xFF94A3B8),
+                                        color: isMe ? Colors.white70 : context.textSecondary,
                                         fontSize: 10,
                                       ),
                                     ),
@@ -427,7 +430,7 @@ class _HostChatDialogState extends State<HostChatDialog> {
             // Quick Answer Chips for Host, Seller, or Member
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              color: Colors.white,
+              color: context.cardBg,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -460,12 +463,12 @@ class _HostChatDialogState extends State<HostChatDialog> {
               ),
             ),
 
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            Divider(height: 1, color: context.borderColor),
 
             // Input Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              color: Colors.white,
+              color: context.cardBg,
               child: Row(
                 children: [
                   Expanded(
@@ -473,23 +476,24 @@ class _HostChatDialogState extends State<HostChatDialog> {
                       controller: _msgController,
                       textInputAction: TextInputAction.send,
                       onSubmitted: _sendMessage,
+                      style: TextStyle(fontSize: 13, color: context.textPrimary),
                       decoration: InputDecoration(
                         hintText: isHost
                             ? 'Reply to members or send announcement as Host...'
                             : (isSeller
                                 ? 'Type a message to ${widget.hostName} (Seller)...'
                                 : 'Type a message to ${widget.hostName}...'),
-                        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                        hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: context.containerBg,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: context.borderColor),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: context.borderColor),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -541,12 +545,12 @@ class _HostChatDialogState extends State<HostChatDialog> {
         ),
       ),
       backgroundColor: isHost
-          ? const Color(0xFFECFDF5)
-          : (isSeller ? const Color(0xFFEEF2FF) : const Color(0xFFEFF6FF)),
+          ? (context.isDarkMode ? const Color(0xFF065F46).withValues(alpha: 0.3) : const Color(0xFFECFDF5))
+          : (isSeller ? (context.isDarkMode ? const Color(0xFF3730A3).withValues(alpha: 0.3) : const Color(0xFFEEF2FF)) : (context.isDarkMode ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : const Color(0xFFEFF6FF))),
       side: BorderSide(
         color: isHost
-            ? const Color(0xFFA7F3D0)
-            : (isSeller ? const Color(0xFFC7D2FE) : const Color(0xFFBFDBFE)),
+            ? const Color(0xFF059669).withValues(alpha: 0.5)
+            : (isSeller ? const Color(0xFF6366F1).withValues(alpha: 0.5) : const Color(0xFF3B82F6).withValues(alpha: 0.5)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 4),
       onPressed: () => _sendMessage(messageToSend),

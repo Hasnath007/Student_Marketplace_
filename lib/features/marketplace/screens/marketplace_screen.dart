@@ -10,6 +10,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/marketplace_provider.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../models/product.dart';
 
 class MarketplaceScreen extends ConsumerWidget {
@@ -153,15 +154,15 @@ class MarketplaceScreen extends ConsumerWidget {
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'Marketplace',
-                          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.8),
+                          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: context.textPrimary, letterSpacing: -0.8),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Find textbooks, notes, and services from students on campus.',
-                          style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 14, color: context.textSecondary),
                         ),
                       ],
                     ),
@@ -205,7 +206,7 @@ class MarketplaceScreen extends ConsumerWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: isSel ? Colors.white.withValues(alpha: 0.25) : const Color(0xFFE2E8F0),
+                                          color: isSel ? Colors.white.withValues(alpha: 0.25) : context.borderColor,
                                           borderRadius: BorderRadius.circular(10),
                                         ),
                                         child: Text(
@@ -213,7 +214,7 @@ class MarketplaceScreen extends ConsumerWidget {
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
-                                            color: isSel ? Colors.white : const Color(0xFF64748B),
+                                            color: isSel ? Colors.white : context.textSecondary,
                                           ),
                                         ),
                                       ),
@@ -226,13 +227,16 @@ class MarketplaceScreen extends ConsumerWidget {
                                     }
                                   },
                                   selectedColor: const Color(0xFF2563EB),
-                                  backgroundColor: const Color(0xFFEEF2FF),
+                                  backgroundColor: context.surfaceColor,
                                   labelStyle: TextStyle(
-                                    color: isSel ? Colors.white : const Color(0xFF475569),
+                                    color: isSel ? Colors.white : context.textSecondary,
                                     fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
                                     fontSize: 13,
                                   ),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(color: isSel ? const Color(0xFF2563EB) : context.borderColor),
+                                  ),
                                 ),
                               );
                             }),
@@ -241,12 +245,12 @@ class MarketplaceScreen extends ConsumerWidget {
                               ActionChip(
                                 avatar: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF2563EB)),
                                 label: Text('Search: "$searchQuery"'),
-                                backgroundColor: const Color(0xFFDBEAFE),
+                                backgroundColor: context.primaryContainerBg,
                                 labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                                 onPressed: () {
                                   ref.read(searchQueryProvider.notifier).setQuery('');
                                 },
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: context.borderColor)),
                               ),
                             ],
                           ],
@@ -260,20 +264,21 @@ class MarketplaceScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.surfaceColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: context.borderColor),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.sort_rounded, size: 16, color: Color(0xFF64748B)),
+                          Icon(Icons.sort_rounded, size: 16, color: context.textSecondary),
                           const SizedBox(width: 6),
                           DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
+                              dropdownColor: context.surfaceColor,
                               value: selectedSort,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF64748B)),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary),
+                              icon: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: context.textSecondary),
                               items: const [
                                 DropdownMenuItem(value: 'Default', child: Text('Featured')),
                                 DropdownMenuItem(value: 'Price: Low to High', child: Text('Price: Low to High')),
@@ -300,7 +305,7 @@ class MarketplaceScreen extends ConsumerWidget {
                   children: [
                     Text(
                       'Showing ${filteredProducts.length} ${filteredProducts.length == 1 ? 'item' : 'items'} in $selectedCategory',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.textSecondary),
                     ),
                     if (selectedCategory != 'All Categories' || searchQuery.isNotEmpty || selectedSort != 'Default')
                       GestureDetector(
@@ -335,26 +340,26 @@ class MarketplaceScreen extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 60),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.cardBg,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: context.borderColor),
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.search_off_rounded, size: 48, color: Color(0xFF94A3B8)),
+                        Icon(Icons.search_off_rounded, size: 48, color: context.textMuted),
                         const SizedBox(height: 12),
                         Text(
                           searchQuery.isNotEmpty
                               ? 'No items found matching "$searchQuery"'
                               : 'No items found in "$selectedCategory"',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textPrimary),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           searchQuery.isNotEmpty
                               ? 'Try searching with different keywords or check spelling.'
                               : 'Be the first to list an item in this category!',
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 13, color: context.textSecondary),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -466,15 +471,15 @@ class _ProductCardState extends State<_ProductCard> {
         curve: Curves.easeOutCubic,
         transform: Matrix4.translationValues(0, _isHovered ? -4 : 0, 0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: _isHovered ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
+            color: _isHovered ? context.primaryAccent : context.borderColor,
             width: _isHovered ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: _isHovered ? const Color(0xFF1E293B).withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.02),
+              color: _isHovered ? Colors.black.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.04),
               blurRadius: _isHovered ? 16 : 4,
               offset: Offset(0, _isHovered ? 8 : 2),
             ),
@@ -542,19 +547,20 @@ class _ProductCardState extends State<_ProductCard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.surfaceColor,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: context.borderColor),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4),
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4),
                         ],
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.star_rounded, size: 12, color: Colors.amber),
-                          SizedBox(width: 2),
+                          const Icon(Icons.star_rounded, size: 12, color: Colors.amber),
+                          const SizedBox(width: 2),
                           Text(
                             '4.9',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.textPrimary),
                           ),
                         ],
                       ),
@@ -620,13 +626,13 @@ class _ProductCardState extends State<_ProductCard> {
                             item.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, height: 1.2),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, height: 1.2, color: context.textPrimary),
                           ),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '৳${item.price.toStringAsFixed(0)}',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF2563EB)),
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: context.primaryAccent),
                         ),
                       ],
                     ),
@@ -686,7 +692,7 @@ class _ProductCardState extends State<_ProductCard> {
                             Expanded(
                               child: Text(
                                 displaySellerName, 
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                style: TextStyle(fontSize: 11, color: context.textSecondary),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -701,8 +707,8 @@ class _ProductCardState extends State<_ProductCard> {
                       child: OutlinedButton(
                         onPressed: () => context.go('/product-details/${item.id}', extra: item),
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: _isHovered ? const Color(0xFF2563EB) : const Color(0xFFEEF2FF),
-                          foregroundColor: _isHovered ? Colors.white : const Color(0xFF2563EB),
+                          backgroundColor: _isHovered ? const Color(0xFF2563EB) : context.primaryContainerBg,
+                          foregroundColor: _isHovered ? Colors.white : context.primaryAccent,
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
@@ -711,7 +717,7 @@ class _ProductCardState extends State<_ProductCard> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: _isHovered ? Colors.white : const Color(0xFF2563EB),
+                            color: _isHovered ? Colors.white : context.primaryAccent,
                           ),
                         ),
                       ),

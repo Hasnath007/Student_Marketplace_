@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/theme/app_theme.dart';
 
 enum PaymentMethod { bkash, nagad }
 
@@ -163,8 +164,9 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
         constraints: const BoxConstraints(maxWidth: 560),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.borderColor),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.12),
@@ -215,22 +217,22 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: context.primaryContainerBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.account_balance_wallet_outlined, color: Color(0xFF2563EB), size: 22),
+                    child: Icon(Icons.account_balance_wallet_outlined, color: context.primaryAccent, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Checkout & Payment',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.textPrimary),
                       ),
                       Text(
                         'Select bKash or Nagad to complete payment',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 12, color: context.textSecondary),
                       ),
                     ],
                   ),
@@ -248,9 +250,9 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.containerBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: context.borderColor),
             ),
             child: Column(
               children: [
@@ -263,29 +265,29 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
                         children: [
                           Text(
                             widget.itemName,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
-                          Text(widget.category, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text(widget.category, style: TextStyle(fontSize: 11, color: context.textSecondary)),
                         ],
                       ),
                     ),
                     Text(
                       totalAmount,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2563EB)),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: context.primaryAccent),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                Divider(height: 1, color: context.borderColor),
                 const SizedBox(height: 10),
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Student Community Fee:', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                    Text('৳0.00 (Free)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+                    Text('Student Community Fee:', style: TextStyle(fontSize: 11, color: context.textSecondary)),
+                    const Text('৳0.00 (Free)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
                   ],
                 ),
               ],
@@ -373,10 +375,10 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.05) : Colors.white,
+          color: isSelected ? color.withValues(alpha: context.isDarkMode ? 0.2 : 0.05) : context.containerBg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? color : const Color(0xFFE2E8F0),
+            color: isSelected ? color : context.borderColor,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -398,8 +400,8 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isSelected ? color : const Color(0xFF0F172A))),
-                  Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isSelected ? color : context.textPrimary)),
+                  Text(subtitle, style: TextStyle(fontSize: 11, color: context.textSecondary)),
                 ],
               ),
             ),
@@ -442,9 +444,9 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.containerBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: context.borderColor),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -455,17 +457,17 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEF2FF),
+                        color: context.primaryContainerBg,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.storefront_rounded, color: Color(0xFF2563EB), size: 18),
+                      child: Icon(Icons.storefront_rounded, color: context.primaryAccent, size: 18),
                     ),
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Campus Market', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-                        Text('Invoice ID: $_invoiceId', style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                        Text('Campus Market', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
+                        Text('Invoice ID: $_invoiceId', style: TextStyle(fontSize: 10, color: context.textSecondary)),
                       ],
                     ),
                   ],
@@ -702,15 +704,15 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
           ),
           const SizedBox(height: 16),
 
-          const Text(
+          Text(
             'পেমেন্ট সফলভাবে সম্পন্ন হয়েছে!',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'আপনার ট্রানজেকশন সফলভাবে ভেরিফাই করা হয়েছে।',
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: 12, color: context.textSecondary),
           ),
           const SizedBox(height: 24),
 
@@ -718,23 +720,23 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.containerBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: context.borderColor),
             ),
             child: Column(
               children: [
                 _buildReceiptRow('Invoice ID', _invoiceId),
-                const Divider(height: 16),
+                Divider(height: 16, color: context.borderColor),
                 _buildReceiptRow('Item / Group', widget.itemName),
-                const Divider(height: 16),
+                Divider(height: 16, color: context.borderColor),
                 _buildReceiptRow('Payment Method', isBkash ? 'bKash (Send Money)' : 'Nagad (Send Money)'),
-                const Divider(height: 16),
+                Divider(height: 16, color: context.borderColor),
                 _buildReceiptRow('TrxID', _trxController.text.trim().toUpperCase()),
-                const Divider(height: 16),
+                Divider(height: 16, color: context.borderColor),
                 _buildReceiptRow('Amount Paid', totalAmount, isBold: true, valueColor: const Color(0xFF16A34A)),
-                const Divider(height: 16),
-                _buildReceiptRow('Status', 'Verified & Active ✓', isBold: true, valueColor: const Color(0xFF2563EB)),
+                Divider(height: 16, color: context.borderColor),
+                _buildReceiptRow('Status', 'Verified & Active ✓', isBold: true, valueColor: context.primaryAccent),
               ],
             ),
           ),
@@ -980,15 +982,15 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: isHighlight ? const Color(0xFFDBEAFE) : Colors.white,
+        color: isHighlight ? (context.isDarkMode ? const Color(0xFF1E3A8A).withValues(alpha: 0.35) : const Color(0xFFDBEAFE)) : context.cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: isHighlight ? const Color(0xFF60A5FA) : const Color(0xFFE2E8F0)),
+        border: Border.all(color: isHighlight ? const Color(0xFF60A5FA) : context.borderColor),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: isHighlight ? const Color(0xFF1D4ED8) : const Color(0xFF64748B)),
+          Icon(icon, size: 16, color: isHighlight ? const Color(0xFF60A5FA) : context.textSecondary),
           const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+          Text(label, style: TextStyle(fontSize: 11, color: context.textSecondary)),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -996,7 +998,7 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isHighlight ? FontWeight.w900 : FontWeight.bold,
-                color: isHighlight ? const Color(0xFF1D4ED8) : const Color(0xFF0F172A),
+                color: isHighlight ? const Color(0xFF60A5FA) : context.textPrimary,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -1007,16 +1009,16 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: context.primaryContainerBg,
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
+                border: Border.all(color: context.borderColor),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.copy_rounded, size: 10, color: Color(0xFF2563EB)),
-                  SizedBox(width: 2),
-                  Text('Copy', style: TextStyle(fontSize: 10, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+                  Icon(Icons.copy_rounded, size: 10, color: context.primaryAccent),
+                  const SizedBox(width: 2),
+                  Text('Copy', style: TextStyle(fontSize: 10, color: context.primaryAccent, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -1043,7 +1045,7 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(text, style: const TextStyle(fontSize: 11, color: Color(0xFF334155), height: 1.25)),
+          child: Text(text, style: TextStyle(fontSize: 11, color: context.textPrimary, height: 1.25)),
         ),
       ],
     );
@@ -1053,13 +1055,13 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+        Text(label, style: TextStyle(fontSize: 12, color: context.textSecondary)),
         Text(
           value,
           style: TextStyle(
             fontSize: 12,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            color: valueColor ?? const Color(0xFF0F172A),
+            color: valueColor ?? context.textPrimary,
           ),
         ),
       ],

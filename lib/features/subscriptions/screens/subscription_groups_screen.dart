@@ -74,7 +74,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 580),
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.all(28),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

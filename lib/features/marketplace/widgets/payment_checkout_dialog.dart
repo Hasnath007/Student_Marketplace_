@@ -176,9 +176,11 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
             ],
           ),
           clipBehavior: Clip.antiAlias,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: _buildCurrentStepContent(),
+          child: SingleChildScrollView(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _buildCurrentStepContent(),
+            ),
           ),
         ),
       ),

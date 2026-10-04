@@ -552,7 +552,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                         prefixIcon: const Icon(Icons.layers_outlined, size: 20, color: Color(0xFF64748B)),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
@@ -581,7 +581,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                     child: Text('৳', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
@@ -605,7 +605,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                   hintText: '4',
                                   prefixIcon: const Icon(Icons.people_outline_rounded, size: 20, color: Color(0xFF64748B)),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
@@ -626,7 +626,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                       style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
@@ -734,7 +734,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                     hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                                     prefixIcon: const Icon(Icons.email_outlined, size: 18, color: Color(0xFF64748B)),
                                     filled: true,
-                                    fillColor: const Color(0xFFF8FAFC),
+                                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                                   ),
@@ -756,7 +756,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                     hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                                     prefixIcon: const Icon(Icons.vpn_key_outlined, size: 18, color: Color(0xFF64748B)),
                                     filled: true,
-                                    fillColor: const Color(0xFFF8FAFC),
+                                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                                   ),
@@ -776,7 +776,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                           hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                           prefixIcon: const Icon(Icons.link_rounded, size: 18, color: Color(0xFF64748B)),
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
+                          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                         ),
@@ -1046,7 +1046,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
         child: Center(

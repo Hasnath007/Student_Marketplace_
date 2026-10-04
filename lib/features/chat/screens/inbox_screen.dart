@@ -44,7 +44,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -52,7 +52,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
             children: [
               // Header & Tabs
               Container(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -157,7 +157,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
             boxShadow: const [
@@ -173,7 +173,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> with SingleTickerProv
             child: InkWell(
               onTap: () => _openChat(chat),
               borderRadius: BorderRadius.circular(16),
-              hoverColor: const Color(0xFFF8FAFC),
+              hoverColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Row(

@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/providers/marketplace_provider.dart';
+import '../core/theme/theme_mode_provider.dart';
 
 class MainShellScreen extends ConsumerStatefulWidget {
   final Widget child;
@@ -72,12 +73,14 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(68),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Color(0xFFF1F5F9)),
-            ),
-          ),
+  decoration: BoxDecoration(
+    color: Theme.of(context).colorScheme.surface,
+    border: Border(
+      bottom: BorderSide(
+        color: Theme.of(context).colorScheme.outlineVariant,
+      ),
+    ),
+  ),
           child: SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -96,7 +99,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                               Container(
                                 padding: const EdgeInsets.all(7),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEEF2FF),
+                                  color: Theme.of(context).colorScheme.primaryContainer,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(
@@ -106,12 +109,12 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const Text(
+                               Text(
                                 'Campus Market',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1E293B),
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   letterSpacing: -0.3,
                                 ),
                               ),
@@ -155,11 +158,11 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                               hintText: GoRouterState.of(context).uri.toString().startsWith('/subscriptions')
                                   ? 'Search subscription groups...'
                                   : 'Search marketplace products...',
-                              hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                              prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
+                              hintStyle: TextStyle( fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                              prefixIcon: Icon(Icons.search, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant,),
                               suffixIcon: currentQuery.isNotEmpty
                                   ? IconButton(
-                                      icon: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF94A3B8)),
+                                      icon:  Icon(Icons.close_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant,),
                                       onPressed: () {
                                         _searchController.clear();
                                         ref.read(searchQueryProvider.notifier).setQuery('');
@@ -167,7 +170,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                     )
                                   : null,
                               filled: true,
-                              fillColor: const Color(0xFFF1F5F9),
+                              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(20),
@@ -189,6 +192,32 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
 
                   const SizedBox(width: 20),
 
+// Light / Dark Theme Toggle
+Tooltip(
+  message: Theme.of(context).brightness == Brightness.dark
+      ? 'Switch to light mode'
+      : 'Switch to dark mode',
+  child: IconButton(
+    onPressed: () {
+      final isDark =
+          Theme.of(context).brightness == Brightness.dark;
+
+      ref
+          .read(themeModeProvider.notifier)
+          .setThemeMode(
+            isDark ? ThemeMode.light : ThemeMode.dark,
+          );
+    },
+    icon: Icon(
+      Theme.of(context).brightness == Brightness.dark
+          ? Icons.light_mode_rounded
+          : Icons.dark_mode_rounded,
+    ),
+  ),
+),
+
+const SizedBox(width: 8),
+
                       // Profile Action Avatar with smooth hover
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
@@ -198,7 +227,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: selectedIndex == 4 ? const Color(0xFF2563EB) : Colors.transparent,
+                                color: selectedIndex == 4
+    ? Theme.of(context).colorScheme.primary
+    : Colors.transparent,
                                 width: 2,
                               ),
                             ),
@@ -291,7 +322,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     return InkWell(
       onTap: isSelected ? null : () => context.go(route),
       borderRadius: BorderRadius.circular(8),
-      hoverColor: const Color(0xFFEEF2FF),
+      hoverColor: Theme.of(context).colorScheme.primaryContainer,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       child: Padding(
@@ -306,7 +337,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                 fontSize: 14,
                 fontFamily: 'Roboto',
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                color: isSelected
+    ? Theme.of(context).colorScheme.primary
+    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
@@ -314,7 +347,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
               height: 2.5,
               width: isSelected ? 36 : 0,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+                color: isSelected
+    ? Theme.of(context).colorScheme.primary
+    : Colors.transparent,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

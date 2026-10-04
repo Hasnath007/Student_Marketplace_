@@ -70,7 +70,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
         child: Center(
@@ -116,7 +116,7 @@ class _SellItemScreenState extends ConsumerState<SellItemScreen> {
                                             width: double.infinity,
                                             padding: const EdgeInsets.symmetric(vertical: 36),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFF8FAFC),
+                                             color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                               borderRadius: BorderRadius.circular(12),
                                             ),
                                             child: Column(

@@ -57,8 +57,8 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     }
 
     if (activeProductOrNull == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF8FAFC),
+      return  Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(child: CircularProgressIndicator(color: Color(0xFF2563EB))),
       );
     }
@@ -76,7 +76,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     final condition = activeProduct.condition;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: StreamBuilder<DocumentSnapshot>(
         stream: () {
           if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();

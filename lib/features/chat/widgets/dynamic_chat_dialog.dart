@@ -80,7 +80,10 @@ class _DynamicChatDialogState extends State<DynamicChatDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
         width: 490,
-        height: 620,
+        constraints: BoxConstraints(
+          maxWidth: 490,
+          maxHeight: (MediaQuery.of(context).size.height * 0.88).clamp(400.0, 640.0),
+        ),
         decoration: BoxDecoration(
           color: context.cardBg,
           borderRadius: BorderRadius.circular(24),

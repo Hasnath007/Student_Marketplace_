@@ -16,6 +16,8 @@ import '../../../core/models/order_model.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/providers/subscriptions_provider.dart';
 import '../../../core/providers/admin_provider.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/theme_mode_provider.dart';
 import '../../../models/product.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -31,6 +33,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   double _availableBalance = 2850.0;
   final double _pendingBalance = 650.0;
   double _totalWithdrawn = 3000.0;
+
+  Stream<DocumentSnapshot>? _userDocStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _initUserDocStream();
+  }
+
+  void _initUserDocStream() {
+    if (Firebase.apps.isNotEmpty) {
+      final uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
+      if (uid.isNotEmpty && !uid.contains('/')) {
+        try {
+          _userDocStream = FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
+          return;
+        } catch (_) {}
+      }
+    }
+    _userDocStream = const Stream<DocumentSnapshot>.empty();
+  }
 
 
 
@@ -96,13 +119,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             width: 440,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
+              border: Border.all(color: context.borderColor),
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x29000000),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 25,
-                  offset: Offset(0, 10),
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -114,13 +138,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Edit Listing',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary),
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(ctx),
-                      icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8), size: 20),
+                      icon: Icon(Icons.close_rounded, color: context.textSecondary, size: 20),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -216,7 +240,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isSold ? const Color(0xFF64748B) : const Color(0xFF0F172A),
+                            color: isSold ? context.textSecondary : context.textPrimary,
                           ),
                         ),
                       ],
@@ -327,7 +351,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Edit Profile Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Text('Edit Profile Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary)),
             const SizedBox(height: 16),
             TextField(
               controller: bioController,
@@ -395,12 +419,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: const Icon(Icons.support_agent_rounded, color: Color(0xFFDC2626), size: 22),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Need Help / Report Issue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                    Text('Direct message to Admin Support', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    Text('Need Help / Report Issue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textPrimary)),
+                    Text('Direct message to Admin Support', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                   ],
                 ),
               ),
@@ -416,14 +440,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: context.containerBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: context.borderColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Order / Item: $itemTitle', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                        Text('Order / Item: $itemTitle', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
                         const SizedBox(height: 2),
                         Text('Amount: ৳${amount.toStringAsFixed(0)} • Party: $sellerName', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                       ],
@@ -566,18 +590,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF059669), size: 22),
                           ),
                           const SizedBox(width: 12),
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Withdraw Earnings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                              Text('Instant Payout to your mobile wallet', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                              Text('Withdraw Earnings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary)),
+                              Text('Instant Payout to your mobile wallet', style: TextStyle(fontSize: 12, color: context.textSecondary)),
                             ],
                           ),
                         ],
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(ctx),
-                        icon: const Icon(Icons.close, size: 20, color: Color(0xFF94A3B8)),
+                        icon: Icon(Icons.close, size: 20, color: context.textSecondary),
                       ),
                     ],
                   ),
@@ -588,14 +612,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: context.containerBg,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: context.borderColor),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Available Balance:', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                        Text('Available Balance:', style: TextStyle(fontSize: 13, color: context.textSecondary)),
                         Text('৳${effectiveAvailable.toStringAsFixed(0)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
                       ],
                     ),
@@ -603,7 +627,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 18),
 
                   // Select Payout Method
-                  const Text('Payout Method', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                  Text('Payout Method', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -613,10 +637,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: selectedMethod == 'bKash' ? const Color(0xFFFDF2F8) : Colors.white,
+                              color: selectedMethod == 'bKash' ? (context.isDarkMode ? const Color(0xFF831843).withValues(alpha: 0.3) : const Color(0xFFFDF2F8)) : context.cardBg,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: selectedMethod == 'bKash' ? const Color(0xFFE11D48) : const Color(0xFFE2E8F0),
+                                color: selectedMethod == 'bKash' ? const Color(0xFFE11D48) : context.borderColor,
                                 width: selectedMethod == 'bKash' ? 2 : 1,
                               ),
                             ),
@@ -633,10 +657,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: selectedMethod == 'Nagad' ? const Color(0xFFFFFBEB) : Colors.white,
+                              color: selectedMethod == 'Nagad' ? (context.isDarkMode ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFFFBEB)) : context.cardBg,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: selectedMethod == 'Nagad' ? const Color(0xFFD97706) : const Color(0xFFE2E8F0),
+                                color: selectedMethod == 'Nagad' ? const Color(0xFFD97706) : context.borderColor,
                                 width: selectedMethod == 'Nagad' ? 2 : 1,
                               ),
                             ),
@@ -651,7 +675,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 16),
 
                   // Account Number
-                  const Text('Wallet Account Number', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                  Text('Wallet Account Number', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
                   const SizedBox(height: 6),
                   TextField(
                     controller: numberController,
@@ -831,8 +855,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        Text(label, style: TextStyle(fontSize: 12, color: context.textSecondary)),
+        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary)),
       ],
     );
   }
@@ -851,7 +875,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final totalSubs = hostedGroups.length + joinedGroups.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
         child: Center(
@@ -864,22 +888,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDBEAFE).withValues(alpha: 0.8),
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: context.borderColor),
                   ),
                   child: StreamBuilder<DocumentSnapshot>(
-                    stream: () {
-                      if (Firebase.apps.isEmpty) return const Stream<DocumentSnapshot>.empty();
-                      final uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
-                      if (uid.isNotEmpty && !uid.contains('/')) {
-                        try {
-                          return FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
-                        } catch (_) {
-                          return const Stream<DocumentSnapshot>.empty();
-                        }
-                      }
-                      return const Stream<DocumentSnapshot>.empty();
-                    }(),
+                    stream: _userDocStream,
                     builder: (context, snapshot) {
                       String userName = 'Student';
                       String userDept = 'University Student';
@@ -954,10 +968,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   children: [
                                     Text(
                                       userName,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 26,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0F172A),
+                                        color: context.textPrimary,
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -971,28 +985,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.school_outlined, size: 16, color: Color(0xFF475569)),
+                                    const Icon(Icons.school_outlined, size: 16, color: Color(0xFF3B82F6)),
                                     const SizedBox(width: 4),
-                                    const Text('University Student', style: TextStyle(fontSize: 13, color: Color(0xFF475569))),
-                                    const Text('  •  ', style: TextStyle(color: Color(0xFF94A3B8))),
-                                    const Icon(Icons.science_outlined, size: 16, color: Color(0xFF475569)),
+                                    Text('University Student', style: TextStyle(fontSize: 13, color: context.textSecondary)),
+                                    Text('  •  ', style: TextStyle(color: context.textMuted)),
+                                    const Icon(Icons.science_outlined, size: 16, color: Color(0xFF3B82F6)),
                                     const SizedBox(width: 4),
-                                    Text(userDept, style: const TextStyle(fontSize: 13, color: Color(0xFF475569))),
-                                    const Text('  •  ', style: TextStyle(color: Color(0xFF94A3B8))),
+                                    Text(userDept, style: TextStyle(fontSize: 13, color: context.textSecondary)),
+                                    Text('  •  ', style: TextStyle(color: context.textMuted)),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.6),
+                                        color: context.containerBg,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
-                                      child: Text(joinedDate, style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                                      child: Text(joinedDate, style: TextStyle(fontSize: 11, color: context.textSecondary)),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 10),
-                                const Text(
+                                Text(
                                   'Student at the university. Interested in textbooks, electronics, and sharing subscriptions.',
-                                  style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
+                                  style: TextStyle(fontSize: 13, color: context.textSecondary, height: 1.4),
                                 ),
                               ],
                             ),
@@ -1030,10 +1044,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 context.go('/landing');
                               }
                             },
-                            icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFFDC2626)),
-                            label: const Text('Sign Out', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold, fontSize: 13)),
+                            icon: Icon(Icons.logout_rounded, size: 16, color: context.isDarkMode ? const Color(0xFFF87171) : const Color(0xFFDC2626)),
+                            label: Text('Sign Out', style: TextStyle(color: context.isDarkMode ? const Color(0xFFF87171) : const Color(0xFFDC2626), fontWeight: FontWeight.bold, fontSize: 13)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFEE2E2),
+                              backgroundColor: context.isDarkMode ? const Color(0xFF7F1D1D).withValues(alpha: 0.35) : const Color(0xFFFEE2E2),
+                              side: BorderSide(color: context.isDarkMode ? const Color(0xFFEF4444).withValues(alpha: 0.4) : const Color(0xFFFCA5A5)),
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -1067,7 +1082,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                Divider(height: 1, color: context.borderColor),
                 const SizedBox(height: 24),
 
                 // Dynamic Tab Content
@@ -1123,7 +1138,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'Active Listings ($activeCount)',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.textPrimary),
                   ),
                 ],
               ),
@@ -1140,9 +1155,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Click on any listing card or the "Edit" button to update price, description, or mark as sold.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: 12, color: context.textSecondary),
           ),
           const SizedBox(height: 18),
           if (myListings.isEmpty)
@@ -1150,12 +1165,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: context.borderColor),
               ),
-              child: const Center(
-                child: Text('No listings found. Tap "+ New Listing" to add one!'),
+              child: Center(
+                child: Text('No listings found. Tap "+ New Listing" to add one!', style: TextStyle(color: context.textSecondary)),
               ),
             )
           else
@@ -1189,11 +1204,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.stars_rounded, color: Color(0xFF2563EB), size: 22),
-                  SizedBox(width: 8),
-                  Text('Groups Hosted by You (Owner)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  Icon(Icons.stars_rounded, color: context.primaryAccent, size: 22),
+                  const SizedBox(width: 8),
+                  Text('Groups Hosted by You (Owner)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary)),
                 ],
               ),
               OutlinedButton.icon(
@@ -1201,8 +1216,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: const Icon(Icons.add_rounded, size: 16),
                 label: Text(hostedGroups.isEmpty ? 'Start a Group' : 'Start Another Group', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF2563EB),
-                  side: const BorderSide(color: Color(0xFF2563EB)),
+                  foregroundColor: context.primaryAccent,
+                  side: BorderSide(color: context.primaryAccent),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
@@ -1243,11 +1258,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 32),
 
           // SECTION 2: GROUPS JOINED AS MEMBER
-          const Row(
+          Row(
             children: [
-              Icon(Icons.group_rounded, color: Color(0xFF059669), size: 22),
-              SizedBox(width: 8),
-              Text('Groups Joined as Member', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              const Icon(Icons.group_rounded, color: Color(0xFF059669), size: 22),
+              const SizedBox(width: 8),
+              Text('Groups Joined as Member', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary)),
             ],
           ),
           const SizedBox(height: 14),
@@ -1365,7 +1380,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(width: 8),
               Text(
                 _linearAlgebraReceived ? 'Active Orders (0)' : 'Active Orders (1 Awaiting Campus Handover)',
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: context.textPrimary),
               ),
             ],
           ),
@@ -1375,7 +1390,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _linearAlgebraReceived ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A),
@@ -1402,7 +1417,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         width: 70,
                         height: 70,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(width: 70, height: 70, color: Colors.grey.shade200),
+                        errorBuilder: (context, error, stackTrace) => Container(width: 70, height: 70, color: context.containerBg),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -1413,9 +1428,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Introduction to Linear Algebra, 5th Ed',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: context.textPrimary),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1435,7 +1450,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          const Text('Paid ৳1,500 via bKash • Seller: Alex R. (Verified Campus Student)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          Text('Paid ৳1,500 via bKash • Seller: Alex R. (Verified Campus Student)', style: TextStyle(fontSize: 12, color: context.textSecondary)),
                           const SizedBox(height: 4),
                           const Row(
                             children: [
@@ -1456,23 +1471,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: context.isDarkMode ? const Color(0xFF78350F).withValues(alpha: 0.25) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: context.isDarkMode ? const Color(0xFFD97706).withValues(alpha: 0.5) : const Color(0xFFE2E8F0)),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.key_rounded, color: Color(0xFFD97706), size: 20),
                         const SizedBox(width: 10),
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Handover Verification PIN', style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
-                            Text('PIN: #8492', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 1.5)),
+                            Text('Handover Verification PIN', style: TextStyle(fontSize: 10, color: context.textSecondary, fontWeight: FontWeight.bold)),
+                            Text('PIN: #8492', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: context.isDarkMode ? const Color(0xFFFDE68A) : const Color(0xFF0F172A), letterSpacing: 1.5)),
                           ],
                         ),
                         const Spacer(),
-                        const Text('Tell seller this PIN or confirm below when meeting', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                        Text('Tell seller this PIN or confirm below when meeting', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                       ],
                     ),
                   ),
@@ -1597,14 +1612,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 32),
 
           // PAST PURCHASES SECTION
-          const Text('Past Completed Purchases', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          Text('Past Completed Purchases', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: context.textPrimary)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: context.borderColor),
             ),
             child: Row(
               children: [
@@ -1618,13 +1633,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Keychron K2 Wireless Mechanical Keyboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-                      SizedBox(height: 2),
-                      Text('৳1,500 • Delivered on 28 Aug 2026 • Seller: Tanvir Hossain', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                      Text('Keychron K2 Wireless Mechanical Keyboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text('৳1,500 • Delivered on 28 Aug 2026 • Seller: Tanvir Hossain', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                     ],
                   ),
                 ),
@@ -1642,18 +1657,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.containerBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: context.borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.hub_rounded, color: Color(0xFF475569), size: 18),
-                    SizedBox(width: 8),
-                    Text('How Admin & System Verifies Handover Automatically', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                    Icon(Icons.hub_rounded, color: context.textSecondary, size: 18),
+                    const SizedBox(width: 8),
+                    Text('How Admin & System Verifies Handover Automatically', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -1843,29 +1858,91 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
     } else {
       // TAB 4: SETTINGS
+      final currentThemeMode = ref.watch(themeModeProvider);
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Account & Privacy Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          Text(
+            'Appearance & Display Mode',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.textPrimary),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Choose how Student Marketplace looks to you across web and mobile',
+            style: TextStyle(fontSize: 13, color: context.textSecondary),
+          ),
           const SizedBox(height: 16),
+
+          // Theme Selector Cards (Light, Dark, System)
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.borderColor),
+            ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SwitchListTile(
-                  title: const Text('Campus Email Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Receive notifications when someone messages or buys your listing'),
-                  value: true,
-                  activeThumbColor: const Color(0xFF2563EB),
-                  onChanged: (val) {},
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: context.primaryContainerBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.palette_outlined, size: 20, color: context.primaryAccent),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Theme Preference', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: context.textPrimary)),
+                        Text('Select your preferred color theme', style: TextStyle(fontSize: 12, color: context.textSecondary)),
+                      ],
+                    ),
+                  ],
                 ),
-                const Divider(),
-                ListTile(
-                  title: const Text('Campus Identity Verification', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Verified student via alex.r@stanford.edu'),
-                  trailing: const Icon(Icons.check_circle, color: Color(0xFF10B981)),
-                  onTap: () {},
+                const SizedBox(height: 20),
+
+                // 2 Choice Cards: Light Theme & Dark Theme
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 600;
+                    return Flex(
+                      direction: isMobile ? Axis.vertical : Axis.horizontal,
+                      children: [
+                        // Light Mode
+                        Expanded(
+                          flex: isMobile ? 0 : 1,
+                          child: _buildThemeOptionCard(
+                            title: 'Light Theme',
+                            description: 'Crisp bright interface for daytime',
+                            icon: Icons.light_mode_rounded,
+                            iconColor: const Color(0xFFD97706),
+                            isSelected: currentThemeMode == ThemeMode.light,
+                            onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.light),
+                          ),
+                        ),
+                        SizedBox(width: isMobile ? 0 : 14, height: isMobile ? 12 : 0),
+
+                        // Dark Mode
+                        Expanded(
+                          flex: isMobile ? 0 : 1,
+                          child: _buildThemeOptionCard(
+                            title: 'Dark Theme',
+                            description: 'Sleek obsidian look for night studying',
+                            icon: Icons.dark_mode_rounded,
+                            iconColor: const Color(0xFF38BDF8),
+                            isSelected: currentThemeMode == ThemeMode.dark,
+                            onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -1875,15 +1952,89 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Widget _buildThemeOptionCard({
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color iconColor,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? (context.isDarkMode ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : const Color(0xFFEFF6FF))
+              : context.cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? context.primaryAccent : context.borderColor,
+            width: isSelected ? 2.0 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: context.primaryAccent.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 20, color: iconColor),
+                ),
+                if (isSelected)
+                  Icon(Icons.check_circle_rounded, size: 20, color: context.primaryAccent)
+                else
+                  Icon(Icons.radio_button_unchecked_rounded, size: 20, color: context.borderColor),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isSelected ? context.primaryAccent : context.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(fontSize: 11, color: context.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStepChip(String step, String label) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: context.borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1891,8 +2042,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Container(
               width: 18,
               height: 18,
-              decoration: const BoxDecoration(
-                color: Color(0xFF2563EB),
+              decoration: BoxDecoration(
+                color: context.primaryAccent,
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -1906,7 +2057,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Flexible(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.textPrimary),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -1927,9 +2078,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -1944,7 +2095,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+              Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.textSecondary)),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(10)),
@@ -1953,9 +2104,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(amount, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)),
+          Text(amount, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: context.textPrimary, letterSpacing: -0.5)),
           const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+          Text(subtitle, style: TextStyle(fontSize: 11, color: context.textMuted)),
         ],
       ),
     );
@@ -1978,7 +2129,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     fontSize: 14,
                     fontFamily: 'Roboto',
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                    color: isSelected ? context.primaryAccent : context.textSecondary,
                   ),
                   child: Text(label),
                 ),
@@ -1988,7 +2139,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFDBEAFE) : const Color(0xFFF1F5F9),
+                      color: isSelected ? context.primaryContainerBg : context.containerBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -1996,7 +2147,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                        color: isSelected ? context.primaryAccent : context.textSecondary,
                       ),
                     ),
                   ),
@@ -2037,19 +2188,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           curve: Curves.easeOutCubic,
           transform: Matrix4.translationValues(0, isHovered ? -6 : 0, 0),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isHovered
-                  ? const Color(0xFF2563EB)
-                  : (isSold ? const Color(0xFFE2E8F0) : const Color(0xFFCBD5E1)),
+                  ? context.primaryAccent
+                  : context.borderColor,
               width: isHovered ? 1.8 : 1.0,
             ),
             boxShadow: [
               BoxShadow(
                 color: isHovered
-                    ? const Color(0xFF2563EB).withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: 0.03),
+                    ? context.primaryAccent.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.05),
                 blurRadius: isHovered ? 18 : 6,
                 offset: Offset(0, isHovered ? 8 : 2),
               ),
@@ -2125,8 +2276,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isSold ? Colors.black.withValues(alpha: 0.7) : Colors.white,
+                          color: isSold ? Colors.black.withValues(alpha: 0.7) : context.surfaceColor,
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: context.borderColor),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.08),
@@ -2149,7 +2301,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: isSold ? Colors.white : const Color(0xFF0F172A),
+                                color: isSold ? Colors.white : context.textPrimary,
                               ),
                             ),
                           ],
@@ -2174,13 +2326,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, height: 1.2),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, height: 1.2, color: context.textPrimary),
                             ),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             '৳$price',
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF2563EB)),
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.primaryAccent),
                           ),
                         ],
                       ),
@@ -2189,7 +2341,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         desc,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3),
+                        style: TextStyle(fontSize: 11, color: context.textSecondary, height: 1.3),
                       ),
                       const SizedBox(height: 14),
                       Row(
@@ -2248,12 +2400,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -2265,7 +2417,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A))),
+              Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: context.textPrimary)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: const Color(0xFFD1FAE5), borderRadius: BorderRadius.circular(8)),
@@ -2274,11 +2426,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(price, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
+          Text(price, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: context.primaryAccent)),
           const SizedBox(height: 4),
-          Text('👑 $host', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+          Text('👑 $host', style: TextStyle(fontSize: 12, color: context.textSecondary)),
           const SizedBox(height: 12),
-          Text('📅 $billing', style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+          Text('📅 $billing', style: TextStyle(fontSize: 11, color: context.textMuted)),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -2288,8 +2440,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   icon: const Icon(Icons.vpn_key_rounded, size: 15),
                   label: const Text('View Credentials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEEF2FF),
-                    foregroundColor: const Color(0xFF2563EB),
+                    backgroundColor: context.primaryContainerBg,
+                    foregroundColor: context.primaryAccent,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -2310,8 +2462,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: const Icon(Icons.chat_bubble_outline_rounded, size: 15),
                 label: const Text('Group Chat', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF475569),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  foregroundColor: context.textPrimary,
+                  side: BorderSide(color: context.borderColor),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
@@ -2336,12 +2488,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF93C5FD), width: 1.5),
+        border: Border.all(color: context.primaryAccent.withValues(alpha: 0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.05),
+            color: context.primaryAccent.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -2358,17 +2510,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: context.primaryContainerBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.stars_rounded, color: Color(0xFF2563EB), size: 22),
+                    child: Icon(Icons.stars_rounded, color: context.primaryAccent, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A))),
-                      const Text('You are the Host / Admin', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                      Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: context.textPrimary)),
+                      Text('You are the Host / Admin', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                     ],
                   ),
                 ],
@@ -2402,23 +2554,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Price per Seat', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  Text('Price per Seat', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                   const SizedBox(height: 2),
-                  Text(price, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
+                  Text(price, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: context.primaryAccent)),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text('Slots Occupied', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  Text('Slots Occupied', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                   const SizedBox(height: 2),
-                  Text(filledSlots, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  Text(filledSlots, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary)),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('Monthly Revenue', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  Text('Monthly Revenue', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                   const SizedBox(height: 2),
                   Text(totalRevenue, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF059669))),
                 ],
@@ -2429,18 +2581,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.containerBg,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: context.borderColor),
             ),
             child: Row(
               children: [
-                const Icon(Icons.people_alt_outlined, size: 16, color: Color(0xFF64748B)),
+                Icon(Icons.people_alt_outlined, size: 16, color: context.textSecondary),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    'Active Members: ${members.join(", ")}',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                  child: Text.rich(
+                    TextSpan(
+                      text: 'Active Members: ',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
+                      children: [
+                        TextSpan(
+                          text: members.join(", "),
+                          style: TextStyle(fontWeight: FontWeight.normal, color: context.textPrimary),
+                        ),
+                      ],
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -2479,8 +2639,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: const Icon(Icons.chat_bubble_outline_rounded, size: 15),
                 label: const Text('Host Group Chat', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF475569),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  foregroundColor: context.textPrimary,
+                  side: BorderSide(color: context.borderColor),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
@@ -2515,12 +2675,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('My Purchases & SafePay Handover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                    SizedBox(height: 2),
-                    Text('Track items you bought, view your 4-digit verification PIN, and confirm receipt', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                    Text('My Purchases & SafePay Handover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.textPrimary)),
+                    const SizedBox(height: 2),
+                    Text('Track items you bought, view your 4-digit verification PIN, and confirm receipt', style: TextStyle(fontSize: 13, color: context.textSecondary)),
                   ],
                 ),
                 OutlinedButton.icon(
@@ -2541,9 +2701,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: context.isDarkMode ? const Color(0xFF1E3A8A).withValues(alpha: 0.25) : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
+                border: Border.all(color: context.isDarkMode ? const Color(0xFF2563EB).withValues(alpha: 0.5) : const Color(0xFFBFDBFE)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2557,18 +2717,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: const Icon(Icons.shield_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Campus SafePay Protection is Active 🛡️',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E3A8A)),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: context.isDarkMode ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A)),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Your bKash / Nagad payment is held safely in SafePay. The seller does NOT receive payment until you meet in person on campus, check the item condition, and tap "Item Received" (or give your 4-digit PIN).',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), height: 1.4),
+                          style: TextStyle(fontSize: 12, color: context.isDarkMode ? const Color(0xFFBFDBFE) : const Color(0xFF1E40AF), height: 1.4),
                         ),
                       ],
                     ),
@@ -2589,7 +2749,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(width: 8),
                 Text(
                   activeOrders.isEmpty ? 'Active Orders (0)' : 'Active Orders (${activeOrders.length} Awaiting Campus Handover)',
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: context.textPrimary),
                 ),
               ],
             ),
@@ -2600,22 +2760,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: context.borderColor),
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.shopping_bag_outlined, size: 44, color: Color(0xFF94A3B8)),
+                    Icon(Icons.shopping_bag_outlined, size: 44, color: context.textSecondary),
                     const SizedBox(height: 10),
-                    const Text('No Active SafePay Orders', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                    Text('No Active SafePay Orders', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary)),
                     const SizedBox(height: 4),
-                    const Text('When you purchase an item using SafePay, your live order and 4-digit PIN will appear here.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    Text('When you purchase an item using SafePay, your live order and 4-digit PIN will appear here.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: context.textSecondary)),
                     const SizedBox(height: 14),
                     ElevatedButton(
                       onPressed: () => context.go('/marketplace'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
+                        backgroundColor: context.primaryAccent,
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('Browse Campus Deals'),
@@ -2629,7 +2789,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 32),
 
             // PAST COMPLETED PURCHASES SECTION
-            const Text('Past Completed Purchases', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Text('Past Completed Purchases', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: context.textPrimary)),
             const SizedBox(height: 12),
 
             if (completedOrders.isEmpty)
@@ -2637,12 +2797,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: context.borderColor),
                 ),
-                child: const Center(
-                  child: Text('No completed purchases yet.', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                child: Center(
+                  child: Text('No completed purchases yet.', style: TextStyle(fontSize: 12, color: context.textSecondary)),
                 ),
               )
             else
@@ -2651,67 +2811,67 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 28),
 
             // Admin Transparency Guide Card
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Column(
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: context.containerBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: context.borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.hub_rounded, color: context.textSecondary, size: 18),
+                    const SizedBox(width: 8),
+                    Text('How Admin & System Verifies Handover Automatically', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildStepChip('1', 'bKash/Nagad SafePay'),
+                    const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
+                    _buildStepChip('2', 'Campus Meetup'),
+                    const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
+                    _buildStepChip('3', 'Item Received / PIN'),
+                    const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
+                    _buildStepChip('4', 'Payout to Seller'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Widget _buildDynamicSellerWalletTab() {
+  return StreamBuilder<List<OrderModel>>(
+    stream: orderService.streamSellerOrders(),
+    builder: (context, snapshot) {
+      final sellerOrders = snapshot.data ?? [];
+      final activeSales = sellerOrders.where((o) => o.status == 'in_safepay').toList();
+      final completedSales = sellerOrders.where((o) => o.status == 'completed').toList();
+
+      final livePending = activeSales.fold<double>(0.0, (acc, o) => acc + o.price);
+      final liveAvailable = completedSales.fold<double>(0.0, (acc, o) => acc + o.price);
+      final liveTotalRevenue = liveAvailable + livePending;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with Quick Withdraw Action
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.hub_rounded, color: Color(0xFF475569), size: 18),
-                      SizedBox(width: 8),
-                      Text('How Admin & System Verifies Handover Automatically', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _buildStepChip('1', 'bKash/Nagad SafePay'),
-                      const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
-                      _buildStepChip('2', 'Campus Meetup'),
-                      const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
-                      _buildStepChip('3', 'Item Received / PIN'),
-                      const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
-                      _buildStepChip('4', 'Payout to Seller'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildDynamicSellerWalletTab() {
-    return StreamBuilder<List<OrderModel>>(
-      stream: orderService.streamSellerOrders(),
-      builder: (context, snapshot) {
-        final sellerOrders = snapshot.data ?? [];
-        final activeSales = sellerOrders.where((o) => o.status == 'in_safepay').toList();
-        final completedSales = sellerOrders.where((o) => o.status == 'completed').toList();
-
-        final livePending = activeSales.fold<double>(0.0, (acc, o) => acc + o.price);
-        final liveAvailable = completedSales.fold<double>(0.0, (acc, o) => acc + o.price);
-        final liveTotalRevenue = liveAvailable + livePending;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with Quick Withdraw Action
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Seller Earnings & Wallet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  Text('Seller Earnings & Wallet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.textPrimary)),
                     SizedBox(height: 2),
                     Text('Track sales income, split revenue, and withdraw instantly', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
                   ],
@@ -2801,7 +2961,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 28),
 
             // Transactions History
-            const Text('Recent Earnings & Sales History', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Text('Recent Earnings & Sales History', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textPrimary)),
             const SizedBox(height: 12),
 
             if (sellerOrders.isEmpty)
@@ -2809,32 +2969,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: context.borderColor),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
-                    Icon(Icons.storefront_outlined, size: 40, color: Color(0xFF94A3B8)),
-                    SizedBox(height: 10),
-                    Text('No sales yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                    SizedBox(height: 4),
-                    Text('List your textbooks or stationery to earn campus income!', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    Icon(Icons.storefront_outlined, size: 40, color: context.textSecondary),
+                    const SizedBox(height: 10),
+                    Text('No sales yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary)),
+                    const SizedBox(height: 4),
+                    Text('List your textbooks or stationery to earn campus income!', style: TextStyle(fontSize: 12, color: context.textSecondary)),
                   ],
                 ),
               )
             else
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: context.borderColor),
                 ),
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: sellerOrders.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  separatorBuilder: (_, _) => Divider(height: 1, color: context.borderColor),
                   itemBuilder: (context, index) {
                     final order = sellerOrders[index];
                     final isCompleted = order.status == 'completed';
@@ -2859,7 +3019,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(order.productTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                                Text(order.productTitle, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
                                 const SizedBox(height: 2),
                                 Text('Buyer: ${order.buyerName} • via ${order.paymentMethod}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                               ],
@@ -2906,15 +3066,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFDE68A),
+          color: const Color(0xFFFDE68A).withValues(alpha: 0.8),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -2952,7 +3112,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Expanded(
                           child: Text(
                             order.productTitle,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: context.textPrimary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -2997,30 +3157,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB),
+              color: context.isDarkMode ? const Color(0xFF78350F).withValues(alpha: 0.25) : const Color(0xFFFFFBEB),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFFDE68A)),
+              border: Border.all(color: context.isDarkMode ? const Color(0xFFD97706).withValues(alpha: 0.5) : const Color(0xFFFDE68A)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.key_rounded, size: 18, color: Color(0xFFB45309)),
+                    Icon(Icons.key_rounded, size: 18, color: context.isDarkMode ? const Color(0xFFFBBF24) : const Color(0xFFB45309)),
                     const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Handover Verification PIN', style: TextStyle(fontSize: 10, color: Color(0xFF92400E), fontWeight: FontWeight.w600)),
+                        Text('Handover Verification PIN', style: TextStyle(fontSize: 10, color: context.isDarkMode ? const Color(0xFFFDE68A) : const Color(0xFF92400E), fontWeight: FontWeight.w600)),
                         Text(
                           'PIN: #${order.handoverPin}',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF78350F), letterSpacing: 1.5),
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: context.isDarkMode ? const Color(0xFFFDE68A) : const Color(0xFF78350F), letterSpacing: 1.5),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const Text('Tell seller this PIN or confirm below when meeting', style: TextStyle(fontSize: 10, color: Color(0xFF92400E))),
+                Text('Tell seller this PIN or confirm below when meeting', style: TextStyle(fontSize: 10, color: context.isDarkMode ? const Color(0xFFFDE68A) : const Color(0xFF92400E))),
               ],
             ),
           ),
@@ -3138,9 +3298,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: context.borderColor),
       ),
       child: Row(
         children: [
@@ -3151,7 +3311,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               width: 50,
               height: 50,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(width: 50, height: 50, color: Colors.grey.shade200, child: const Icon(Icons.inventory_2_outlined, size: 20, color: Colors.grey)),
+              errorBuilder: (_, _, _) => Container(width: 50, height: 50, color: context.containerBg, child: Icon(Icons.inventory_2_outlined, size: 20, color: context.textSecondary)),
             ),
           ),
           const SizedBox(width: 14),
@@ -3159,9 +3319,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(order.productTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                Text(order.productTitle, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
                 const SizedBox(height: 2),
-                Text('৳${order.price.toStringAsFixed(0)} • Delivered • Seller: ${order.sellerName}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                Text('৳${order.price.toStringAsFixed(0)} • Delivered • Seller: ${order.sellerName}', style: TextStyle(fontSize: 11, color: context.textSecondary)),
               ],
             ),
           ),

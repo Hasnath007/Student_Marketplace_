@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/providers/subscriptions_provider.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../marketplace/widgets/payment_checkout_dialog.dart';
 import '../widgets/host_chat_dialog.dart';
 
@@ -66,7 +67,11 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
           final isHost = group['host'] == currentUserName;
 
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            backgroundColor: context.cardBg,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(color: context.borderColor),
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 580),
               child: Padding(
@@ -99,15 +104,15 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(group['title'] as String, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-                                Text('Host: ${group['host']}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                Text(group['title'] as String, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.textPrimary)),
+                                Text('Host: ${group['host']}', style: TextStyle(fontSize: 12, color: context.textSecondary)),
                               ],
                             ),
                           ],
                         ),
                         Row(
                           children: [
-                            IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close, size: 20, color: Color(0xFF94A3B8))),
+                            IconButton(onPressed: () => Navigator.pop(ctx), icon: Icon(Icons.close, size: 20, color: context.textSecondary)),
                           ],
                         ),
                       ],
@@ -118,9 +123,9 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: context.containerBg,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: context.borderColor),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -128,7 +133,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Cost per Member', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                              Text('Cost per Member', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                               const SizedBox(height: 2),
                               Text('৳${((group['totalPrice'] as int? ?? 0) / ((group['totalSlots'] as int? ?? 1) == 0 ? 1 : (group['totalSlots'] as int? ?? 1))).round()}${group['period']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
                             ],
@@ -154,19 +159,19 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     const SizedBox(height: 20),
 
                     // Member Slots Breakdown
-                    const Text('Group Seats & Member Allocation', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    Text('Group Seats & Member Allocation', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary)),
                     const SizedBox(height: 10),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: context.borderColor),
                       ),
                       child: ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: members.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        separatorBuilder: (_, _) => Divider(height: 1, color: context.borderColor),
                         itemBuilder: (context, idx) {
                           final m = members[idx] as Map<String, dynamic>;
                           final isVacant = m['status'] == 'Vacant';
@@ -179,9 +184,9 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                 else
                                   CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: isVacant ? const Color(0xFFF1F5F9) : const Color(0xFFE0E7FF),
+                                    backgroundColor: isVacant ? context.containerBg : const Color(0xFFE0E7FF),
                                     child: isVacant
-                                        ? const Icon(Icons.person_add_alt_1_rounded, size: 16, color: Color(0xFF94A3B8))
+                                        ? Icon(Icons.person_add_alt_1_rounded, size: 16, color: context.textSecondary)
                                         : Text(
                                             (m['name'] as String).isNotEmpty ? (m['name'] as String)[0].toUpperCase() : 'U',
                                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
@@ -197,22 +202,22 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
-                                          color: isVacant ? const Color(0xFF94A3B8) : const Color(0xFF0F172A),
+                                          color: isVacant ? context.textMuted : context.textPrimary,
                                         ),
                                       ),
-                                      Text('${m['role']} • ${m['screen']}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                      Text('${m['role']} • ${m['screen']}', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                                     ],
                                   ),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: isVacant ? const Color(0xFFF1F5F9) : const Color(0xFFD1FAE5),
+                                    color: isVacant ? context.containerBg : const Color(0xFFD1FAE5),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     isVacant ? 'Open Seat' : 'Occupied',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isVacant ? const Color(0xFF64748B) : const Color(0xFF047857)),
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isVacant ? context.textSecondary : const Color(0xFF047857)),
                                   ),
                                 ),
                               ],
@@ -295,8 +300,8 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                           icon: const Icon(Icons.copy_rounded, size: 14),
                                           label: const Text('Copy', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF38BDF8),
-                                            foregroundColor: const Color(0xFF0F172A),
+                                            backgroundColor: const Color(0xFF0284C7),
+                                            foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                                             minimumSize: const Size(0, 32),
                                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -434,8 +439,8 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             icon: Icon(isHost ? Icons.forum_rounded : Icons.chat_outlined, size: 16),
                             label: Text(isHost ? 'Manage Group Chat' : 'Chat with Host', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: isHost ? const Color(0xFF0F172A) : const Color(0xFF475569),
-                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              foregroundColor: context.textPrimary,
+                              side: BorderSide(color: context.borderColor),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -491,8 +496,11 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
         builder: (context, setModalState) {
           return Dialog(
             elevation: 8,
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            backgroundColor: context.cardBg,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(color: context.borderColor),
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 540),
               child: SingleChildScrollView(
@@ -511,23 +519,23 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEEF2FF),
+                                color: context.primaryContainerBg,
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Icon(Icons.add_task_rounded, color: Color(0xFF2563EB), size: 24),
+                              child: Icon(Icons.add_task_rounded, color: context.primaryAccent, size: 24),
                             ),
                             const SizedBox(width: 14),
-                            const Column(
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Start a Subscription Group',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), letterSpacing: -0.3),
+                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: context.textPrimary, letterSpacing: -0.3),
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
                                   'Share subscriptions & split monthly costs with peers',
-                                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                  style: TextStyle(fontSize: 12, color: context.textSecondary),
                                 ),
                               ],
                             ),
@@ -535,27 +543,27 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(ctx),
-                          icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8), size: 20),
+                          icon: Icon(Icons.close_rounded, color: context.textSecondary, size: 20),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
 
                     // Input 1: Group Name
-                    const Text('Service or Group Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                    Text('Service or Group Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: titleCtrl,
-                      style: const TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 14, color: context.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'e.g. ChatGPT Plus, Netflix 4K, Spotify Family',
-                        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                        prefixIcon: const Icon(Icons.layers_outlined, size: 20, color: Color(0xFF64748B)),
+                        hintStyle: TextStyle(color: context.textMuted, fontSize: 13),
+                        prefixIcon: Icon(Icons.layers_outlined, size: 20, color: context.textSecondary),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                        fillColor: context.containerBg,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.primaryAccent, width: 1.5)),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -567,24 +575,24 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Total Price', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              Text('Total Price', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary)),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: priceCtrl,
                                 keyboardType: TextInputType.number,
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
                                 decoration: InputDecoration(
                                   hintText: '৳1000 /mo',
-                                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.normal),
-                                  prefixIcon: const Padding(
-                                    padding: EdgeInsets.all(12),
-                                    child: Text('৳', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                  hintStyle: TextStyle(color: context.textMuted, fontSize: 13, fontWeight: FontWeight.normal),
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Text('৳', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textSecondary)),
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                                  fillColor: context.containerBg,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.primaryAccent, width: 1.5)),
                                 ),
                               ),
                             ],
@@ -595,20 +603,20 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Total Slots (Seats)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              Text('Total Slots (Seats)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary)),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: totalSlotsCtrl,
                                 keyboardType: TextInputType.number,
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
                                 decoration: InputDecoration(
                                   hintText: '4',
-                                  prefixIcon: const Icon(Icons.people_outline_rounded, size: 20, color: Color(0xFF64748B)),
+                                  prefixIcon: Icon(Icons.people_outline_rounded, size: 20, color: context.textSecondary),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                                  fillColor: context.containerBg,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.primaryAccent, width: 1.5)),
                                 ),
                               ),
                             ],
@@ -619,17 +627,18 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     const SizedBox(height: 16),
 
                     // Input 3: Category
-                    const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                    Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
                       initialValue: selectedCategory,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
+                      dropdownColor: context.cardBg,
+                      style: TextStyle(fontSize: 13, color: context.textPrimary),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: context.containerBg,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'Entertainment', child: Text('Entertainment')),
@@ -646,7 +655,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     const SizedBox(height: 24),
                     
                     // Access Method Selector
-                    const Text('How will members access this?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                    Text('How will members access this?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary)),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -656,16 +665,16 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: accessMethod == 'login' ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                                color: accessMethod == 'login' ? context.primaryContainerBg : context.containerBg,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: accessMethod == 'login' ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0), width: accessMethod == 'login' ? 1.5 : 1.0),
+                                border: Border.all(color: accessMethod == 'login' ? context.primaryAccent : context.borderColor, width: accessMethod == 'login' ? 1.5 : 1.0),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.password_rounded, size: 16, color: accessMethod == 'login' ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
+                                  Icon(Icons.password_rounded, size: 16, color: accessMethod == 'login' ? context.primaryAccent : context.textSecondary),
                                   const SizedBox(width: 6),
-                                  Text('Shared Login', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: accessMethod == 'login' ? const Color(0xFF1E40AF) : const Color(0xFF64748B))),
+                                  Text('Shared Login', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: accessMethod == 'login' ? context.primaryAccent : context.textSecondary)),
                                 ],
                               ),
                             ),
@@ -678,16 +687,16 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: accessMethod == 'link' ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                                color: accessMethod == 'link' ? context.primaryContainerBg : context.containerBg,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: accessMethod == 'link' ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0), width: accessMethod == 'link' ? 1.5 : 1.0),
+                                border: Border.all(color: accessMethod == 'link' ? context.primaryAccent : context.borderColor, width: accessMethod == 'link' ? 1.5 : 1.0),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.link_rounded, size: 16, color: accessMethod == 'link' ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
+                                  Icon(Icons.link_rounded, size: 16, color: accessMethod == 'link' ? context.primaryAccent : context.textSecondary),
                                   const SizedBox(width: 6),
-                                  Text('Invite Link', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: accessMethod == 'link' ? const Color(0xFF1E40AF) : const Color(0xFF64748B))),
+                                  Text('Invite Link', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: accessMethod == 'link' ? context.primaryAccent : context.textSecondary)),
                                 ],
                               ),
                             ),
@@ -699,17 +708,17 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     // Helper text for Hosts to understand what to choose
                     Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFE2E8F0))),
+                      decoration: BoxDecoration(color: context.containerBg, borderRadius: BorderRadius.circular(8), border: Border.all(color: context.borderColor)),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF64748B)),
+                          Icon(Icons.info_outline_rounded, size: 16, color: context.textSecondary),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               accessMethod == 'login' 
                                   ? 'Share your Email & Password/PIN (e.g., Netflix, ChatGPT Plus).'
                                   : 'Share a Premium Invite Link. No password needed (e.g., Spotify, Canva).',
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                              style: TextStyle(fontSize: 11, color: context.textSecondary),
                             ),
                           ),
                         ],
@@ -725,18 +734,19 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Account Email', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                                Text('Account Email', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary)),
                                 const SizedBox(height: 6),
                                 TextField(
                                   controller: emailCtrl,
+                                  style: TextStyle(color: context.textPrimary, fontSize: 13),
                                   decoration: InputDecoration(
                                     hintText: 'e.g. host@email.com',
-                                    hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                                    prefixIcon: const Icon(Icons.email_outlined, size: 18, color: Color(0xFF64748B)),
+                                    hintStyle: TextStyle(color: context.textMuted, fontSize: 13),
+                                    prefixIcon: Icon(Icons.email_outlined, size: 18, color: context.textSecondary),
                                     filled: true,
-                                    fillColor: const Color(0xFFF8FAFC),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                    fillColor: context.containerBg,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
                                   ),
                                 ),
                               ],
@@ -747,18 +757,19 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Password / Profile PIN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                                Text('Password / Profile PIN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary)),
                                 const SizedBox(height: 6),
                                 TextField(
                                   controller: pinCtrl,
+                                  style: TextStyle(color: context.textPrimary, fontSize: 13),
                                   decoration: InputDecoration(
                                     hintText: 'e.g. 4829 or MyPass123',
-                                    hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                                    prefixIcon: const Icon(Icons.vpn_key_outlined, size: 18, color: Color(0xFF64748B)),
+                                    hintStyle: TextStyle(color: context.textMuted, fontSize: 13),
+                                    prefixIcon: Icon(Icons.vpn_key_outlined, size: 18, color: context.textSecondary),
                                     filled: true,
-                                    fillColor: const Color(0xFFF8FAFC),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                                    fillColor: context.containerBg,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
                                   ),
                                 ),
                               ],
@@ -767,18 +778,19 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         ],
                       ),
                     ] else ...[
-                      const Text('Premium Invite Link', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                      Text('Premium Invite Link', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.textSecondary)),
                       const SizedBox(height: 6),
                       TextField(
                         controller: inviteLinkCtrl,
+                        style: TextStyle(color: context.textPrimary, fontSize: 13),
                         decoration: InputDecoration(
                           hintText: 'https://spotify.com/invite/...',
-                          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                          prefixIcon: const Icon(Icons.link_rounded, size: 18, color: Color(0xFF64748B)),
+                          hintStyle: TextStyle(color: context.textMuted, fontSize: 13),
+                          prefixIcon: Icon(Icons.link_rounded, size: 18, color: context.textSecondary),
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          fillColor: context.containerBg,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.borderColor)),
                         ),
                       ),
                     ],
@@ -791,11 +803,11 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                         OutlinedButton(
                           onPressed: () => Navigator.pop(ctx),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            side: BorderSide(color: context.borderColor),
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                          child: Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700, color: context.textSecondary)),
                         ),
                         const SizedBox(width: 12),
                         ElevatedButton.icon(
@@ -1046,7 +1058,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
         child: Center(
@@ -1063,32 +1075,32 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'COST SHARING',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF2563EB),
+                              color: context.primaryAccent,
                               letterSpacing: 1.0,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'Share Costs, Save Money',
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF0F172A),
+                              color: context.textPrimary,
                               letterSpacing: -0.5,
                             ),
                           ),
-                          SizedBox(height: 6),
+                          const SizedBox(height: 6),
                           Text(
                             'Pool subscription seats with verified university peers for maximum savings.',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF64748B),
+                              color: context.textSecondary,
                             ),
                           ),
                         ],
@@ -1101,7 +1113,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                           icon: const Icon(Icons.add_rounded, size: 18),
                           label: const Text('Start a Group', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
+                            backgroundColor: context.primaryAccent,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             elevation: 0,
@@ -1133,7 +1145,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? Colors.white.withValues(alpha: 0.25) : const Color(0xFFE2E8F0),
+                                    color: isSelected ? Colors.white.withValues(alpha: 0.25) : context.containerBg,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
@@ -1141,7 +1153,7 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : const Color(0xFF64748B),
+                                      color: isSelected ? Colors.white : context.textSecondary,
                                     ),
                                   ),
                                 ),
@@ -1154,12 +1166,12 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
                             labelStyle: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? Colors.white : const Color(0xFF475569),
+                              color: isSelected ? Colors.white : context.textSecondary,
                             ),
-                            backgroundColor: Colors.white,
-                            selectedColor: const Color(0xFF2563EB),
+                            backgroundColor: context.cardBg,
+                            selectedColor: context.primaryAccent,
                             side: BorderSide(
-                              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                              color: isSelected ? context.primaryAccent : context.borderColor,
                             ),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                             showCheckmark: false,
@@ -1415,15 +1427,15 @@ class _GroupCardWidgetState extends State<_GroupCardWidget> {
           curve: Curves.easeOutCubic,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _isHovered ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
+              color: _isHovered ? context.primaryAccent : context.borderColor,
               width: 1.0,
             ),
             boxShadow: [
               BoxShadow(
-                color: _isHovered ? const Color(0xFF1E293B).withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.03),
+                color: _isHovered ? Colors.black.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.04),
                 blurRadius: _isHovered ? 16 : 8,
                 offset: Offset(0, _isHovered ? 6 : 2),
               ),
@@ -1445,15 +1457,15 @@ class _GroupCardWidgetState extends State<_GroupCardWidget> {
                   else
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(6)),
-                      child: Text(widget.badge, style: const TextStyle(color: Color(0xFF2563EB), fontSize: 9, fontWeight: FontWeight.bold)),
+                      decoration: BoxDecoration(color: context.primaryContainerBg, borderRadius: BorderRadius.circular(6)),
+                      child: Text(widget.badge, style: TextStyle(color: context.primaryAccent, fontSize: 9, fontWeight: FontWeight.bold)),
                     ),
                 ],
               ),
               const SizedBox(height: 14),
-              Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis),
+              Text(widget.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, height: 1.2, color: context.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 4),
-              Text('👤 Host: ${widget.host}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+              Text('👤 Host: ${widget.host}', style: TextStyle(fontSize: 11, color: context.textSecondary)),
               const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1471,13 +1483,13 @@ class _GroupCardWidgetState extends State<_GroupCardWidget> {
               const SizedBox(height: 4),
               LinearProgressIndicator(
                 value: widget.progress,
-                backgroundColor: const Color(0xFFE2E8F0),
+                backgroundColor: context.borderColor,
                 color: widget.isDisabled ? Colors.red : (widget.isJoined ? const Color(0xFF10B981) : const Color(0xFF2563EB)),
                 minHeight: 4,
                 borderRadius: BorderRadius.circular(4),
               ),
               const Spacer(),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              Divider(height: 1, color: context.borderColor),
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1485,11 +1497,11 @@ class _GroupCardWidgetState extends State<_GroupCardWidget> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('PER PERSON', style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
+                      Text('PER PERSON', style: TextStyle(fontSize: 9, color: context.textMuted, fontWeight: FontWeight.bold)),
                       Row(
                         children: [
-                          Text(widget.price, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-                          Text(widget.period, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text(widget.price, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: context.textPrimary)),
+                          Text(widget.period, style: TextStyle(fontSize: 11, color: context.textSecondary)),
                         ],
                       ),
                     ],

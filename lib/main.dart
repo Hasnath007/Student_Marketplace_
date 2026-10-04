@@ -78,6 +78,7 @@ class StudentMarketplaceApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      themeAnimationDuration: Duration.zero,
     );
   }
 }

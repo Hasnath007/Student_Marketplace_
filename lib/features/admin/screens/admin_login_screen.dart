@@ -186,9 +186,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     }
   }
 
-  void _handleForgotPassword() {
-    context.push('/forgot-password');
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -430,33 +427,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                           const SizedBox(height: 18),
 
-                          // PASSWORD LABEL & FORGOT
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Password',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: _labelColor,
-                                ),
+                          // PASSWORD LABEL
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Password',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: _labelColor,
                               ),
-                              MouseRegion(
-                                cursor: SystemMouseCursors.click,
-                                child: GestureDetector(
-                                  onTap: _handleForgotPassword,
-                                  child: const Text(
-                                    'Forgot Password?',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF2563EB),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
 
                           const SizedBox(height: 6),

@@ -1567,35 +1567,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-
                 if (!_linearAlgebraReceived) ...[
-                  // Handover PIN Box
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: context.isDarkMode ? const Color(0xFF78350F).withValues(alpha: 0.25) : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: context.isDarkMode ? const Color(0xFFD97706).withValues(alpha: 0.5) : const Color(0xFFE2E8F0)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.key_rounded, color: Color(0xFFD97706), size: 20),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Handover Verification PIN', style: TextStyle(fontSize: 10, color: context.textSecondary, fontWeight: FontWeight.bold)),
-                            Text('PIN: #8492', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: context.isDarkMode ? const Color(0xFFFDE68A) : const Color(0xFF0F172A), letterSpacing: 1.5)),
-                          ],
-                        ),
-                        const Spacer(),
-                        Text('Tell seller this PIN or confirm below when meeting', style: TextStyle(fontSize: 11, color: context.textSecondary)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
                   // Action Buttons
                   Row(
                     children: [
@@ -2783,7 +2755,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     Text('My Purchases & SafePay Handover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.textPrimary)),
                     const SizedBox(height: 2),
-                    Text('Track items you bought, view your 4-digit verification PIN, and confirm receipt', style: TextStyle(fontSize: 13, color: context.textSecondary)),
+                    Text('Track items you bought and confirm receipt upon campus handover', style: TextStyle(fontSize: 13, color: context.textSecondary)),
                   ],
                 ),
                 OutlinedButton.icon(
@@ -2830,7 +2802,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Your bKash / Nagad payment is held safely in SafePay. The seller does NOT receive payment until you meet in person on campus, check the item condition, and tap "Item Received" (or give your 4-digit PIN).',
+                          'Your bKash / Nagad payment is held safely in SafePay. The seller does NOT receive payment until you meet in person on campus, check the item condition, and tap "Item Received".',
                           style: TextStyle(fontSize: 12, color: context.isDarkMode ? const Color(0xFFBFDBFE) : const Color(0xFF1E40AF), height: 1.4),
                         ),
                       ],
@@ -2873,7 +2845,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(height: 10),
                     Text('No Active SafePay Orders', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('When you purchase an item using SafePay, your live order and 4-digit PIN will appear here.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: context.textSecondary)),
+                    Text('When you purchase an item using SafePay, your live order will appear here.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: context.textSecondary)),
                     const SizedBox(height: 14),
                     ElevatedButton(
                       onPressed: () => context.go('/marketplace'),
@@ -2938,7 +2910,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
                     _buildStepChip('2', 'Campus Meetup'),
                     const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
-                    _buildStepChip('3', 'Item Received / PIN'),
+                    _buildStepChip('3', 'Item Received'),
                     const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF94A3B8)),
                     _buildStepChip('4', 'Payout to Seller'),
                   ],
@@ -2962,7 +2934,7 @@ Widget _buildDynamicSellerWalletTab() {
 
       final livePending = activeSales.fold<double>(0.0, (acc, o) => acc + o.price);
       final liveAvailable = completedSales.fold<double>(0.0, (acc, o) => acc + o.price);
-      final liveTotalRevenue = liveAvailable + livePending;
+      final liveTotalRevenue = liveAvailable;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3042,7 +3014,7 @@ Widget _buildDynamicSellerWalletTab() {
                   child: _buildWalletStatCard(
                     title: 'Total Revenue Earned',
                     amount: '৳${liveTotalRevenue.toStringAsFixed(0)}',
-                    subtitle: 'From ${sellerOrders.length} sale(s)',
+                    subtitle: 'From ${completedSales.length} completed sale(s)',
                     icon: Icons.trending_up_rounded,
                     iconColor: const Color(0xFF2563EB),
                     bgColor: const Color(0xFFEFF6FF),
@@ -3067,7 +3039,7 @@ Widget _buildDynamicSellerWalletTab() {
             Text('Recent Earnings & Sales History', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textPrimary)),
             const SizedBox(height: 12),
 
-            if (sellerOrders.isEmpty)
+            if (completedSales.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -3080,9 +3052,9 @@ Widget _buildDynamicSellerWalletTab() {
                   children: [
                     Icon(Icons.storefront_outlined, size: 40, color: context.textSecondary),
                     const SizedBox(height: 10),
-                    Text('No sales yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary)),
+                    Text('No completed earnings yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('List your textbooks or stationery to earn campus income!', style: TextStyle(fontSize: 12, color: context.textSecondary)),
+                    Text('Once the buyer clicks "Access Received" / "Item Received", your earnings will appear here instantly!', style: TextStyle(fontSize: 12, color: context.textSecondary)),
                   ],
                 ),
               )
@@ -3096,11 +3068,10 @@ Widget _buildDynamicSellerWalletTab() {
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: sellerOrders.length,
+                  itemCount: completedSales.length,
                   separatorBuilder: (_, _) => Divider(height: 1, color: context.borderColor),
                   itemBuilder: (context, index) {
-                    final order = sellerOrders[index];
-                    final isCompleted = order.status == 'completed';
+                    final order = completedSales[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       child: Row(
@@ -3108,12 +3079,12 @@ Widget _buildDynamicSellerWalletTab() {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: (isCompleted ? const Color(0xFF059669) : const Color(0xFFD97706)).withValues(alpha: 0.12),
+                              color: const Color(0xFF059669).withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
-                              isCompleted ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
-                              color: isCompleted ? const Color(0xFF059669) : const Color(0xFFD97706),
+                            child: const Icon(
+                              Icons.check_circle_rounded,
+                              color: Color(0xFF059669),
                               size: 20,
                             ),
                           ),
@@ -3124,20 +3095,23 @@ Widget _buildDynamicSellerWalletTab() {
                               children: [
                                 Text(order.productTitle, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
                                 const SizedBox(height: 2),
-                                Text('Buyer: ${order.buyerName} • via ${order.paymentMethod}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                Text(
+                                  'Buyer: ${order.buyerName} • via ${order.paymentMethod}',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                ),
                               ],
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: (isCompleted ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7)),
+                              color: const Color(0xFFDCFCE7),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(
-                              isCompleted ? 'RELEASED' : 'IN SAFEPAY',
+                            child: const Text(
+                              'RELEASED ✓',
                               style: TextStyle(
-                                color: isCompleted ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                                color: Color(0xFF15803D),
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -3165,6 +3139,8 @@ Widget _buildDynamicSellerWalletTab() {
   }
 
   Widget _buildDynamicActiveOrderCard(OrderModel order) {
+    final isSub = order.productTitle.contains('(Sub Group)') || order.productId.startsWith('sub_');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -3200,7 +3176,7 @@ Widget _buildDynamicSellerWalletTab() {
                     width: 70,
                     height: 70,
                     color: Colors.grey.shade200,
-                    child: const Icon(Icons.inventory_2_outlined, color: Colors.grey),
+                    child: Icon(isSub ? Icons.groups_rounded : Icons.inventory_2_outlined, color: Colors.grey),
                   ),
                 ),
               ),
@@ -3239,13 +3215,19 @@ Widget _buildDynamicSellerWalletTab() {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text('Paid ৳${order.price.toStringAsFixed(0)} via ${order.paymentMethod} • Seller: ${order.sellerName}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    Text(
+                      'Paid ৳${order.price.toStringAsFixed(0)} via ${order.paymentMethod} • ${isSub ? "Host" : "Seller"}: ${order.sellerName}',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
                     const SizedBox(height: 4),
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF2563EB)),
-                        SizedBox(width: 4),
-                        Text('Campus Handover: Central Library / TSC', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF2563EB))),
+                        Icon(isSub ? Icons.vpn_key_rounded : Icons.location_on_outlined, size: 14, color: const Color(0xFF2563EB)),
+                        const SizedBox(width: 4),
+                        Text(
+                          isSub ? 'Digital Access: Credentials / Invite Link' : 'Campus Handover: Central Library / TSC',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF2563EB)),
+                        ),
                       ],
                     ),
                   ],
@@ -3253,40 +3235,7 @@ Widget _buildDynamicSellerWalletTab() {
               ),
             ],
           ),
-          const SizedBox(height: 16),
 
-          // Handover PIN Box
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: context.isDarkMode ? const Color(0xFF78350F).withValues(alpha: 0.25) : const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: context.isDarkMode ? const Color(0xFFD97706).withValues(alpha: 0.5) : const Color(0xFFFDE68A)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.key_rounded, size: 18, color: context.isDarkMode ? const Color(0xFFFBBF24) : const Color(0xFFB45309)),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Handover Verification PIN', style: TextStyle(fontSize: 10, color: context.isDarkMode ? const Color(0xFFFDE68A) : const Color(0xFF92400E), fontWeight: FontWeight.w600)),
-                        Text(
-                          'PIN: #${order.handoverPin}',
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: context.isDarkMode ? const Color(0xFFFDE68A) : const Color(0xFF78350F), letterSpacing: 1.5),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Text('Tell seller this PIN or confirm below when meeting', style: TextStyle(fontSize: 10, color: context.isDarkMode ? const Color(0xFFFDE68A) : const Color(0xFF92400E))),
-              ],
-            ),
-          ),
           const SizedBox(height: 16),
 
           // Actions Row
@@ -3312,7 +3261,10 @@ Widget _buildDynamicSellerWalletTab() {
                     }
                   },
                   icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-                  label: const Text('Chat with Seller (Schedule Meetup)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  label: Text(
+                    isSub ? 'Chat with Host (Get Access)' : 'Chat with Seller (Schedule Meetup)',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF2563EB)),
                     foregroundColor: const Color(0xFF2563EB),
@@ -3329,14 +3281,18 @@ Widget _buildDynamicSellerWalletTab() {
                       context: context,
                       builder: (ctx) => AlertDialog(
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        title: const Row(
+                        title: Row(
                           children: [
-                            Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 24),
-                            SizedBox(width: 8),
-                            Text('Confirm Item Handover'),
+                            const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 24),
+                            const SizedBox(width: 8),
+                            Text(isSub ? 'Confirm Subscription Access' : 'Confirm Item Handover'),
                           ],
                         ),
-                        content: Text('Did you meet ${order.sellerName} and receive "${order.productTitle}" in good condition? This will release ৳${order.price.toStringAsFixed(0)} to the seller.'),
+                        content: Text(
+                          isSub
+                              ? 'Did you receive your account credentials/access for "${order.productTitle}"? This will release ৳${order.price.toStringAsFixed(0)} to the host (${order.sellerName}).'
+                              : 'Did you meet ${order.sellerName} and receive "${order.productTitle}" in good condition? This will release ৳${order.price.toStringAsFixed(0)} to the seller.',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx),
@@ -3349,7 +3305,11 @@ Widget _buildDynamicSellerWalletTab() {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('🎉 Handover confirmed! ৳${order.price.toStringAsFixed(0)} released to ${order.sellerName}.'),
+                                    content: Text(
+                                      isSub
+                                          ? '🎉 Subscription confirmed! ৳${order.price.toStringAsFixed(0)} released to host ${order.sellerName}.'
+                                          : '🎉 Handover confirmed! ৳${order.price.toStringAsFixed(0)} released to ${order.sellerName}.',
+                                    ),
                                     backgroundColor: const Color(0xFF10B981),
                                   ),
                                 );
@@ -3359,14 +3319,17 @@ Widget _buildDynamicSellerWalletTab() {
                               backgroundColor: const Color(0xFF10B981),
                               foregroundColor: Colors.white,
                             ),
-                            child: const Text('Yes, Item Received ✓'),
+                            child: Text(isSub ? 'Yes, Access Received ✓' : 'Yes, Item Received ✓'),
                           ),
                         ],
                       ),
                     );
                   },
                   icon: const Icon(Icons.check_circle_rounded, size: 16),
-                  label: const Text('Item Received (Complete Handover)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  label: Text(
+                    isSub ? 'Access Received (Confirm Seat)' : 'Item Received (Complete Handover)',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF059669),
                     foregroundColor: Colors.white,
@@ -3397,6 +3360,8 @@ Widget _buildDynamicSellerWalletTab() {
   }
 
   Widget _buildDynamicCompletedOrderCard(OrderModel order) {
+    final isSub = order.productTitle.contains('(Sub Group)') || order.productId.startsWith('sub_');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -3414,7 +3379,12 @@ Widget _buildDynamicSellerWalletTab() {
               width: 50,
               height: 50,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(width: 50, height: 50, color: context.containerBg, child: Icon(Icons.inventory_2_outlined, size: 20, color: context.textSecondary)),
+              errorBuilder: (_, _, _) => Container(
+                width: 50,
+                height: 50,
+                color: context.containerBg,
+                child: Icon(isSub ? Icons.groups_rounded : Icons.inventory_2_outlined, size: 20, color: context.textSecondary),
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -3424,14 +3394,27 @@ Widget _buildDynamicSellerWalletTab() {
               children: [
                 Text(order.productTitle, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
                 const SizedBox(height: 2),
-                Text('৳${order.price.toStringAsFixed(0)} • Delivered • Seller: ${order.sellerName}', style: TextStyle(fontSize: 11, color: context.textSecondary)),
+                Text(
+                  '৳${order.price.toStringAsFixed(0)} • ${isSub ? "Active Access" : "Delivered"} • ${isSub ? "Host" : "Seller"}: ${order.sellerName}',
+                  style: TextStyle(fontSize: 11, color: context.textSecondary),
+                ),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(6)),
-            child: const Text('DELIVERED ✓', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+            decoration: BoxDecoration(
+              color: isSub ? const Color(0xFFEFF6FF) : const Color(0xFFDCFCE7),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              isSub ? 'ACCESS ACTIVE ✓' : 'DELIVERED ✓',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: isSub ? const Color(0xFF2563EB) : const Color(0xFF15803D),
+              ),
+            ),
           ),
         ],
       ),

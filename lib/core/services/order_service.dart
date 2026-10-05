@@ -29,12 +29,28 @@ class OrderService {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
 
+    final currentUserName = (user.displayName ?? user.email?.split('@')[0] ?? '').trim().toLowerCase();
+
     return _firestore
         .collection('orders')
-        .where('sellerId', isEqualTo: user.uid)
         .snapshots()
         .map((snapshot) {
-          final list = snapshot.docs.map((d) => OrderModel.fromFirestore(d)).toList();
+          final list = snapshot.docs
+              .map((d) => OrderModel.fromFirestore(d))
+              .where((o) {
+                final sellerId = o.sellerId.trim().toLowerCase();
+                final sellerName = o.sellerName.trim().toLowerCase();
+
+                final isDirectUidMatch = o.sellerId == user.uid;
+                final isNameMatch = currentUserName.isNotEmpty &&
+                    (sellerId == currentUserName ||
+                        sellerName == currentUserName ||
+                        sellerName.contains(currentUserName) ||
+                        currentUserName.contains(sellerName));
+
+                return isDirectUidMatch || isNameMatch;
+              })
+              .toList();
           list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return list;
         });
@@ -90,6 +106,42 @@ class OrderService {
     } catch (_) {}
 
     return order;
+  }
+
+  // Place a subscription group order for Admin and tracking
+  Future<void> createSubscriptionOrder({
+    required String groupId,
+    required String groupTitle,
+    required double price,
+    required String category,
+    required String hostName,
+    String? hostId,
+    required String paymentMethod,
+    required String trxId,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final docRef = _firestore.collection('orders').doc();
+    final order = OrderModel(
+      id: docRef.id,
+      productId: groupId,
+      productTitle: '$groupTitle (Sub Group)',
+      productImage: '',
+      price: price,
+      category: category,
+      buyerId: user.uid,
+      buyerName: user.displayName ?? user.email?.split('@')[0] ?? 'Student',
+      sellerId: (hostId != null && hostId.isNotEmpty) ? hostId : hostName,
+      sellerName: hostName,
+      handoverPin: '0000',
+      paymentMethod: paymentMethod,
+      trxId: trxId.isNotEmpty ? trxId : 'TRX${100000 + Random().nextInt(900000)}',
+      status: 'in_safepay',
+      createdAt: DateTime.now(),
+    );
+
+    await docRef.set(order.toMap());
   }
 
   // Complete handover

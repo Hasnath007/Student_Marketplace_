@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/admin_provider.dart';
 import '../../../core/providers/marketplace_provider.dart';
 import '../../../core/providers/subscriptions_provider.dart';
@@ -39,11 +40,11 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     final totalProducts = products.length;
     final totalSubscriptions = subscriptions.length;
     final pendingReports = reports.where((r) => r.status == 'pending').length;
-    final heldInSafePay = transactions.where((t) => t.status == 'held_in_escrow' || t.status == 'pending_verification').length;
+    final heldInSafePay = transactions.where((t) => t.status == 'held_in_escrow').length;
 
     double escrowBalance = 0;
     for (var t in transactions) {
-      if (t.status == 'held_in_escrow' || t.status == 'pending_verification') {
+      if (t.status == 'held_in_escrow') {
         escrowBalance += t.amount;
       }
     }
@@ -1402,7 +1403,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   // TAB 4: Escrow Transactions
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildTransactionsTab(List<AdminTransaction> transactions) {
-    final statusFilters = ['All', 'Pending_Verification', 'Held_In_Escrow', 'Released_To_Seller', 'Refunded'];
+    final statusFilters = ['All', 'Held_In_Escrow', 'Released_To_Seller', 'Refunded'];
 
     final filtered = transactions.where((t) {
       return _transactionFilterStatus == 'All' || t.status.toLowerCase() == _transactionFilterStatus.toLowerCase();

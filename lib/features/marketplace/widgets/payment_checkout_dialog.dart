@@ -748,15 +748,11 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFEFF6FF), Color(0xFFF0FDF4)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: context.isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
+                border: Border.all(color: context.isDarkMode ? const Color(0xFF334155) : const Color(0xFF93C5FD), width: 1.2),
                 boxShadow: [
-                  BoxShadow(color: const Color(0xFF2563EB).withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -765,13 +761,13 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.link_rounded, color: Color(0xFF2563EB), size: 18),
-                          SizedBox(width: 8),
+                          Icon(Icons.link_rounded, color: context.isDarkMode ? const Color(0xFF60A5FA) : const Color(0xFF2563EB), size: 18),
+                          const SizedBox(width: 8),
                           Text(
                             'Your Access Link',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E3A8A)),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.isDarkMode ? Colors.white : const Color(0xFF1E3A8A)),
                           ),
                         ],
                       ),
@@ -797,19 +793,11 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFEFF6FF), Color(0xFFF0FDF4)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: context.isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
+                border: Border.all(color: context.isDarkMode ? const Color(0xFF334155) : const Color(0xFF93C5FD), width: 1.2),
                 boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -818,13 +806,13 @@ class _PaymentCheckoutDialogState extends State<PaymentCheckoutDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.vpn_key_rounded, color: Color(0xFF2563EB), size: 18),
-                          SizedBox(width: 8),
+                          Icon(Icons.vpn_key_rounded, color: context.isDarkMode ? const Color(0xFF60A5FA) : const Color(0xFF2563EB), size: 18),
+                          const SizedBox(width: 8),
                           Text(
                             'Your Access Credentials',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E3A8A)),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.isDarkMode ? Colors.white : const Color(0xFF1E3A8A)),
                           ),
                         ],
                       ),

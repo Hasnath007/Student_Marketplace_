@@ -11,6 +11,7 @@ import '../../../core/providers/subscriptions_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../marketplace/widgets/payment_checkout_dialog.dart';
 import '../widgets/host_chat_dialog.dart';
+import '../../../core/services/order_service.dart';
 
 class SubscriptionGroupsScreen extends ConsumerStatefulWidget {
   const SubscriptionGroupsScreen({super.key});
@@ -920,6 +921,21 @@ class _SubscriptionGroupsScreenState extends ConsumerState<SubscriptionGroupsScr
             accountEmail: group['accountEmail'] as String?,
             pinCode: group['pinCode'] as String?,
             assignedScreen: group['assignedScreen'] as String?,
+          );
+        },
+        onPaymentCompleted: (method, trxId) async {
+          final totalP = (group['totalPrice'] as int? ?? 0);
+          final totalS = ((group['totalSlots'] as int? ?? 1) == 0 ? 1 : (group['totalSlots'] as int? ?? 1));
+          final seatPrice = (totalP / totalS).roundToDouble();
+          await orderService.createSubscriptionOrder(
+            groupId: (group['id'] ?? '').toString(),
+            groupTitle: (group['title'] ?? 'Subscription Group').toString(),
+            price: seatPrice > 0 ? seatPrice : 250.0,
+            category: (group['category'] ?? 'Entertainment').toString(),
+            hostName: (group['host'] ?? 'Group Host').toString(),
+            hostId: (group['hostId'] ?? '').toString(),
+            paymentMethod: method,
+            trxId: trxId,
           );
         },
         onPaymentSuccess: () {

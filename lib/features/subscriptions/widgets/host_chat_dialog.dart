@@ -63,12 +63,19 @@ class _HostChatDialogState extends State<HostChatDialog> {
 
   String get _chatId {
     String hName = widget.hostName.trim();
-    if (hName.startsWith('You')) {
+    hName = hName
+        .replaceAll('👑', '')
+        .replaceAll('(Host)', '')
+        .replaceAll('(Admin)', '')
+        .replaceAll('(Owner)', '')
+        .trim();
+
+    if (hName.startsWith('You') || hName.isEmpty) {
       final user = FirebaseAuth.instance.currentUser;
       hName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Host';
     }
-    final cleanTitle = widget.groupTitle.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final cleanHost = hName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final cleanTitle = widget.groupTitle.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase();
+    final cleanHost = hName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase();
     return '${cleanTitle}_$cleanHost';
   }
 
@@ -113,6 +120,7 @@ class _HostChatDialogState extends State<HostChatDialog> {
         .add({
       'text': clean,
       'sender': senderName,
+      'senderId': user?.uid ?? '',
       'isHost': widget.isHostMode,
       'timestamp': FieldValue.serverTimestamp(),
     });
@@ -343,12 +351,15 @@ class _HostChatDialogState extends State<HostChatDialog> {
                       itemBuilder: (context, index) {
                         final doc = docs[index];
                         final msg = doc.data() as Map<String, dynamic>;
-
                         final user = FirebaseAuth.instance.currentUser;
                         final currentUserName = user?.displayName ?? user?.email?.split('@')[0] ?? 'You';
 
                         final sender = msg['sender'] as String? ?? 'Unknown';
-                        final isMe = sender == currentUserName || sender == '$currentUserName (Admin)';
+                        final senderId = msg['senderId'] as String?;
+                        final isMe = (senderId != null && senderId == user?.uid) ||
+                            sender == currentUserName ||
+                            sender == '$currentUserName (Admin)' ||
+                            (user?.displayName != null && sender.toLowerCase().contains(user!.displayName!.toLowerCase()));
 
                         String timeStr = 'Just now';
                         if (msg['timestamp'] != null) {
